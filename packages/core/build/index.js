@@ -6240,6 +6240,19 @@ var tlsParser = (proxy, parsedProxy) => {
     parsedProxy.tls.fragment_fallback_delay = proxy["_fragment_fallback_delay"];
   if (proxy["_record_fragment"])
     parsedProxy.tls.record_fragment = !!proxy["_record_fragment"];
+  if (proxy["_certificate"])
+    parsedProxy.tls.certificate = proxy["_certificate"];
+  if (proxy["_certificate_path"])
+    parsedProxy.tls.certificate_path = proxy["_certificate_path"];
+  if (proxy["_certificate_public_key_sha256"])
+    parsedProxy.tls.certificate_public_key_sha256 = proxy["_certificate_public_key_sha256"];
+  if (proxy["_client_certificate"])
+    parsedProxy.tls.client_certificate = proxy["_client_certificate"];
+  if (proxy["_client_certificate_path"])
+    parsedProxy.tls.client_certificate_path = proxy["_client_certificate_path"];
+  if (proxy["_client_key"]) parsedProxy.tls.client_key = proxy["_client_key"];
+  if (proxy["_client_key_path"])
+    parsedProxy.tls.client_key_path = proxy["_client_key_path"];
   if (!parsedProxy.tls.enabled) delete parsedProxy.tls;
 };
 var sshParser = (proxy = {}) => {
@@ -6898,7 +6911,7 @@ function Egern_Producer() {
         "chacha20-ietf",
         "2022-blake3-aes-128-gcm",
         "2022-blake3-aes-256-gcm"
-      ].includes(proxy.cipher)) || proxy.type === "vmess" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "trojan" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "vless" && (!opts["include-unsupported-proxy"] && (typeof proxy.flow !== "undefined" || proxy["reality-opts"]) || opts["include-unsupported-proxy"] && typeof proxy.flow !== "undefined" && proxy.flow !== "xtls-rprx-vision" || !["http", "ws", "tcp"].includes(proxy.network) && proxy.network) || proxy.type === "tuic" && proxy.token && proxy.token.length !== 0) {
+      ].includes(proxy.cipher)) || proxy.type === "vmess" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "trojan" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "vless" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "tuic" && proxy.token && proxy.token.length !== 0) {
         return false;
       }
       return true;
@@ -7120,6 +7133,13 @@ function Egern_Producer() {
               reality
             }
           };
+          if (typeof proxy.flow !== "undefined") {
+            if (!["xtls-rprx-vision"].includes(proxy.flow)) {
+              throw new Error(
+                `VLESS flow(${proxy.flow}) is not supported`
+              );
+            }
+          }
           flow = proxy.flow;
         }
         proxy = {
