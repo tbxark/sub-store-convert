@@ -17,7 +17,7 @@
     "@hono/node-server": "^1.19.5",
     "@sub-store-convert/core": "workspace:*",
     "esbuild": "^0.25.11",
-    "hono": "^4.10.3",
+    "hono": "^4.11.4",
     "wrangler": "^4.45.1"
   }
 }
