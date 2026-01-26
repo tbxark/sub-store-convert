@@ -23,7 +23,7 @@
     "js-base64": "^3.7.8",
     "json5": "^2.2.3",
     "lodash": "^4.17.23",
-    "peggy": "^4.2.0",
+    "peggy": "^2.0.1",
     "static-js-yaml": "^1.0.0"
   },
   "devDependencies": {
