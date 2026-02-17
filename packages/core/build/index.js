@@ -8007,8 +8007,109 @@ var preprocessors_default = [
 var parsers = parsers_default;
 var produce = producers_default;
 var preprocessors = preprocessors_default;
+function loadProducer(target) {
+  const targetLower = target.toLowerCase();
+  for (const key of Object.keys(produce)) {
+    if (key.toLowerCase() === targetLower) {
+      return produce[key];
+    }
+  }
+  return null;
+}
+async function loadRemoteData(url) {
+  try {
+    const response = await fetch(url);
+    const raw = await response.text();
+    for (const preprocessor of preprocessors) {
+      try {
+        if (preprocessor.test(raw)) {
+          return preprocessor.parse(raw).split("\n").map((line) => line.trim()).filter((line) => line.length > 0);
+        }
+      } catch (error) {
+        console.error("Preprocessor error:", error);
+      }
+    }
+    return [];
+  } catch (error) {
+    console.error("Failed to load remote data:", error);
+    return [];
+  }
+}
+function tryParseProxy(parser5, line) {
+  try {
+    if (parser5.test(line)) {
+      return parser5.parse(line);
+    }
+  } catch (error) {
+    console.error("Parser test/parse error:", error);
+  }
+  return null;
+}
+function buildProxyServer(proxy, opts) {
+  const server = { ...proxy, ...opts };
+  if (server.name) {
+    server.name = server.name.trim();
+  }
+  return server;
+}
+function parseProxyLines(lines, opts) {
+  const proxyList = [];
+  let lastParser = null;
+  for (const line of lines) {
+    if (line.length === 0) continue;
+    let proxy = null;
+    if (lastParser) {
+      proxy = tryParseProxy(lastParser, line);
+      if (proxy) {
+        proxyList.push(buildProxyServer(proxy, opts));
+        continue;
+      }
+    }
+    for (const parser5 of parsers) {
+      proxy = tryParseProxy(parser5, line);
+      if (proxy) {
+        proxyList.push(buildProxyServer(proxy, opts));
+        lastParser = parser5;
+        break;
+      }
+    }
+  }
+  return proxyList;
+}
+function produceOutput(producer, proxyList) {
+  if (producer.type === "ALL") {
+    return producer.produce(proxyList);
+  }
+  const results = [];
+  for (const proxy of proxyList) {
+    try {
+      results.push(producer.produce(proxy, proxy.type));
+    } catch (error) {
+      console.error("Producer error:", error);
+    }
+  }
+  return results.join("\n");
+}
+async function convert(url, target, opts = {}) {
+  const producer = loadProducer(target);
+  if (!producer) {
+    throw new Error(`Unknown target: ${target}`);
+  }
+  const urls = url.split("|");
+  const allLines = await Promise.all(urls.map(loadRemoteData));
+  const lines = allLines.flat();
+  const proxyList = parseProxyLines(lines, opts);
+  return produceOutput(producer, proxyList);
+}
 export {
+  buildProxyServer,
+  convert,
+  loadProducer,
+  loadRemoteData,
+  parseProxyLines,
   parsers,
   preprocessors,
-  produce
+  produce,
+  produceOutput,
+  tryParseProxy
 };
