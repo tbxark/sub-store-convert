@@ -78,7 +78,7 @@ var grammars = String.raw`
     }
 }
 
-start = (anytls/shadowsocks/vmess/trojan/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/direct) {
+start = (anytls/shadowsocks/vmess/trojan/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
     return proxy;
 }
 
@@ -163,6 +163,11 @@ anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_prox
     proxy.type = "anytls";
     proxy.tls = true;
 }
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/sni/fast_open/tfo/block_quic/others)* {
+    proxy.type = "trust-tunnel";
+    proxy.tls = true;
+}
+
 direct = tag equals "direct" (udp_relay/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/block_quic/others)* {
     proxy.type = "direct";
 }
@@ -2019,9 +2024,11 @@ function Clash_All() {
       proxy = yaml_default.parse(line);
     }
     if (![
+      "trust-tunnel",
       "naive",
       "anytls",
       "mieru",
+      "masque",
       "sudoku",
       "juicity",
       "ss",
@@ -2305,6 +2312,14 @@ function Surge_Anytls() {
   const parse = (line) => getParser().parse(line);
   return { name, test, parse };
 }
+function Surge_TrustTunnel() {
+  const name = "Surge TrustTunnel Parser";
+  const test = (line) => {
+    return /^.*=\s*trust-tunnel/.test(line.split(",")[0]);
+  };
+  const parse = (line) => getParser().parse(line);
+  return { name, test, parse };
+}
 function Surge_SSH() {
   const name = "Surge SSH Parser";
   const test = (line) => {
@@ -2474,6 +2489,7 @@ var parsers_default = [
   Clash_All(),
   Surge_Direct(),
   Surge_Anytls(),
+  Surge_TrustTunnel(),
   Surge_SSH(),
   Surge_SS(),
   Surge_VMess(),
@@ -2584,6 +2600,9 @@ function Surge_Producer() {
         );
       }
       return anytls(proxy);
+    }
+    if (opts["include-unsupported-proxy"] && proxy.type === "trust-tunnel") {
+      return trust_tunnel(proxy);
     }
     throw new Error(
       `Platform ${targetPlatform} does not support proxy type: ${proxy.type}`
@@ -2771,6 +2790,52 @@ function trojan(proxy) {
   return result.toString();
 }
 function anytls(proxy) {
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,password="${proxy.password}"`, "password");
+  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
+  result.appendIfPresent(
+    `,no-error-alert=${proxy["no-error-alert"]}`,
+    "no-error-alert"
+  );
+  result.appendIfPresent(
+    `,server-cert-fingerprint-sha256=${proxy["tls-fingerprint"]}`,
+    "tls-fingerprint"
+  );
+  result.appendIfPresent(`,sni=${proxy.sni}`, "sni");
+  result.appendIfPresent(
+    `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
+    "skip-cert-verify"
+  );
+  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
+  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
+  result.appendIfPresent(
+    `,test-timeout=${proxy["test-timeout"]}`,
+    "test-timeout"
+  );
+  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
+  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
+  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
+  result.appendIfPresent(
+    `,allow-other-interface=${proxy["allow-other-interface"]}`,
+    "allow-other-interface"
+  );
+  result.appendIfPresent(
+    `,interface=${proxy["interface-name"]}`,
+    "interface-name"
+  );
+  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
+  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(
+    `,underlying-proxy=${proxy["underlying-proxy"]}`,
+    "underlying-proxy"
+  );
+  result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  return result.toString();
+}
+function trust_tunnel(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
@@ -3503,7 +3568,7 @@ function ClashMeta_Producer() {
       if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "snell" && proxy.version >= 4) {
         return false;
-      } else if (["juicity", "naive"].includes(proxy.type)) {
+      } else if (["trust-tunnel", "juicity", "naive"].includes(proxy.type)) {
         return false;
       } else if (["ss"].includes(proxy.type) && ![
         "aes-128-ctr",
@@ -3667,6 +3732,7 @@ function ClashMeta_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
+        "trust-tunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -3961,6 +4027,7 @@ function Clash_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
+        "trust-tunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -4034,11 +4101,6 @@ function Stash_Producer() {
         "2022-blake3-aes-128-gcm",
         "2022-blake3-aes-256-gcm"
       ].includes(proxy.cipher) || proxy.type === "snell" && proxy.version >= 4 || proxy.type === "vless" && proxy["reality-opts"] && !["xtls-rprx-vision"].includes(proxy.flow)) {
-        return false;
-      } else if (proxy["underlying-proxy"] || proxy["dialer-proxy"]) {
-        app_default.error(
-          `Stash \u6682\u4E0D\u652F\u6301\u524D\u7F6E\u4EE3\u7406\u5B57\u6BB5. \u5DF2\u8FC7\u6EE4\u8282\u70B9 ${proxy.name}. \u8BF7\u4F7F\u7528 \u4EE3\u7406\u7684\u8F6C\u53D1\u94FE https://stash.wiki/proxy-protocols/proxy-groups#relay`
-        );
         return false;
       } else if (["anytls"].includes(proxy.type) && !opts["include-unsupported-proxy"]) {
         return false;
@@ -4196,6 +4258,7 @@ function Stash_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
+        "trust-tunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -4946,7 +5009,8 @@ function URI_Producer() {
       "hysteria",
       "hysteria2",
       "juicity",
-      "anytls"
+      "anytls",
+      "trust-tunnel"
     ].includes(proxy.type)) {
       delete proxy.tls;
     }
@@ -5992,7 +6056,13 @@ function Shadowrocket_Producer() {
       if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "snell" && proxy.version >= 4) {
         return false;
-      } else if (["mieru", "sudoku", "naive"].includes(proxy.type)) {
+      } else if ([
+        "trust-tunnel",
+        "mieru",
+        "sudoku",
+        "naive",
+        "masque"
+      ].includes(proxy.type)) {
         return false;
       } else if (proxy.encryption && proxy.encryption !== "none" && ["vless"].includes(proxy.type)) {
         return false;
@@ -6125,6 +6195,7 @@ function Shadowrocket_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
+        "trust-tunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -6186,6 +6257,8 @@ function Surfboard_Producer() {
         return http4(proxy);
       case "socks5":
         return socks54(proxy);
+      case "anytls":
+        return anytls2(proxy);
       case "wireguard-surge":
         return wireguard3(proxy);
     }
@@ -6194,6 +6267,20 @@ function Surfboard_Producer() {
     );
   };
   return { produce: produce2 };
+}
+function anytls2(proxy) {
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,password="${proxy.password}"`, "password");
+  result.appendIfPresent(`,sni=${proxy.sni}`, "sni");
+  result.appendIfPresent(
+    `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
+    "skip-cert-verify"
+  );
+  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
+  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  return result.toString();
 }
 function shadowsocks4(proxy) {
   const result = new Result(proxy);
@@ -6218,12 +6305,14 @@ function shadowsocks4(proxy) {
     "camellia-256-cfb",
     "salsa20",
     "chacha20",
-    "chacha20-ietf"
+    "chacha20-ietf",
+    "2022-blake3-aes-128-gcm",
+    "2022-blake3-aes-256-gcm"
   ].includes(proxy.cipher)) {
     throw new Error(`cipher ${proxy.cipher} is not supported`);
   }
   result.append(`,encrypt-method=${proxy.cipher}`);
-  result.appendIfPresent(`,password=${proxy.password}`, "password");
+  result.appendIfPresent(`,password="${proxy.password}"`, "password");
   if (isPresent2(proxy, "plugin")) {
     if (proxy.plugin === "obfs") {
       result.append(`,obfs=${proxy["plugin-opts"].mode}`);
@@ -6598,6 +6687,9 @@ var tlsParser = (proxy, parsedProxy) => {
     };
   if (proxy._ech && isPlainObject(proxy._ech)) {
     parsedProxy.tls.ech = proxy._ech;
+  }
+  if (proxy._curve_preferences && Array.isArray(proxy._curve_preferences)) {
+    parsedProxy.tls.curve_preferences = proxy._curve_preferences;
   }
   if (proxy["_fragment"]) parsedProxy.tls.fragment = !!proxy["_fragment"];
   if (proxy["_fragment_fallback_delay"])
@@ -7301,7 +7393,10 @@ function Egern_Producer() {
         "vless",
         "vmess",
         "tuic",
-        ...opts["include-unsupported-proxy"] ? ["wireguard"] : []
+        "wireguard"
+        // ...(opts['include-unsupported-proxy']
+        //     ? ['wireguard']
+        //     : []),
       ].includes(proxy.type) || proxy.type === "ss" && (proxy.plugin === "obfs" && !["http", "tls"].includes(
         proxy["plugin-opts"]?.mode
       ) || ![

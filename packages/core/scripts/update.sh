@@ -1,4 +1,4 @@
-version=2.21.15
+version=2.21.25
 cd src/vendors/Sub-Store
 git fetch --tags
 git checkout tags/$version
