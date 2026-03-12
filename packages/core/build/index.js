@@ -164,7 +164,7 @@ anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_prox
     proxy.tls = true;
 }
 trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/sni/fast_open/tfo/block_quic/others)* {
-    proxy.type = "trust-tunnel";
+    proxy.type = "trusttunnel";
     proxy.tls = true;
 }
 
@@ -355,7 +355,7 @@ var grammars2 = String.raw`
     }
 }
 
-start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2) {
+start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls) {
     return proxy;
 }
 
@@ -364,7 +364,7 @@ shadowsocksr = tag equals "shadowsocksr"i address method password (ssr_protocol/
     // handle ssr obfs
     proxy.obfs = obfs.type;
 }
-shadowsocks = tag equals "shadowsocks"i address method password (obfs_typev obfs_hostv)? (obfs_ss/obfs_host/obfs_uri/fast_open/udp_relay/udp_port/shadow_tls_version/shadow_tls_sni/shadow_tls_password/ip_mode/block_quic/others)* {
+shadowsocks = tag equals "shadowsocks"i address method password (obfs_typev obfs_hostv)? (obfs_ss/obfs_host/obfs_uri/fast_open/udp_relay/udp_port/shadow_tls_version/shadow_tls_sni/shadow_tls_password/ip_mode/block_quic/udp_over_tcp/others)* {
     proxy.type = "ss";
     // handle ss obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -386,6 +386,10 @@ vless = tag equals "vless"i address uuid (transport/transport_host/transport_pat
 }
 trojan = tag equals "trojan"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/fast_open/udp_relay/ip_mode/block_quic/others)* {
     proxy.type = "trojan";
+    handleTransport();
+}
+anytls = tag equals "anytls"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/fast_open/udp_relay/ip_mode/block_quic/idle_session_check_interval/idle_session_timeout/min_idle_session/max_stream_count/others)* {
+    proxy.type = "anytls";
     handleTransport();
 }
 hysteria2 = tag equals "hysteria2"i address password (tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/udp_relay/fast_open/download_bandwidth/salamander_password/ecn/ip_mode/block_quic/others)* {
@@ -514,6 +518,13 @@ download_bandwidth = comma "download-bandwidth" equals match:[^,]+ { proxy.down 
 salamander_password = comma "salamander-password" equals match:[^,]+ { proxy['obfs-password'] = match.join(""); proxy.obfs = 'salamander'; }
 
 block_quic = comma "block-quic" equals flag:bool { if(flag) proxy["block-quic"] = "on"; else proxy["block-quic"] = "off"; }
+
+idle_session_check_interval = comma "idle-session-check-interval" equals match:$[0-9]+ { proxy["idle-session-check-interval"] = parseInt(match.trim()); }
+idle_session_timeout = comma "idle-session-timeout" equals match:$[0-9]+ { proxy["idle-session-timeout"] = parseInt(match.trim()); }
+min_idle_session = comma "min-idle-session" equals match:$[0-9]+ { proxy["min-idle-session"] = parseInt(match.trim()); }
+max_stream_count = comma "max-stream-count" equals match:$[0-9]+ { proxy["max-stream-count"] = parseInt(match.trim()); }
+
+udp_over_tcp = comma "udp-over-tcp" equals flag:bool { proxy["udp-over-tcp"] = true; proxy["udp-over-tcp-version"] = 2; }
 
 tag = match:[^=,]* { proxy.name = match.join("").trim(); }
 comma = _ "," _
@@ -1209,7 +1220,7 @@ function URI_SS() {
           proxy.plugin = "v2ray-plugin";
           proxy["plugin-opts"] = {
             mode: "websocket",
-            host: getIfNotBlank(params2["obfs-host"]),
+            host: getIfNotBlank(params2["obfs-host"]) || getIfNotBlank(params2["host"]),
             path: getIfNotBlank(params2.path),
             tls: getIfPresent(params2.tls)
           };
@@ -2024,7 +2035,7 @@ function Clash_All() {
       proxy = yaml_default.parse(line);
     }
     if (![
-      "trust-tunnel",
+      "trusttunnel",
       "naive",
       "anytls",
       "mieru",
@@ -2050,7 +2061,7 @@ function Clash_All() {
         `Clash does not support proxy with type: ${proxy.type}`
       );
     }
-    if (["vmess", "vless"].includes(proxy.type)) {
+    if (["vmess", "vless"].includes(proxy.type) && proxy.servername) {
       proxy.sni = proxy.servername;
       delete proxy.servername;
     }
@@ -2168,6 +2179,14 @@ function Loon_Trojan() {
   const name = "Loon Trojan Parser";
   const test = (line) => {
     return /^.*=\s*trojan/i.test(line.split(",")[0]);
+  };
+  const parse = (line) => getParser2().parse(line);
+  return { name, test, parse };
+}
+function Loon_AnyTLS() {
+  const name = "Loon AnyTLS Parser";
+  const test = (line) => {
+    return /^.*=\s*anytls/i.test(line.split(",")[0]);
   };
   const parse = (line) => getParser2().parse(line);
   return { name, test, parse };
@@ -2304,8 +2323,8 @@ function Surge_Direct() {
   const parse = (line) => getParser().parse(line);
   return { name, test, parse };
 }
-function Surge_Anytls() {
-  const name = "Surge Anytls Parser";
+function Surge_AnyTLS() {
+  const name = "Surge AnyTLS Parser";
   const test = (line) => {
     return /^.*=\s*anytls/.test(line.split(",")[0]);
   };
@@ -2488,7 +2507,7 @@ var parsers_default = [
   URI_AnyTLS(),
   Clash_All(),
   Surge_Direct(),
-  Surge_Anytls(),
+  Surge_AnyTLS(),
   Surge_TrustTunnel(),
   Surge_SSH(),
   Surge_SS(),
@@ -2507,6 +2526,7 @@ var parsers_default = [
   Loon_Vless(),
   Loon_Hysteria2(),
   Loon_Trojan(),
+  Loon_AnyTLS(),
   Loon_Http(),
   Loon_Socks5(),
   Loon_WireGuard(),
@@ -2601,8 +2621,8 @@ function Surge_Producer() {
       }
       return anytls(proxy);
     }
-    if (opts["include-unsupported-proxy"] && proxy.type === "trust-tunnel") {
-      return trust_tunnel(proxy);
+    if (opts["include-unsupported-proxy"] && proxy.type === "trusttunnel") {
+      return trusttunnel(proxy);
     }
     throw new Error(
       `Platform ${targetPlatform} does not support proxy type: ${proxy.type}`
@@ -2835,9 +2855,10 @@ function anytls(proxy) {
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
   return result.toString();
 }
-function trust_tunnel(proxy) {
+function trusttunnel(proxy) {
   const result = new Result(proxy);
-  result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
+  result.append(`${proxy.name}=trust-tunnel,${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,username="${proxy.username}"`, "username");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
   const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
@@ -3568,7 +3589,7 @@ function ClashMeta_Producer() {
       if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "snell" && proxy.version >= 4) {
         return false;
-      } else if (["trust-tunnel", "juicity", "naive"].includes(proxy.type)) {
+      } else if (["juicity", "naive"].includes(proxy.type)) {
         return false;
       } else if (["ss"].includes(proxy.type) && ![
         "aes-128-ctr",
@@ -3732,7 +3753,7 @@ function ClashMeta_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
-        "trust-tunnel",
+        "trusttunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -4027,7 +4048,7 @@ function Clash_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
-        "trust-tunnel",
+        "trusttunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -4101,8 +4122,6 @@ function Stash_Producer() {
         "2022-blake3-aes-128-gcm",
         "2022-blake3-aes-256-gcm"
       ].includes(proxy.cipher) || proxy.type === "snell" && proxy.version >= 4 || proxy.type === "vless" && proxy["reality-opts"] && !["xtls-rprx-vision"].includes(proxy.flow)) {
-        return false;
-      } else if (["anytls"].includes(proxy.type) && !opts["include-unsupported-proxy"]) {
         return false;
       } else if (["anytls"].includes(proxy.type) && proxy.network && (!["tcp"].includes(proxy.network) || ["tcp"].includes(proxy.network) && proxy["reality-opts"])) {
         return false;
@@ -4258,7 +4277,7 @@ function Stash_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
-        "trust-tunnel",
+        "trusttunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -4267,6 +4286,10 @@ function Stash_Producer() {
         proxy["server-cert-fingerprint"] = proxy["tls-fingerprint"];
       }
       delete proxy["tls-fingerprint"];
+      if (proxy["underlying-proxy"]) {
+        proxy["dialer-proxy"] = proxy["underlying-proxy"];
+      }
+      delete proxy["underlying-proxy"];
       if (isPresent2(proxy, "tls") && typeof proxy.tls !== "boolean") {
         delete proxy.tls;
       }
@@ -4324,6 +4347,8 @@ function Loon_Producer() {
         return shadowsocksr(proxy);
       case "trojan":
         return trojan2(proxy);
+      case "anytls":
+        return anytls2(proxy);
       case "vmess":
         return vmess2(proxy, opts["include-unsupported-proxy"]);
       case "vless":
@@ -4428,6 +4453,21 @@ function shadowsocks2(proxy) {
       );
     }
   }
+  if (proxy["udp-over-tcp"]) {
+    if (proxy["udp-over-tcp-version"] === 2) {
+      if (proxy.plugin === "obfs") {
+        app_default.error(
+          `Platform ${targetPlatform3} shadowsocks udp-over-tcp does not support obfs`
+        );
+      } else {
+        result.append(`,udp-over-tcp=true`);
+      }
+    } else {
+      app_default.error(
+        `Platform ${targetPlatform3} shadowsocks only supports udp-over-tcp-version 2`
+      );
+    }
+  }
   result.appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
   if (proxy["block-quic"] === "on") {
     result.append(",block-quic=true");
@@ -4521,6 +4561,47 @@ function trojan2(proxy) {
       );
     } else {
       throw new Error(`network ${proxy.network} is unsupported`);
+    }
+  }
+  result.appendIfPresent(
+    `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
+    "skip-cert-verify"
+  );
+  result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+  result.appendIfPresent(
+    `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
+    "tls-fingerprint"
+  );
+  result.appendIfPresent(
+    `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
+    "tls-pubkey-sha256"
+  );
+  result.appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
+  if (proxy["block-quic"] === "on") {
+    result.append(",block-quic=true");
+  } else if (proxy["block-quic"] === "off") {
+    result.append(",block-quic=false");
+  }
+  if (proxy.udp) {
+    result.append(`,udp=true`);
+  }
+  const ip_version = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
+  return result.toString();
+}
+function anytls2(proxy) {
+  const result = new Result(proxy);
+  result.append(
+    `${proxy.name}=anytls,${proxy.server},${proxy.port},"${proxy.password}"`
+  );
+  for (const key of [
+    // 'idle-session-check-interval',
+    "idle-session-timeout",
+    // 'min-idle-session',
+    "max-stream-count"
+  ]) {
+    if (isPresent2(proxy, key) && Number.isInteger(proxy[key])) {
+      result.append(`,${key}=${proxy[key]}`);
     }
   }
   result.appendIfPresent(
@@ -5004,13 +5085,11 @@ function URI_Producer() {
       }
     }
     if ([
-      "trojan",
       "tuic",
       "hysteria",
       "hysteria2",
       "juicity",
-      "anytls",
-      "trust-tunnel"
+      "trusttunnel"
     ].includes(proxy.type)) {
       delete proxy.tls;
     }
@@ -5042,7 +5121,7 @@ function URI_Producer() {
               break;
             case "v2ray-plugin":
               query += encodeURIComponent(
-                `v2ray-plugin;obfs=${opts.mode}${opts.host ? ";obfs-host" + opts.host : ""}${opts.tls ? ";tls" : ""}`
+                `v2ray-plugin;obfs=${opts.mode}${opts.host ? ";obfs-host=" + opts.host : ""}${opts.host ? ";host=" + opts.host : ""}${opts.path ? ";path=" + opts.path : ""}${opts.tls ? ";tls" : ""}`
               );
               break;
             case "shadow-tls":
@@ -6057,7 +6136,7 @@ function Shadowrocket_Producer() {
       if (proxy.type === "snell" && proxy.version >= 4) {
         return false;
       } else if ([
-        "trust-tunnel",
+        "trusttunnel",
         "mieru",
         "sudoku",
         "naive",
@@ -6195,7 +6274,7 @@ function Shadowrocket_Producer() {
         "hysteria2",
         "juicity",
         "anytls",
-        "trust-tunnel",
+        "trusttunnel",
         "naive"
       ].includes(proxy.type)) {
         delete proxy.tls;
@@ -6255,10 +6334,12 @@ function Surfboard_Producer() {
         return vmess4(proxy);
       case "http":
         return http4(proxy);
+      case "snell":
+        return snell2(proxy);
       case "socks5":
         return socks54(proxy);
       case "anytls":
-        return anytls2(proxy);
+        return anytls3(proxy);
       case "wireguard-surge":
         return wireguard3(proxy);
     }
@@ -6268,7 +6349,7 @@ function Surfboard_Producer() {
   };
   return { produce: produce2 };
 }
-function anytls2(proxy) {
+function anytls3(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
@@ -6280,6 +6361,34 @@ function anytls2(proxy) {
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  return result.toString();
+}
+function snell2(proxy) {
+  if (proxy.version > 3) {
+    throw new Error(
+      `Platform ${targetPlatform5} does not support snell version ${proxy.version}`
+    );
+  }
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,version=${proxy.version}`, "version");
+  result.appendIfPresent(`,psk=${proxy.psk}`, "psk");
+  result.appendIfPresent(
+    `,obfs=${proxy["obfs-opts"]?.mode}`,
+    "obfs-opts.mode"
+  );
+  result.appendIfPresent(
+    `,obfs-host=${proxy["obfs-opts"]?.host}`,
+    "obfs-opts.host"
+  );
+  result.appendIfPresent(
+    `,obfs-uri=${proxy["obfs-opts"]?.path}`,
+    "obfs-opts.path"
+  );
+  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
+  if (proxy.version >= 3) {
+    result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  }
   return result.toString();
 }
 function shadowsocks4(proxy) {
@@ -7381,7 +7490,7 @@ function singbox_Producer() {
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/egern.js
 function Egern_Producer() {
   const type = "ALL";
-  const produce2 = (proxies, type2, opts = {}) => {
+  const produce2 = (proxies, type2) => {
     const list = proxies.filter((proxy) => {
       if (![
         "http",
@@ -7393,10 +7502,8 @@ function Egern_Producer() {
         "vless",
         "vmess",
         "tuic",
-        "wireguard"
-        // ...(opts['include-unsupported-proxy']
-        //     ? ['wireguard']
-        //     : []),
+        "wireguard",
+        "anytls"
       ].includes(proxy.type) || proxy.type === "ss" && (proxy.plugin === "obfs" && !["http", "tls"].includes(
         proxy["plugin-opts"]?.mode
       ) || ![
@@ -7428,7 +7535,11 @@ function Egern_Producer() {
         "chacha20-ietf",
         "2022-blake3-aes-128-gcm",
         "2022-blake3-aes-256-gcm"
-      ].includes(proxy.cipher)) || proxy.type === "vmess" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "trojan" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "vless" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "tuic" && proxy.token && proxy.token.length !== 0) {
+      ].includes(proxy.cipher)) || proxy.type === "vmess" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "trojan" && !["http", "ws", "tcp"].includes(proxy.network) && proxy.network || proxy.type === "vless" && (!["http", "ws", "tcp"].includes(proxy.network) && proxy.network || typeof proxy.flow !== "undefined" && !["xtls-rprx-vision", ""].includes(
+        proxy.flow
+      )) || proxy.type === "tuic" && proxy.token && proxy.token.length !== 0) {
+        return false;
+      } else if (["anytls"].includes(proxy.type) && proxy.network && (!["tcp"].includes(proxy.network) || ["tcp"].includes(proxy.network) && proxy["reality-opts"])) {
         return false;
       } else if (["ws"].includes(proxy.network) && proxy["ws-opts"]?.["v2ray-http-upgrade"]) {
         return false;
@@ -7538,6 +7649,19 @@ function Egern_Producer() {
           sni: proxy.sni,
           skip_tls_verify: proxy["skip-cert-verify"],
           websocket: proxy.websocket
+        };
+      } else if (proxy.type === "anytls") {
+        proxy = {
+          type: "anytls",
+          name: proxy.name,
+          server: proxy.server,
+          port: proxy.port,
+          password: proxy.password,
+          tfo: proxy.tfo || proxy["fast-open"],
+          udp_relay: proxy.udp || proxy.udp_relay || proxy.udp_relay,
+          next_hop: proxy.next_hop,
+          sni: proxy.sni,
+          skip_tls_verify: proxy["skip-cert-verify"]
         };
       } else if (proxy.type === "vmess") {
         let security = proxy.cipher;
@@ -7658,14 +7782,8 @@ function Egern_Producer() {
               reality
             }
           };
-          if (typeof proxy.flow !== "undefined") {
-            if (!["xtls-rprx-vision"].includes(proxy.flow)) {
-              throw new Error(
-                `VLESS flow(${proxy.flow}) is not supported`
-              );
-            }
-          }
           flow = proxy.flow;
+          if (flow === "") flow = void 0;
         }
         proxy = {
           type: "vless",
@@ -7716,7 +7834,8 @@ function Egern_Producer() {
         "ss",
         "trojan",
         "vless",
-        "vmess"
+        "vmess",
+        "anytls"
       ].includes(original.type)) {
         if (isPresent2(original, "shadow-tls-password")) {
           if (original["shadow-tls-version"] != 3)
@@ -7746,7 +7865,8 @@ function Egern_Producer() {
         "vmess",
         "wireguard",
         "tuic",
-        "hysteria2"
+        "hysteria2",
+        "anytls"
       ].includes(original.type)) {
         if (["on", "true", true, "1", 1].includes(
           original["block-quic"]
