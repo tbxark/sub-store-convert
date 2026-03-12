@@ -27,7 +27,7 @@
     "static-js-yaml": "^1.0.0"
   },
   "devDependencies": {
-    "esbuild": "^0.25.11",
+    "esbuild": "^0.25.12",
     "esbuild-plugin-alias": "^0.2.1"
   }
 }

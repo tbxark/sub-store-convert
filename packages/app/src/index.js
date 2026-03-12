@@ -4,7 +4,7 @@ import { convert } from "@sub-store-convert/core"
 const app = new Hono()
 
 app.get('/', (c) => {
-    return c.redirect('https://github.com/TBXark/sub-store-convert', 302)
+    return c.redirect('https://github.com/tbxark/sub-store-convert', 302)
 })
 
 app.get('/sub', async (c) => {
