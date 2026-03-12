@@ -56,7 +56,6 @@ esbuild.build({
       }
     }),
     alias({
-      'automerge': path.resolve(__dirname, 'src/pkg/automerge/index.js'),
       'ip-address': path.resolve(__dirname, 'src/pkg/ip-address/index.js'),
     })
   ],
