@@ -928,16 +928,7 @@ function getParser4() {
 }
 
 // src/core/app/index.js
-var app_default = new Proxy(console, {
-  get: function(target, prop) {
-    if (prop in target) {
-      return target[prop];
-    }
-    return function() {
-      return void 0;
-    };
-  }
-});
+var app_default = console;
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/index.js
 import JSON5 from "json5";
