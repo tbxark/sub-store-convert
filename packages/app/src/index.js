@@ -17,10 +17,22 @@ app.get('/sub', async (c) => {
     delete opts.target
     delete opts.url
     try {
+        for (const key in opts) {
+            const val = opts[key]
+            if (typeof val !== 'string') continue
+            if (val === 'true') {
+                opts[key] = true
+            } else if (val === 'false') {
+                opts[key] = false
+            } else if (val !== '' && val.trim() !== '' && !isNaN(val)) {
+                opts[key] = Number(val)
+            }
+        }
         const res = await convert(url, target, opts)
         return c.text(res, 200)
     } catch (e) {
-        return c.text(e.message, 500)
+        const msg = e instanceof Error ? e.message : String(e)
+        return c.text(msg, 500)
     }
 })
 
