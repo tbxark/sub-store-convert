@@ -61,8 +61,8 @@ export function tryParseProxy(parser, line) {
         if (parser.test(line)) {
             return parser.parse(line)
         }
-    } catch (error) {
-        console.error('Parser test/parse error:', error)
+    } catch {
+        // skip unsupported / malformed line
     }
     return null
 }
@@ -134,8 +134,8 @@ export function produceOutput(producer, proxyList) {
     for (const proxy of proxyList) {
         try {
             results.push(producer.produce(proxy, proxy.type))
-        } catch (error) {
-            console.error('Producer error:', error)
+        } catch {
+            // skip proxies the target producer does not support
         }
     }
     return results.join('\n')

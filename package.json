@@ -10,6 +10,7 @@
     "start:bun": "pnpm --filter @sub-store-convert/app start:bun",
     "start:node": "pnpm --filter @sub-store-convert/app start:node",
     "start:docker": "docker run --rm --name sub-store-convert -p 3000:3000 ghcr.io/tbxark/sub-store-convert:latest",
+    "cli": "pnpm --filter @sub-store-convert/cli start",
     "deploy": "pnpm --filter @sub-store-convert/app deploy",
     "clean": "pnpm -r clean && rm -rf node_modules",
     "publish": "pnpm --filter @sub-store-convert/core publish"

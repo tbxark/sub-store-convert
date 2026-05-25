@@ -11300,8 +11300,7 @@ function tryParseProxy(parser5, line) {
     if (parser5.test(line)) {
       return parser5.parse(line);
     }
-  } catch (error) {
-    console.error("Parser test/parse error:", error);
+  } catch {
   }
   return null;
 }
@@ -11344,8 +11343,7 @@ function produceOutput(producer, proxyList) {
   for (const proxy of proxyList) {
     try {
       results.push(producer.produce(proxy, proxy.type));
-    } catch (error) {
-      console.error("Producer error:", error);
+    } catch {
     }
   }
   return results.join("\n");

@@ -1,0 +1,17 @@
+{
+  "name": "@sub-store-convert/cli",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "./src/index.js",
+  "license": "MIT",
+  "bin": {
+    "sub-store-convert": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node ./src/index.js",
+    "clean": "rm -rf node_modules/"
+  },
+  "dependencies": {
+    "@sub-store-convert/core": "workspace:*"
+  }
+}
