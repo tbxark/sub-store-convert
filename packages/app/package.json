@@ -18,6 +18,6 @@
     "@sub-store-convert/core": "workspace:*",
     "esbuild": "^0.25.12",
     "hono": "^4.12.18",
-    "wrangler": "^4.90.0"
+    "wrangler": "^4.94.0"
   }
 }
