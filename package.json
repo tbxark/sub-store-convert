@@ -1,6 +1,6 @@
 {
   "name": "sub-store-convert",
-  "version": "2.23.22",
+  "version": "2.24.7",
   "private": true,
   "scripts": {
     "build:core": "pnpm --filter @sub-store-convert/core build",
@@ -13,6 +13,7 @@
     "cli": "pnpm --filter @sub-store-convert/cli start",
     "deploy": "pnpm --filter @sub-store-convert/app deploy",
     "clean": "pnpm -r clean && rm -rf node_modules",
+    "update:vendor": "sh packages/core/scripts/update.sh",
     "publish": "pnpm --filter @sub-store-convert/core publish"
   }
 }
