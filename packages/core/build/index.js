@@ -438,7 +438,7 @@ ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (serv
     proxy.type = "ssh";
     handleShadowTLS();
 }
-snell = tag equals "snell" address (snell_version/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+snell = tag equals "snell" address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "snell";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -561,6 +561,12 @@ client_cert = comma "client-cert" equals match:[^,]+ { proxy["keystore-client-ce
 
 snell_psk = comma "psk" equals match:[^,]+ { proxy.psk = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
 snell_version = comma "version" equals match:$[0-9]+ { proxy.version = parseInt(match.trim()); }
+snell_mode = comma "mode" equals match:[^,]+ {
+    const mode = stripQuotes(match.join("")).trim();
+    if (["default", "unshaped", "unsafe-raw"].includes(mode)) {
+        proxy.mode = mode;
+    }
+}
 
 usernamek = comma "username" equals match:[^,]+ { proxy.username = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
 passwordk = comma "password" equals match:[^,]+ { proxy.password = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
@@ -730,11 +736,11 @@ vless = tag equals "vless"i address uuid (transport/transport_host/transport_pat
     proxy.type = "vless";
     handleTransport();
 }
-trojan = tag equals "trojan"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/block_quic/others)* {
+trojan = tag equals "trojan"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
     proxy.type = "trojan";
     handleTransport();
 }
-anytls = tag equals "anytls"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/block_quic/idle_session_check_interval/idle_session_timeout/min_idle_session/max_stream_count/others)* {
+anytls = tag equals "anytls"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/idle_session_check_interval/idle_session_timeout/min_idle_session/max_stream_count/others)* {
     proxy.type = "anytls";
     handleTransport();
 }
@@ -5479,6 +5485,9 @@ function snell(proxy) {
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,version=${proxy.version}`, "version");
   result.appendIfPresent(`,psk="${proxy.psk}"`, "psk");
+  if (Number(proxy.version) === 6) {
+    result.appendIfPresent(`,mode=${proxy.mode}`, "mode");
+  }
   const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
   result.appendIfPresent(
@@ -6773,9 +6782,9 @@ function Loon_Producer() {
         return hysteria22(proxy);
     }
     if (proxy.type === "anytls") {
-      if (proxy.network && (!["tcp"].includes(proxy.network) || ["tcp"].includes(proxy.network) && proxy["reality-opts"])) {
+      if (proxy.network && !["tcp"].includes(proxy.network)) {
         throw new Error(
-          `Platform ${targetPlatform3} does not support proxy type ${proxy.type} with network or REALITY`
+          `Platform ${targetPlatform3} does not support proxy type ${proxy.type} with network ${proxy.network}`
         );
       }
       return anytls2(proxy);
@@ -6793,6 +6802,17 @@ function appendTlsProfile(result, proxy) {
 function appendAlpn(result, proxy) {
   const alpn = getLoonAlpn(proxy);
   if (alpn) result.append(`,alpn="${alpn}"`);
+}
+function appendReality(result, proxy) {
+  result.appendIfPresent(`,sni=${proxy.sni}`, "sni");
+  result.appendIfPresent(
+    `,public-key="${proxy["reality-opts"]["public-key"]}"`,
+    "reality-opts.public-key"
+  );
+  result.appendIfPresent(
+    `,short-id=${proxy["reality-opts"]["short-id"]}`,
+    "reality-opts.short-id"
+  );
 }
 function getLoonAlpn(proxy) {
   const values = Array.isArray(proxy.alpn) ? proxy.alpn : `${proxy.alpn || ""}`.split(",");
@@ -6843,11 +6863,6 @@ function shadowsocks2(proxy) {
   );
   if (isPresent2(proxy, "plugin")) {
     if (proxy.plugin === "obfs") {
-      if (proxy["plugin-opts"]?.mode && proxy.cipher.startsWith("2022-")) {
-        throw new Error(
-          `${proxy.cipher} ${proxy.plugin} is not supported`
-        );
-      }
       result.append(`,obfs-name=${proxy["plugin-opts"].mode}`);
       result.appendIfPresent(
         `,obfs-host=${proxy["plugin-opts"].host}`,
@@ -6983,6 +6998,7 @@ function shadowsocksr(proxy) {
   return result.toString();
 }
 function trojan2(proxy) {
+  const isReality = !!proxy["reality-opts"];
   const result = new Result(proxy);
   result.append(
     `${proxy.name}=trojan,${proxy.server},${proxy.port},"${proxy.password}"`
@@ -7011,15 +7027,19 @@ function trojan2(proxy) {
   );
   appendTlsProfile(result, proxy);
   appendAlpn(result, proxy);
-  result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
-  result.appendIfPresent(
-    `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
-    "tls-fingerprint"
-  );
-  result.appendIfPresent(
-    `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
-    "tls-pubkey-sha256"
-  );
+  if (isReality) {
+    appendReality(result, proxy);
+  } else {
+    result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+    result.appendIfPresent(
+      `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
+      "tls-fingerprint"
+    );
+    result.appendIfPresent(
+      `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
+      "tls-pubkey-sha256"
+    );
+  }
   result.appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
   if (proxy["block-quic"] === "on") {
     result.append(",block-quic=true");
@@ -7034,6 +7054,7 @@ function trojan2(proxy) {
   return result.toString();
 }
 function anytls2(proxy) {
+  const isReality = !!proxy["reality-opts"];
   const result = new Result(proxy);
   result.append(
     `${proxy.name}=anytls,${proxy.server},${proxy.port},"${proxy.password}"`
@@ -7054,15 +7075,19 @@ function anytls2(proxy) {
   );
   appendTlsProfile(result, proxy);
   appendAlpn(result, proxy);
-  result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
-  result.appendIfPresent(
-    `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
-    "tls-fingerprint"
-  );
-  result.appendIfPresent(
-    `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
-    "tls-pubkey-sha256"
-  );
+  if (isReality) {
+    appendReality(result, proxy);
+  } else {
+    result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+    result.appendIfPresent(
+      `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
+      "tls-fingerprint"
+    );
+    result.appendIfPresent(
+      `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
+      "tls-pubkey-sha256"
+    );
+  }
   result.appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
   if (proxy["block-quic"] === "on") {
     result.append(",block-quic=true");
@@ -7125,15 +7150,7 @@ function vmess2(proxy) {
     appendAlpn(result, proxy);
   }
   if (isReality) {
-    result.appendIfPresent(`,sni=${proxy.sni}`, "sni");
-    result.appendIfPresent(
-      `,public-key="${proxy["reality-opts"]["public-key"]}"`,
-      "reality-opts.public-key"
-    );
-    result.appendIfPresent(
-      `,short-id=${proxy["reality-opts"]["short-id"]}`,
-      "reality-opts.short-id"
-    );
+    appendReality(result, proxy);
   } else {
     result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
     result.appendIfPresent(
@@ -7224,15 +7241,7 @@ function vless(proxy) {
     result.appendIfPresent(`,flow=${proxy.flow}`, "flow");
   }
   if (isReality) {
-    result.appendIfPresent(`,sni=${proxy.sni}`, "sni");
-    result.appendIfPresent(
-      `,public-key="${proxy["reality-opts"]["public-key"]}"`,
-      "reality-opts.public-key"
-    );
-    result.appendIfPresent(
-      `,short-id=${proxy["reality-opts"]["short-id"]}`,
-      "reality-opts.short-id"
-    );
+    appendReality(result, proxy);
   } else {
     result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
     result.appendIfPresent(

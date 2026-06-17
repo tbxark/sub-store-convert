@@ -1,6 +1,6 @@
 {
   "name": "@sub-store-convert/app",
-  "version": "2.24.19",
+  "version": "2.24.22",
   "type": "module",
   "main": "./src/index.js",
   "module": "./src/index.js",
