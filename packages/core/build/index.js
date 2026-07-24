@@ -1150,8 +1150,13 @@ fast_open = comma "fast-open" equals flag:bool { proxy.tfo = flag; }
 
 over_tls = comma "over-tls" equals flag:bool { proxy.tls = flag; }
 tls_host = comma sni:("tls-host") equals match:[^,]+ { proxy.sni = match.join("").replace(/^"(.*)"$/, '$1'); }
-tls_verification = comma "tls-verification" equals flag:bool { 
-    proxy["skip-cert-verify"] = !flag;
+tls_verification = comma "tls-verification" equals raw:$[^,]+ {
+    const value = raw.trim();
+    if (value === "true" || value === "false") {
+        proxy["skip-cert-verify"] = value !== "true";
+    } else {
+        proxy["name-cert-verify"] = value;
+    }
 }
 tls_fingerprint = comma "tls-cert-sha256" equals tls_fingerprint:$[^,]+ { proxy["tls-fingerprint"] = tls_fingerprint.trim(); }
 tls_pubkey_sha256 = comma "tls-pubkey-sha256" equals param:$[^=,]+ { proxy["tls-pubkey-sha256"] = param; }
@@ -4770,6 +4775,38 @@ function supportsShadowsocksV2rayPluginMode(proxy, supportedModes) {
   const normalizedMode = typeof proxy?.["plugin-opts"]?.mode === "string" ? proxy["plugin-opts"].mode.trim().toLowerCase() : proxy?.["plugin-opts"]?.mode;
   return supportedModes.includes(normalizedMode);
 }
+function restoreShadowTLSOpts(target, serverNameKey) {
+  if (target?.plugin !== "shadow-tls" || !target["plugin-opts"]) {
+    return void 0;
+  }
+  const opts = target["plugin-opts"];
+  const enabled = Boolean(opts.password) || opts.version != null && Number(opts.version) !== 0;
+  target["shadow-tls-opts"] = {
+    password: opts.password,
+    version: opts.version
+  };
+  if (opts.host != null)
+    target[serverNameKey] = opts.host;
+  if (opts.alpn != null)
+    target.alpn = opts.alpn;
+  delete target.plugin;
+  delete target["plugin-opts"];
+  return enabled;
+}
+function restoreShadowTLSProxyOpts(proxy) {
+  if (["vmess", "vless", "trojan", "anytls"].includes(proxy.type)) {
+    const restored = restoreShadowTLSOpts(proxy, "sni");
+    if (restored && ["vmess", "vless"].includes(proxy.type)) {
+      proxy.tls = true;
+    }
+  }
+  if (proxy.type === "vless" && proxy.network === "xhttp") {
+    const downloadSettings = proxy["xhttp-opts"]?.["download-settings"];
+    if (restoreShadowTLSOpts(downloadSettings, "servername")) {
+      downloadSettings.tls = true;
+    }
+  }
+}
 function parseWireGuardCIDR(cidr, max) {
   if (cidr == null)
     return void 0;
@@ -5882,10 +5919,26 @@ function ClashMeta_Producer() {
         return false;
       } else if (proxy.type === "snell" && !isSupportedMihomoVersion(proxy.version, [1, 2, 3, 4, 5])) {
         return false;
-      } else if (hasMihomoShadowTls(proxy) && (!["ss", "snell"].includes(proxy.type) || !isSupportedMihomoVersion(
+      } else if (hasMihomoShadowTls(proxy) && (![
+        "ss",
+        "snell",
+        "vmess",
+        "vless",
+        "trojan",
+        "anytls"
+      ].includes(proxy.type) || !isSupportedMihomoVersion(
         getMihomoShadowTlsVersion(proxy),
-        [1, 2, 3]
+        ["ss", "snell"].includes(proxy.type) ? [1, 2, 3] : [0, 1, 2, 3]
       ))) {
+        return false;
+      } else if (proxy.type === "vless" && proxy.network === "xhttp" && hasMihomoShadowTls(
+        proxy["xhttp-opts"]?.["download-settings"]
+      ) && !isSupportedMihomoVersion(
+        getMihomoShadowTlsVersion(
+          proxy["xhttp-opts"]["download-settings"]
+        ),
+        [0, 1, 2, 3]
+      )) {
         return false;
       } else if (hasMihomoSnellShadowTlsObfsConflict(proxy)) {
         app_default.error(
@@ -5939,6 +5992,7 @@ function ClashMeta_Producer() {
       return true;
     }).map((proxy) => {
       warnMihomoUnsupportedEchDnsFields(proxy, type2);
+      restoreShadowTLSProxyOpts(proxy);
       if (proxy["reality-opts"] && !proxy["client-fingerprint"]) {
         proxy["client-fingerprint"] = "chrome";
       }
@@ -8710,6 +8764,13 @@ function getQxHttpObfs(proxy) {
     proxy._qx_obfs_http
   ) ? proxy._qx_obfs_http : "http";
 }
+function appendTlsVerification(result, proxy) {
+  const attr = isPresent2(proxy, "name-cert-verify") ? "name-cert-verify" : "skip-cert-verify";
+  result.appendIfPresent(
+    `,tls-verification=${proxy["name-cert-verify"] ?? !proxy["skip-cert-verify"]}`,
+    attr
+  );
+}
 function shadowsocks3(proxy) {
   const result = new Result(proxy);
   const append = result.append.bind(result);
@@ -8802,10 +8863,7 @@ function shadowsocks3(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     if (!isSSOverTls) {
       appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
     }
@@ -8896,10 +8954,7 @@ function trojan3(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   }
   appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
@@ -8968,10 +9023,7 @@ function vmess3(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   }
   if (isPresent2(proxy, "aead")) {
@@ -9047,10 +9099,7 @@ function vless3(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   }
   appendIfPresent(`,vless-flow=${proxy.flow}`, "flow");
@@ -9094,10 +9143,7 @@ function anytls3(proxy) {
     `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
     "tls-fingerprint"
   );
-  appendIfPresent(
-    `,tls-verification=${!proxy["skip-cert-verify"]}`,
-    "skip-cert-verify"
-  );
+  appendTlsVerification(result, proxy);
   appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
   appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
@@ -9137,10 +9183,7 @@ function http3(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   }
   appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
@@ -9181,10 +9224,7 @@ function socks53(proxy) {
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
     );
-    appendIfPresent(
-      `,tls-verification=${!proxy["skip-cert-verify"]}`,
-      "skip-cert-verify"
-    );
+    appendTlsVerification(result, proxy);
     appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
   }
   appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
@@ -9215,7 +9255,7 @@ function Shadowrocket_Producer() {
         "grpc"
       ])) {
         return false;
-      } else if (proxy.type === "snell" && ![1, 2, 3, 4, 5].includes(proxy.version)) {
+      } else if (proxy.type === "snell" && ![1, 2, 3, 4, 5, 6].includes(proxy.version)) {
         return false;
       } else if (hasShadowrocketSnellShadowTlsObfsConflict(proxy)) {
         app_default.error(
@@ -9239,6 +9279,7 @@ function Shadowrocket_Producer() {
       }
       return true;
     }).map((proxy) => {
+      restoreShadowTLSProxyOpts(proxy);
       if (proxy.type === "vmess") {
         if (isPresent2(proxy, "aead")) {
           if (proxy.aead) {
@@ -9449,6 +9490,8 @@ function Surfboard_Producer() {
         return http4(proxy);
       case "snell":
         return snell2(proxy);
+      case "tuic":
+        return tuic2(proxy);
       case "socks5":
         return socks54(proxy);
       case "hysteria2":
@@ -9469,6 +9512,33 @@ function Surfboard_Producer() {
     );
   };
   return { produce: produce2 };
+}
+function tuic2(proxy) {
+  if (proxy.token?.length) {
+    throw new Error(
+      `Platform ${targetPlatform5} does not support proxy type ${proxy.type} v4`
+    );
+  }
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=tuic-v5,${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,uuid=${proxy.uuid}`, "uuid");
+  result.appendIfPresent(`,password="${proxy.password}"`, "password");
+  if (hasNonBlankValue2(proxy.alpn)) {
+    result.append(
+      `,alpn="${Array.isArray(proxy.alpn) ? proxy.alpn.join(",") : proxy.alpn}"`
+    );
+  }
+  if (hasNonBlankValue2(proxy.ports)) {
+    result.append(
+      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
+    );
+  }
+  if (hasNonBlankValue2(proxy["hop-interval"])) {
+    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
+  }
+  appendTlsProxyParams2(result, proxy);
+  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  return result.toString();
 }
 function hysteria23(proxy) {
   if (proxy.obfs && proxy.obfs !== "salamander" || proxy["obfs-password"] && proxy.obfs !== "salamander") {
@@ -10251,6 +10321,8 @@ var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
       server_name: pluginOpts.host
     }
   };
+  if (proxy["skip-cert-verify"])
+    stPart.tls.insecure = true;
   if (fingerprint) {
     stPart.tls.utls = {
       enabled: true,
@@ -10942,9 +11014,9 @@ function singbox_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = [];
-    const originalSnellShadowTLS = new Map(
+    const originalShadowTLS = new Map(
       proxies.filter(
-        (proxy) => proxy?.type === "snell" && proxy?.plugin === "shadow-tls" && proxy?.["plugin-opts"]
+        (proxy) => proxy?.plugin === "shadow-tls" && proxy?.["plugin-opts"]
       ).map((proxy) => [
         proxy,
         {
@@ -10955,16 +11027,56 @@ function singbox_Producer() {
       ])
     );
     ClashMeta_Producer().produce(proxies, "internal", { "include-unsupported-proxy": true }).map((proxy) => {
+      const listStart = list.length;
       try {
-        const originalShadowTLS = originalSnellShadowTLS.get(proxy);
-        if (originalShadowTLS) {
-          proxy.plugin = originalShadowTLS.plugin;
-          proxy["plugin-opts"] = originalShadowTLS["plugin-opts"];
-          if (originalShadowTLS["obfs-opts"]) {
-            proxy["obfs-opts"] = originalShadowTLS["obfs-opts"];
+        const shadowTLS = originalShadowTLS.get(proxy);
+        if (shadowTLS) {
+          proxy.plugin = shadowTLS.plugin;
+          proxy["plugin-opts"] = shadowTLS["plugin-opts"];
+          if (shadowTLS["obfs-opts"]) {
+            proxy["obfs-opts"] = shadowTLS["obfs-opts"];
           } else {
             delete proxy["obfs-opts"];
           }
+        }
+        const shadowTLSPluginOpts = getShadowTLSPluginOpts(proxy);
+        const shadowTLSEnabled = Boolean(
+          shadowTLSPluginOpts && (shadowTLSPluginOpts.password || shadowTLSPluginOpts.version != null && Number(shadowTLSPluginOpts.version) !== 0)
+        );
+        let streamShadowTLSOutbound;
+        if (shadowTLSEnabled && ["vmess", "vless", "trojan"].includes(proxy.type)) {
+          if (proxy["reality-opts"]) {
+            throw new Error(
+              `Platform sing-box cannot chain ShadowTLS with Reality for proxy ${proxy.name}`
+            );
+          }
+          if (["vmess", "vless"].includes(proxy.type) && proxy.network === "h2") {
+            throw new Error(
+              `Platform sing-box cannot chain ShadowTLS with network h2 for proxy ${proxy.name}`
+            );
+          }
+          if (proxy.type === "vless" && proxy.flow === "xtls-rprx-vision") {
+            throw new Error(
+              `Platform sing-box cannot chain ShadowTLS with flow xtls-rprx-vision for proxy ${proxy.name}`
+            );
+          }
+          const rawVersion = shadowTLSPluginOpts.version;
+          const parsedVersion = typeof rawVersion === "string" && rawVersion.trim() === "" ? NaN : Number(rawVersion ?? 0);
+          const version = parsedVersion === 0 ? 2 : parsedVersion;
+          if (!Number.isInteger(version) || ![1, 2, 3].includes(version)) {
+            throw new Error(
+              `Platform sing-box does not support shadow-tls version ${rawVersion} for proxy ${proxy.name}`
+            );
+          }
+          streamShadowTLSOutbound = shadowTLSOutboundParser(
+            proxy,
+            { ...shadowTLSPluginOpts, version }
+          );
+        }
+        if (proxy.type === "anytls" && shadowTLSEnabled) {
+          throw new Error(
+            "Platform sing-box cannot replace AnyTLS TLS with ShadowTLS"
+          );
         }
         if (["xhttp"].includes(proxy.network))
           throw new Error(
@@ -11011,12 +11123,12 @@ function singbox_Producer() {
                 opts["include-unsupported-proxy"]
               )
             );
-            const shadowTLSPluginOpts = getShadowTLSPluginOpts(proxy);
-            if (shadowTLSPluginOpts) {
+            const shadowTLSPluginOpts2 = getShadowTLSPluginOpts(proxy);
+            if (shadowTLSPluginOpts2) {
               list.push(
                 shadowTLSOutboundParser(
                   proxy,
-                  shadowTLSPluginOpts
+                  shadowTLSPluginOpts2
                 )
               );
             }
@@ -11093,7 +11205,21 @@ function singbox_Producer() {
               `Platform sing-box does not support proxy type: ${proxy.type}`
             );
         }
+        if (streamShadowTLSOutbound) {
+          const outbound = list[listStart];
+          outbound.detour = getShadowTLSTag(proxy);
+          delete outbound.tls;
+          list.push(streamShadowTLSOutbound);
+        }
+        if (opts["include-unsupported-proxy"] && proxy["name-cert-verify"]) {
+          for (let i = listStart; i < list.length; i++) {
+            const outbound = list[i];
+            if (outbound.tls)
+              outbound.tls.certificate_server_name = proxy["name-cert-verify"];
+          }
+        }
       } catch (e) {
+        list.length = listStart;
         app_default.error(e.message ?? e);
       }
     });
