@@ -27,7 +27,7 @@
     "yaml": "^2.9.0"
   },
   "devDependencies": {
-    "esbuild": "^0.19.8",
+    "esbuild": "^0.28.1",
     "esbuild-plugin-alias": "^0.2.1"
   }
 }
