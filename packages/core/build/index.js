@@ -1250,8 +1250,7 @@ function splitQueryPart(part) {
   };
 }
 function parseSafeIntegerValue(value) {
-  if (!/^\d+$/.test(`${value}`))
-    return null;
+  if (!/^\d+$/.test(`${value}`)) return null;
   const parsed = parseInt(`${value}`, 10);
   return Number.isSafeInteger(parsed) ? parsed : null;
 }
@@ -1269,8 +1268,7 @@ function extractPathQueryParam(rawPath, paramName) {
   const keptParts = [];
   let value = "";
   for (const part of query.split("&")) {
-    if (part === "")
-      continue;
+    if (part === "") continue;
     const parsed = splitQueryPart(part);
     if (parsed.key === paramName) {
       if (value === "" && parsed.value !== "") {
@@ -1288,12 +1286,10 @@ function extractPathQueryParam(rawPath, paramName) {
 function getPathQueryParam(rawPath, paramName) {
   const path = rawPath == null ? "" : `${rawPath}`;
   const queryIndex = path.indexOf("?");
-  if (queryIndex === -1)
-    return "";
+  if (queryIndex === -1) return "";
   const query = path.slice(queryIndex + 1);
   for (const part of query.split("&")) {
-    if (part === "")
-      continue;
+    if (part === "") continue;
     const parsed = splitQueryPart(part);
     if (parsed.key === paramName && parsed.value !== "") {
       return parsed.value;
@@ -1328,8 +1324,7 @@ function setPathQueryParam(rawPath, paramName, value) {
 }
 function normalizeWebSocketEarlyDataPath(wsOpts) {
   const networkPath = wsOpts?.path;
-  if (!wsOpts)
-    return;
+  if (!wsOpts) return;
   const { value: ed, parsed: maxEarlyData } = getSafeIntegerPathQueryParam(
     networkPath,
     "ed"
@@ -1346,8 +1341,7 @@ function normalizeWebSocketEarlyDataPath(wsOpts) {
     delete wsOpts["max-early-data"];
     return;
   }
-  if (ed === "")
-    return;
+  if (ed === "") return;
   wsOpts.path = extractPathQueryParam(networkPath, "ed").path;
   if (wsOpts["early-data-header-name"] == null) {
     wsOpts["early-data-header-name"] = "Sec-WebSocket-Protocol";
@@ -1357,8 +1351,7 @@ function normalizeWebSocketEarlyDataPath(wsOpts) {
   }
 }
 function deleteHttpUpgradeEarlyDataMetadata(wsOpts) {
-  if (!wsOpts)
-    return;
+  if (!wsOpts) return;
   delete wsOpts["_v2ray-http-upgrade-ed"];
 }
 
@@ -1366,10 +1359,8 @@ function deleteHttpUpgradeEarlyDataMetadata(wsOpts) {
 var unsafePathSegments = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 var parser4;
 function $set(obj, path, value) {
-  if (Object(obj) !== obj)
-    return obj;
-  if (!Array.isArray(path))
-    path = path.toString().match(/[^.[\]]+/g) || [];
+  if (Object(obj) !== obj) return obj;
+  if (!Array.isArray(path)) path = path.toString().match(/[^.[\]]+/g) || [];
   if (path.some((segment) => unsafePathSegments.has(segment))) {
     throw new Error("Unsafe property path");
   }
@@ -1377,8 +1368,7 @@ function $set(obj, path, value) {
   return obj;
 }
 function toBool(str) {
-  if (str == null)
-    return void 0;
+  if (str == null) return void 0;
   return /(TRUE)|1/i.test(str);
 }
 function isNumericEarlyData(value) {
@@ -1887,8 +1877,7 @@ var VMESS_SECURITY_ALIASES = {
   "chacha20-ietf-poly1305": "chacha20-poly1305"
 };
 function normalizeSecurityValue(security) {
-  if (security == null)
-    return "";
+  if (security == null) return "";
   return `${security}`.trim().toLowerCase();
 }
 function canonicalizeVmessSecurity(security) {
@@ -1896,8 +1885,7 @@ function canonicalizeVmessSecurity(security) {
 }
 function normalizeVmessSecurity(security, supportedValues = VMESS_SECURITY_COMMON_VALUES, { acceptAliases = true, fallback = VMESS_SECURITY_AUTO } = {}) {
   const normalized = normalizeSecurityValue(security);
-  if (!normalized)
-    return fallback;
+  if (!normalized) return fallback;
   const normalizedSupported = supportedValues.map(normalizeSecurityValue);
   if (normalizedSupported.includes(normalized)) {
     return canonicalizeVmessSecurity(normalized);
@@ -1928,8 +1916,7 @@ function formatSurgeVmessEncryptMethod(security) {
     "aes-128-gcm",
     "chacha20-poly1305"
   ]);
-  if (normalized === VMESS_SECURITY_AUTO)
-    return void 0;
+  if (normalized === VMESS_SECURITY_AUTO) return void 0;
   return normalized === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : normalized;
 }
 
@@ -1965,8 +1952,7 @@ function decodeShadowsocksUserInfo(rawUserInfoStr) {
   return Base64.decode(decodedUserInfoStr);
 }
 function isNumericEarlyData2(value) {
-  if (value == null || !/^\d+$/.test(`${value}`))
-    return false;
+  if (value == null || !/^\d+$/.test(`${value}`)) return false;
   return Number.isSafeInteger(parseInt(`${value}`, 10));
 }
 function extractEarlyDataFromPath(path) {
@@ -2004,21 +1990,16 @@ function splitURIHostList(host) {
   return hosts.length > 0 ? hosts : void 0;
 }
 function parseWireGuardURIAddressValue(value) {
-  if (value == null)
-    return null;
+  if (value == null) return null;
   const raw = `${value}`.trim();
-  if (!raw)
-    return null;
+  if (!raw) return null;
   const [, hostRaw = raw, cidrRaw] = /^(.*?)(?:\/(\d+))?$/.exec(raw) || [];
   const host = `${hostRaw}`.trim().replace(/^\[/, "").replace(/\]$/, "");
   const normalizeCIDR = (cidr, max) => {
-    if (cidr == null)
-      return void 0;
-    if (!/^\d+$/.test(cidr))
-      return void 0;
+    if (cidr == null) return void 0;
+    if (!/^\d+$/.test(cidr)) return void 0;
     const parsed = parseInt(cidr, 10);
-    if (parsed < 0 || parsed > max)
-      return void 0;
+    if (parsed < 0 || parsed > max) return void 0;
     return parsed;
   };
   if (isIPv4(host)) {
@@ -2273,14 +2254,12 @@ function URI_SS() {
       for (const item of pluginInfo) {
         const separatorIndex = item.indexOf("=");
         if (separatorIndex === -1) {
-          if (item)
-            params2[item] = true;
+          if (item) params2[item] = true;
           continue;
         }
         const key = item.slice(0, separatorIndex);
         const val = item.slice(separatorIndex + 1).replace(/\\=/g, "=");
-        if (key)
-          params2[key] = val || true;
+        if (key) params2[key] = val || true;
       }
       switch (params2.plugin) {
         case "obfs-local":
@@ -3943,8 +3922,7 @@ function URI_WireGuard() {
         } else if (["address", "ip"].includes(key)) {
           value.split(",").map((i) => {
             const parsed = parseWireGuardURIAddressValue(i);
-            if (!parsed)
-              return;
+            if (!parsed) return;
             if (parsed.family === "ipv4") {
               proxy.ip = parsed.address;
               if (typeof parsed.cidr !== "undefined") {
@@ -4655,8 +4633,7 @@ function fallbackBase64Encoded() {
 function Clash() {
   const name = "Clash Pre-processor";
   const test = function(raw) {
-    if (!/proxies/.test(raw))
-      return false;
+    if (!/proxies/.test(raw)) return false;
     const content = safeLoad(raw);
     return Array.isArray(content.proxies) || Array.isArray(content["proxy-groups"]);
   };
@@ -4753,16 +4730,12 @@ function isShadowsocksOverTls(proxy) {
   return proxy?.type === "ss" && proxy?.tls === true && !isPresent2(proxy, "plugin") && (!isPresent2(proxy, "network") || normalizedNetwork === "tcp");
 }
 function normalizePluginMuxValue(mux) {
-  if (typeof mux === "boolean")
-    return Number(mux);
+  if (typeof mux === "boolean") return Number(mux);
   if (typeof mux === "string") {
     const normalized = mux.trim().toLowerCase();
-    if (normalized === "true")
-      return 1;
-    if (normalized === "false")
-      return 0;
-    if (/^\d+$/.test(normalized))
-      return parseInt(normalized, 10);
+    if (normalized === "true") return 1;
+    if (normalized === "false") return 0;
+    if (/^\d+$/.test(normalized)) return parseInt(normalized, 10);
   }
   return mux;
 }
@@ -4770,8 +4743,7 @@ function normalizePluginMuxBooleanValue(mux) {
   return Boolean(normalizePluginMuxValue(mux));
 }
 function supportsShadowsocksV2rayPluginMode(proxy, supportedModes) {
-  if (proxy?.type !== "ss" || proxy?.plugin !== "v2ray-plugin")
-    return true;
+  if (proxy?.type !== "ss" || proxy?.plugin !== "v2ray-plugin") return true;
   const normalizedMode = typeof proxy?.["plugin-opts"]?.mode === "string" ? proxy["plugin-opts"].mode.trim().toLowerCase() : proxy?.["plugin-opts"]?.mode;
   return supportedModes.includes(normalizedMode);
 }
@@ -4785,10 +4757,8 @@ function restoreShadowTLSOpts(target, serverNameKey) {
     password: opts.password,
     version: opts.version
   };
-  if (opts.host != null)
-    target[serverNameKey] = opts.host;
-  if (opts.alpn != null)
-    target.alpn = opts.alpn;
+  if (opts.host != null) target[serverNameKey] = opts.host;
+  if (opts.alpn != null) target.alpn = opts.alpn;
   delete target.plugin;
   delete target["plugin-opts"];
   return enabled;
@@ -4808,28 +4778,22 @@ function restoreShadowTLSProxyOpts(proxy) {
   }
 }
 function parseWireGuardCIDR(cidr, max) {
-  if (cidr == null)
-    return void 0;
+  if (cidr == null) return void 0;
   const normalized = `${cidr}`.trim();
-  if (!/^\d+$/.test(normalized))
-    return void 0;
+  if (!/^\d+$/.test(normalized)) return void 0;
   const parsed = parseInt(normalized, 10);
-  if (parsed < 0 || parsed > max)
-    return void 0;
+  if (parsed < 0 || parsed > max) return void 0;
   return parsed;
 }
 function parseWireGuardInterfaceAddress(value, family) {
-  if (value == null)
-    return null;
+  if (value == null) return null;
   const raw = `${value}`.trim();
-  if (!raw)
-    return null;
+  if (!raw) return null;
   const [, hostRaw = raw, cidrRaw] = /^(.*?)(?:\/(\d+))?$/.exec(raw) || [];
   const host = `${hostRaw}`.trim().replace(/^\[/, "").replace(/\]$/, "");
   const isIPv4Family = family === "ipv4";
   const isValid = isIPv4Family ? isIPv4(host) : isIPv6(host);
-  if (!isValid)
-    return null;
+  if (!isValid) return null;
   const max = isIPv4Family ? 32 : 128;
   return {
     address: host,
@@ -4842,8 +4806,7 @@ function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
     proxy[config.addressKey],
     family
   );
-  if (!parsed)
-    return void 0;
+  if (!parsed) return void 0;
   const normalizedCIDR = parseWireGuardCIDR(
     proxy[config.cidrKey],
     config.defaultCIDR
@@ -4851,8 +4814,7 @@ function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
   return `${parsed.address}/${normalizedCIDR ?? parsed.cidr ?? config.defaultCIDR}`;
 }
 function produceProxyListOutput(list, type, opts = {}) {
-  if (type === "internal")
-    return list;
+  if (type === "internal") return list;
   if (opts.prettyYaml || opts["pretty-yaml"]) {
     return normalizeClashYaml(
       yaml_default.safeDump(
@@ -4887,8 +4849,7 @@ var ipVersions = {
   "ipv6-prefer": "prefer-v6"
 };
 function stripSurgeQuotes(value) {
-  if (typeof value !== "string")
-    return value;
+  if (typeof value !== "string") return value;
   const trimmed = value.trim();
   const quote = trimmed[0];
   if ((quote === '"' || quote === "'") && trimmed[trimmed.length - 1] === quote) {
@@ -4909,23 +4870,19 @@ function formatSurgeAlpn(alpn) {
 }
 function appendAlpn(result, proxy) {
   const alpn = formatSurgeAlpn(proxy.alpn);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
 }
 function getShadowTLSAlpn(proxy) {
   return formatSurgeAlpn(proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn);
 }
 function appendShadowTLS(result, proxy, includeUdpPort = false) {
-  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"])
-    return;
+  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"]) return;
   const password = proxy["plugin-opts"].password;
   const host = proxy["plugin-opts"].host;
   const version = proxy["plugin-opts"].version;
-  if (!password)
-    return;
+  if (!password) return;
   result.append(`,shadow-tls-password="${password}"`);
-  if (host)
-    result.append(`,shadow-tls-sni=${host}`);
+  if (host) result.append(`,shadow-tls-sni=${host}`);
   if (version) {
     if (version < 2) {
       throw unsupported(`shadow-tls version ${version} is not supported`);
@@ -4933,8 +4890,7 @@ function appendShadowTLS(result, proxy, includeUdpPort = false) {
     result.append(`,shadow-tls-version=${version}`);
   }
   const alpn = getShadowTLSAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
   if (includeUdpPort) {
     result.appendIfPresent(`,udp-port=${proxy["udp-port"]}`, "udp-port");
   }
@@ -4973,11 +4929,9 @@ function appendSshPrivateKey(result, proxy) {
   }
 }
 function warnMaxStreamsIfNeeded(proxy) {
-  if (!isPresent2(proxy, "max-streams"))
-    return;
+  if (!isPresent2(proxy, "max-streams")) return;
   const maxStreams = Number(stripSurgeQuotes(proxy["max-streams"]));
-  if (!Number.isInteger(maxStreams) || maxStreams <= 3)
-    return;
+  if (!Number.isInteger(maxStreams) || maxStreams <= 3) return;
   app_default.warn(
     `Surge ${proxy.type} proxy ${proxy.name}: max-streams=${maxStreams} is greater than 3. Too many streams sharing one TCP connection may hurt performance.`
   );
@@ -5901,8 +5855,7 @@ function ClashMeta_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "h2-connect") {
         app_default.error(
           `mihomo does not support HTTP/2 CONNECT proxy type. Proxy ${proxy.name} has been filtered.`
@@ -6209,6 +6162,8 @@ function SurgeMac_Producer() {
     switch (proxy.type) {
       case "external":
         return external(proxy);
+      // case 'ssr':
+      //     return shadowsocksr(proxy);
       default: {
         if (opts.mihomoExternal || proxy._mihomoExternal) {
           return mihomo(proxy, type, opts) || "";
@@ -6395,8 +6350,7 @@ function Clash_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (![
         "ss",
         "ssr",
@@ -6551,8 +6505,7 @@ function Stash_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (![
         "ss",
         "ssr",
@@ -6842,13 +6795,11 @@ function Loon_Producer() {
 }
 function appendTlsProfile(result, proxy) {
   const tlsProfile = getLoonTlsProfile(proxy);
-  if (tlsProfile)
-    result.append(`,tls-profile=${tlsProfile}`);
+  if (tlsProfile) result.append(`,tls-profile=${tlsProfile}`);
 }
 function appendAlpn2(result, proxy) {
   const alpn = getLoonAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
 }
 function getLoonShadowTLSAlpn(proxy) {
   const values = proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn;
@@ -6856,16 +6807,13 @@ function getLoonShadowTLSAlpn(proxy) {
   return normalized.map((item) => `${item}`.trim()).filter((item) => item !== "").join(",");
 }
 function appendShadowTLS2(result, proxy) {
-  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"])
-    return;
+  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"]) return;
   const password = proxy["plugin-opts"].password;
   const host = proxy["plugin-opts"].host;
   const version = proxy["plugin-opts"].version;
-  if (!password)
-    return;
+  if (!password) return;
   result.append(`,shadow-tls-password=${password}`);
-  if (host)
-    result.append(`,shadow-tls-sni=${host}`);
+  if (host) result.append(`,shadow-tls-sni=${host}`);
   if (version) {
     if (version < 2) {
       throw new Error(`shadow-tls version ${version} is not supported`);
@@ -6874,8 +6822,7 @@ function appendShadowTLS2(result, proxy) {
   }
   appendTlsProfile(result, proxy);
   const alpn = getLoonShadowTLSAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
   result.appendIfPresent(`,udp-port=${proxy["udp-port"]}`, "udp-port");
 }
 function appendReality(result, proxy) {
@@ -7458,8 +7405,7 @@ function getHttpUpgradeEarlyData(transportOpts, path) {
   const httpUpgradeEd = getSafeEarlyDataValue(
     transportOpts?.["_v2ray-http-upgrade-ed"]
   );
-  if (httpUpgradeEd !== "")
-    return httpUpgradeEd;
+  if (httpUpgradeEd !== "") return httpUpgradeEd;
   const pathEd = getSafeEarlyDataValue(
     extractPathQueryParam(path || "/", "ed").value
   );
@@ -7491,8 +7437,7 @@ function setWebSocketEarlyDataPath(path, transportOpts) {
   return setPathQueryParam(path || "/", "ed", earlyData);
 }
 function getSafeEarlyDataValue(value) {
-  if (value == null || `${value}` === "")
-    return "";
+  if (value == null || `${value}` === "") return "";
   return parseSafeIntegerValue(value) == null ? "" : `${value}`;
 }
 function parseIntegerLikeValue(value) {
@@ -8829,10 +8774,8 @@ function shadowsocks3(proxy) {
       }
     } else if (proxy.plugin === "v2ray-plugin" && proxy["plugin-opts"].mode === "websocket") {
       const opts = proxy["plugin-opts"];
-      if (opts.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (opts.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else {
       throw new Error(`plugin is not supported`);
     }
@@ -8917,10 +8860,8 @@ function trojan3(proxy) {
   append(`,password=${proxy.password}`);
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (needTls(proxy))
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (needTls(proxy)) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
       appendIfPresent(
         `,obfs-uri=${proxy["ws-opts"]?.path}`,
         "ws-opts.path"
@@ -8979,15 +8920,12 @@ function vmess3(proxy) {
   }
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (proxy.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (proxy.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else if (proxy.network === "http") {
       append(`,obfs=${getQxHttpObfs(proxy)}`);
     } else if (["tcp"].includes(proxy.network)) {
-      if (proxy.tls)
-        append(`,obfs=over-tls`);
+      if (proxy.tls) append(`,obfs=over-tls`);
     } else if (!["tcp"].includes(proxy.network)) {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9002,8 +8940,7 @@ function vmess3(proxy) {
       `${proxy.network}-opts.headers.Host`
     );
   } else {
-    if (proxy.tls)
-      append(`,obfs=over-tls`);
+    if (proxy.tls) append(`,obfs=over-tls`);
   }
   if (needTls(proxy)) {
     appendIfPresent(
@@ -9055,15 +8992,12 @@ function vless3(proxy) {
   }
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (proxy.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (proxy.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else if (proxy.network === "http") {
       append(`,obfs=${getQxHttpObfs(proxy)}`);
     } else if (["tcp"].includes(proxy.network)) {
-      if (proxy.tls)
-        append(`,obfs=over-tls`);
+      if (proxy.tls) append(`,obfs=over-tls`);
     } else if (!["tcp"].includes(proxy.network)) {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9078,8 +9012,7 @@ function vless3(proxy) {
       `${proxy.network}-opts.headers.Host`
     );
   } else {
-    if (proxy.tls)
-      append(`,obfs=over-tls`);
+    if (proxy.tls) append(`,obfs=over-tls`);
   }
   if (needTls(proxy)) {
     appendIfPresent(
@@ -9245,8 +9178,7 @@ function Shadowrocket_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (!supportsShadowsocksV2rayPluginMode(proxy, [
         "websocket",
         "quic",
@@ -9786,10 +9718,8 @@ var domainResolverParser = (proxy, parsedProxy) => {
 };
 var hasControlHTTPClient = (proxy) => {
   const value = proxy["control-http-client"];
-  if (value === void 0 || value === null)
-    return false;
-  if (typeof value === "string")
-    return value.trim() !== "";
+  if (value === void 0 || value === null) return false;
+  if (typeof value === "string") return value.trim() !== "";
   if (isPlainObject(value)) {
     return Object.values(value).some(
       (item) => item !== void 0 && item !== null && item !== ""
@@ -9811,18 +9741,13 @@ var networkParser = (proxy, parsedProxy) => {
 };
 var tfoParser = (proxy, parsedProxy) => {
   parsedProxy.tcp_fast_open = false;
-  if (proxy.tfo)
-    parsedProxy.tcp_fast_open = true;
-  if (proxy.tcp_fast_open)
-    parsedProxy.tcp_fast_open = true;
-  if (proxy["tcp-fast-open"])
-    parsedProxy.tcp_fast_open = true;
-  if (!parsedProxy.tcp_fast_open)
-    delete parsedProxy.tcp_fast_open;
+  if (proxy.tfo) parsedProxy.tcp_fast_open = true;
+  if (proxy.tcp_fast_open) parsedProxy.tcp_fast_open = true;
+  if (proxy["tcp-fast-open"]) parsedProxy.tcp_fast_open = true;
+  if (!parsedProxy.tcp_fast_open) delete parsedProxy.tcp_fast_open;
 };
 var smuxParser = (smux, proxy) => {
-  if (!smux || !smux.enabled)
-    return;
+  if (!smux || !smux.enabled) return;
   proxy.multiplex = { enabled: true };
   proxy.multiplex.protocol = smux.protocol;
   if (smux["max-connections"])
@@ -9834,8 +9759,7 @@ var smuxParser = (smux, proxy) => {
     proxy.multiplex.max_streams = parseInt(`${smux["max-streams"]}`, 10);
   if (smux["min-streams"])
     proxy.multiplex.min_streams = parseInt(`${smux["min-streams"]}`, 10);
-  if (smux.padding)
-    proxy.multiplex.padding = true;
+  if (smux.padding) proxy.multiplex.padding = true;
   if (smux["brutal-opts"]?.up || smux["brutal-opts"]?.down) {
     proxy.multiplex.brutal = {
       enabled: true
@@ -9863,25 +9787,20 @@ var wsParser = (proxy, parsedProxy) => {
     } = proxy["ws-opts"];
     transport.early_data_header_name = early_data_header_name;
     transport.max_early_data = max_early_data ? parseInt(max_early_data, 10) : void 0;
-    if (wsPath !== "")
-      transport.path = `${wsPath}`;
+    if (wsPath !== "") transport.path = `${wsPath}`;
     if (Object.keys(wsHeaders).length > 0) {
       const headers = {};
       for (const key of Object.keys(wsHeaders)) {
         let value = wsHeaders[key];
-        if (value === "")
-          continue;
-        if (!Array.isArray(value))
-          value = [`${value}`];
-        if (value.length > 0)
-          headers[key] = value;
+        if (value === "") continue;
+        if (!Array.isArray(value)) value = [`${value}`];
+        if (value.length > 0) headers[key] = value;
       }
       const { Host: wsHost } = headers;
       if (wsHost.length === 1)
         for (const item of `Host:${wsHost[0]}`.split("\n")) {
           const [key, value] = item.split(":");
-          if (value.trim() === "")
-            continue;
+          if (value.trim() === "") continue;
           headers[key.trim()] = value.trim().split(",");
         }
       transport.headers = headers;
@@ -9891,19 +9810,15 @@ var wsParser = (proxy, parsedProxy) => {
     const headers = {};
     for (const key of Object.keys(proxy["ws-headers"])) {
       let value = proxy["ws-headers"][key];
-      if (value === "")
-        continue;
-      if (!Array.isArray(value))
-        value = [`${value}`];
-      if (value.length > 0)
-        headers[key] = value;
+      if (value === "") continue;
+      if (!Array.isArray(value)) value = [`${value}`];
+      if (value.length > 0) headers[key] = value;
     }
     const { Host: wsHost } = headers;
     if (wsHost.length === 1)
       for (const item of `Host:${wsHost[0]}`.split("\n")) {
         const [key, value] = item.split(":");
-        if (value.trim() === "")
-          continue;
+        if (value.trim() === "") continue;
         headers[key.trim()] = value.trim().split(",");
       }
     for (const key of Object.keys(headers))
@@ -9927,15 +9842,13 @@ var wsParser = (proxy, parsedProxy) => {
       transport.host = transport.headers.Host[0];
       delete transport.headers.Host;
     }
-    if (transport.max_early_data)
-      delete transport.max_early_data;
+    if (transport.max_early_data) delete transport.max_early_data;
     if (transport.early_data_header_name)
       delete transport.early_data_header_name;
   }
   for (const key of Object.keys(transport.headers)) {
     const value = transport.headers[key];
-    if (value.length === 1)
-      transport.headers[key] = value[0];
+    if (value.length === 1) transport.headers[key] = value[0];
   }
   parsedProxy.transport = transport;
 };
@@ -9947,52 +9860,43 @@ var h1Parser = (proxy, parsedProxy) => {
       path: h1Path = "",
       headers: h1Headers = {}
     } = proxy["http-opts"];
-    if (method !== "")
-      transport.method = method;
+    if (method !== "") transport.method = method;
     if (Array.isArray(h1Path)) {
       transport.path = `${h1Path[0]}`;
-    } else if (h1Path !== "")
-      transport.path = `${h1Path}`;
+    } else if (h1Path !== "") transport.path = `${h1Path}`;
     for (const key of Object.keys(h1Headers)) {
       let value = h1Headers[key];
-      if (value === "")
-        continue;
+      if (value === "") continue;
       if (key.toLowerCase() === "host") {
         let host = value;
         if (!Array.isArray(host))
           host = `${host}`.split(",").map((i) => i.trim());
-        if (host.length > 0)
-          transport.host = host;
+        if (host.length > 0) transport.host = host;
         continue;
       }
       if (!Array.isArray(value))
         value = `${value}`.split(",").map((i) => i.trim());
-      if (value.length > 0)
-        transport.headers[key] = value;
+      if (value.length > 0) transport.headers[key] = value;
     }
   }
   if (proxy["http-host"] && proxy["http-host"] !== "") {
     let host = proxy["http-host"];
     if (!Array.isArray(host))
       host = `${host}`.split(",").map((i) => i.trim());
-    if (host.length > 0)
-      transport.host = host;
+    if (host.length > 0) transport.host = host;
   }
   if (proxy["http-path"] && proxy["http-path"] !== "") {
     const path = proxy["http-path"];
     if (Array.isArray(path)) {
       transport.path = `${path[0]}`;
-    } else if (path !== "")
-      transport.path = `${path}`;
+    } else if (path !== "") transport.path = `${path}`;
   }
   if (parsedProxy.tls.insecure)
     parsedProxy.tls.server_name = transport.host[0];
-  if (transport.host?.length === 1)
-    transport.host = transport.host[0];
+  if (transport.host?.length === 1) transport.host = transport.host[0];
   for (const key of Object.keys(transport.headers)) {
     const value = transport.headers[key];
-    if (value.length === 1)
-      transport.headers[key] = value[0];
+    if (value.length === 1) transport.headers[key] = value[0];
   }
   parsedProxy.transport = transport;
 };
@@ -10000,29 +9904,25 @@ var h2Parser = (proxy, parsedProxy) => {
   const transport = { type: "http" };
   if (proxy["h2-opts"]) {
     let { host = "", path = "" } = proxy["h2-opts"];
-    if (path !== "")
-      transport.path = `${path}`;
+    if (path !== "") transport.path = `${path}`;
     if (host !== "") {
       if (!Array.isArray(host))
         host = `${host}`.split(",").map((i) => i.trim());
-      if (host.length > 0)
-        transport.host = host;
+      if (host.length > 0) transport.host = host;
     }
   }
   if (proxy["h2-host"] && proxy["h2-host"] !== "") {
     let host = proxy["h2-host"];
     if (!Array.isArray(host))
       host = `${host}`.split(",").map((i) => i.trim());
-    if (host.length > 0)
-      transport.host = host;
+    if (host.length > 0) transport.host = host;
   }
   if (proxy["h2-path"] && proxy["h2-path"] !== "")
     transport.path = `${proxy["h2-path"]}`;
   parsedProxy.tls.enabled = true;
   if (parsedProxy.tls.insecure)
     parsedProxy.tls.server_name = transport.host[0];
-  if (transport.host.length === 1)
-    transport.host = transport.host[0];
+  if (transport.host.length === 1) transport.host = transport.host[0];
   parsedProxy.transport = transport;
 };
 var grpcParser = (proxy, parsedProxy) => {
@@ -10039,16 +9939,13 @@ var normalizePemLines = (value, label) => {
   const lines = [];
   for (const item of items) {
     const normalized = `${item}`.trim().replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
-    if (normalized === "")
-      continue;
+    if (normalized === "") continue;
     for (const line of normalized.split(/\r?\n/)) {
       const trimmed = line.trim();
-      if (trimmed !== "")
-        lines.push(trimmed);
+      if (trimmed !== "") lines.push(trimmed);
     }
   }
-  if (lines.length === 0)
-    return void 0;
+  if (lines.length === 0) return void 0;
   if (lines.some((line) => /^-----BEGIN [A-Za-z0-9 -]+-----$/.test(line))) {
     return lines;
   }
@@ -10068,34 +9965,24 @@ var singBoxUtlsFingerprints = [
 ];
 var getSingBoxUtlsFingerprint = (value) => {
   const fingerprint = `${value || ""}`.trim().toLowerCase();
-  if (singBoxUtlsFingerprints.includes(fingerprint))
-    return fingerprint;
+  if (singBoxUtlsFingerprints.includes(fingerprint)) return fingerprint;
 };
 var tlsParser = (proxy, parsedProxy) => {
-  if (proxy.tls)
-    parsedProxy.tls.enabled = true;
+  if (proxy.tls) parsedProxy.tls.enabled = true;
   if (proxy.servername && proxy.servername !== "")
     parsedProxy.tls.server_name = proxy.servername;
   if (proxy.peer && proxy.peer !== "")
     parsedProxy.tls.server_name = proxy.peer;
-  if (proxy.sni && proxy.sni !== "")
-    parsedProxy.tls.server_name = proxy.sni;
-  if (proxy["skip-cert-verify"])
-    parsedProxy.tls.insecure = true;
-  if (proxy.insecure)
-    parsedProxy.tls.insecure = true;
-  if (proxy["disable-sni"])
-    parsedProxy.tls.disable_sni = true;
+  if (proxy.sni && proxy.sni !== "") parsedProxy.tls.server_name = proxy.sni;
+  if (proxy["skip-cert-verify"]) parsedProxy.tls.insecure = true;
+  if (proxy.insecure) parsedProxy.tls.insecure = true;
+  if (proxy["disable-sni"]) parsedProxy.tls.disable_sni = true;
   if (typeof proxy.alpn === "string") {
     parsedProxy.tls.alpn = [proxy.alpn];
-  } else if (Array.isArray(proxy.alpn))
-    parsedProxy.tls.alpn = proxy.alpn;
-  if (proxy.ca)
-    parsedProxy.tls.certificate_path = `${proxy.ca}`;
-  if (proxy.ca_str)
-    parsedProxy.tls.certificate = [proxy.ca_str];
-  if (proxy["ca-str"])
-    parsedProxy.tls.certificate = [proxy["ca-str"]];
+  } else if (Array.isArray(proxy.alpn)) parsedProxy.tls.alpn = proxy.alpn;
+  if (proxy.ca) parsedProxy.tls.certificate_path = `${proxy.ca}`;
+  if (proxy.ca_str) parsedProxy.tls.certificate = [proxy.ca_str];
+  if (proxy["ca-str"]) parsedProxy.tls.certificate = [proxy["ca-str"]];
   if (proxy["reality-opts"]) {
     parsedProxy.tls.reality = { enabled: true };
     if (proxy["reality-opts"]["public-key"])
@@ -10123,8 +10010,7 @@ var tlsParser = (proxy, parsedProxy) => {
     const echOptsConfig = proxy["ech-opts"].config;
     if (Array.isArray(echOptsConfig) || typeof echOptsConfig === "string") {
       const config = normalizePemLines(echOptsConfig, "ECH CONFIGS");
-      if (config)
-        parsedProxy.tls.ech.config = config;
+      if (config) parsedProxy.tls.ech.config = config;
     }
     parsedProxy.tls.ech.query_server_name = proxy["ech-opts"]["query-server-name"];
     parsedProxy.tls.ech.config_path = proxy["ech-opts"]["config-path"];
@@ -10135,8 +10021,7 @@ var tlsParser = (proxy, parsedProxy) => {
   if (proxy._curve_preferences && Array.isArray(proxy._curve_preferences)) {
     parsedProxy.tls.curve_preferences = proxy._curve_preferences;
   }
-  if (proxy["_fragment"])
-    parsedProxy.tls.fragment = !!proxy["_fragment"];
+  if (proxy["_fragment"]) parsedProxy.tls.fragment = !!proxy["_fragment"];
   if (proxy["_fragment_fallback_delay"])
     parsedProxy.tls.fragment_fallback_delay = proxy["_fragment_fallback_delay"];
   if (proxy["_record_fragment"])
@@ -10151,12 +10036,10 @@ var tlsParser = (proxy, parsedProxy) => {
     parsedProxy.tls.client_certificate = proxy["_client_certificate"];
   if (proxy["_client_certificate_path"])
     parsedProxy.tls.client_certificate_path = proxy["_client_certificate_path"];
-  if (proxy["_client_key"])
-    parsedProxy.tls.client_key = proxy["_client_key"];
+  if (proxy["_client_key"]) parsedProxy.tls.client_key = proxy["_client_key"];
   if (proxy["_client_key_path"])
     parsedProxy.tls.client_key_path = proxy["_client_key_path"];
-  if (!parsedProxy.tls.enabled)
-    delete parsedProxy.tls;
+  if (!parsedProxy.tls.enabled) delete parsedProxy.tls;
 };
 var sshParser = (proxy = {}) => {
   const parsedProxy = {
@@ -10167,12 +10050,9 @@ var sshParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.user = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy["privateKey"])
-    parsedProxy.private_key_path = proxy["privateKey"];
+  if (proxy.username) parsedProxy.user = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy["privateKey"]) parsedProxy.private_key_path = proxy["privateKey"];
   if (proxy["private-key"])
     parsedProxy.private_key_path = proxy["private-key"];
   if (proxy["private-key-passphrase"])
@@ -10183,12 +10063,10 @@ var sshParser = (proxy = {}) => {
       proxy["server-fingerprint"].split(" ")[0]
     ];
   }
-  if (proxy["host-key"])
-    parsedProxy.host_key = proxy["host-key"];
+  if (proxy["host-key"]) parsedProxy.host_key = proxy["host-key"];
   if (proxy["host-key-algorithms"])
     parsedProxy.host_key_algorithms = proxy["host-key-algorithms"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   ipVersionParser(proxy, parsedProxy);
@@ -10205,10 +10083,8 @@ var httpParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
   if (proxy.headers) {
     parsedProxy.headers = {};
     for (const k of Object.keys(proxy.headers)) {
@@ -10217,8 +10093,7 @@ var httpParser = (proxy = {}) => {
     if (Object.keys(parsedProxy.headers).length === 0)
       delete parsedProxy.headers;
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
@@ -10236,20 +10111,16 @@ var socks5Parser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
       version: !proxy["udp-over-tcp-version"] || proxy["udp-over-tcp-version"] === 1 ? 1 : 2
     };
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10266,8 +10137,7 @@ var shadowTLSParser = (proxy = {}) => {
     password: proxy.password,
     detour: getShadowTLSTag(proxy)
   };
-  if (proxy.uot)
-    ssPart.udp_over_tcp = true;
+  if (proxy.uot) ssPart.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     ssPart.udp_over_tcp = {
       enabled: true,
@@ -10301,13 +10171,11 @@ var normalizeALPN = (alpn) => {
   if (typeof alpn === "string") {
     return alpn.split(",").map((item) => item.trim()).filter((item) => item !== "");
   }
-  if (Array.isArray(alpn))
-    return alpn;
+  if (Array.isArray(alpn)) return alpn;
   return void 0;
 };
 var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
-  if (!pluginOpts)
-    throw new Error("shadow-tls plugin options are missing");
+  if (!pluginOpts) throw new Error("shadow-tls plugin options are missing");
   const fingerprint = getSingBoxUtlsFingerprint(proxy["client-fingerprint"]);
   const stPart = {
     tag: getShadowTLSTag(proxy),
@@ -10321,8 +10189,7 @@ var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
       server_name: pluginOpts.host
     }
   };
-  if (proxy["skip-cert-verify"])
-    stPart.tls.insecure = true;
+  if (proxy["skip-cert-verify"]) stPart.tls.insecure = true;
   if (fingerprint) {
     stPart.tls.utls = {
       enabled: true,
@@ -10332,10 +10199,8 @@ var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
   if (stPart.server_port < 0 || stPart.server_port > 65535)
     throw "\u7AEF\u53E3\u503C\u975E\u6CD5";
   const alpn = normalizeALPN(pluginOpts.alpn) ?? normalizeALPN(proxy.alpn);
-  if (alpn)
-    stPart.tls.alpn = alpn;
-  if (proxy["fast-open"] === true)
-    stPart.udp_fragment = true;
+  if (alpn) stPart.tls.alpn = alpn;
+  if (proxy["fast-open"] === true) stPart.udp_fragment = true;
   tfoParser(proxy, stPart);
   detourParser(proxy, stPart);
   ipVersionParser(proxy, stPart);
@@ -10353,16 +10218,14 @@ var ssParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
       version: !proxy["udp-over-tcp-version"] || proxy["udp-over-tcp-version"] === 1 ? 1 : 2
     };
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10392,15 +10255,12 @@ var ssParser = (proxy = {}) => {
     }
     if (proxy.plugin === "v2ray-plugin") {
       parsedProxy.plugin = "v2ray-plugin";
-      if (proxy["ws-host"])
-        proxy["plugin-opts"].host = proxy["ws-host"];
-      if (proxy["ws-path"])
-        proxy["plugin-opts"].path = proxy["ws-path"];
+      if (proxy["ws-host"]) proxy["plugin-opts"].host = proxy["ws-host"];
+      if (proxy["ws-path"]) proxy["plugin-opts"].path = proxy["ws-path"];
       Object.keys(proxy["plugin-opts"]).forEach((k) => {
         switch (k) {
           case "tls":
-            if (proxy["plugin-opts"].tls)
-              optArr.push("tls");
+            if (proxy["plugin-opts"].tls) optArr.push("tls");
             break;
           case "host":
             optArr.push(`host=${proxy["plugin-opts"].host}`);
@@ -10419,8 +10279,7 @@ var ssParser = (proxy = {}) => {
             const mux = normalizePluginMuxValue(
               proxy["plugin-opts"].mux
             );
-            if (mux)
-              parsedProxy.multiplex = { enabled: true };
+            if (mux) parsedProxy.multiplex = { enabled: true };
             optArr.push(`mux=${mux}`);
             break;
           }
@@ -10446,12 +10305,10 @@ var ssrParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["obfs-param"])
-    parsedProxy.obfs_param = proxy["obfs-param"];
+  if (proxy["obfs-param"]) parsedProxy.obfs_param = proxy["obfs-param"];
   if (proxy["protocol-param"] && proxy["protocol-param"] !== "")
     parsedProxy.protocol_param = proxy["protocol-param"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10461,11 +10318,9 @@ var ssrParser = (proxy = {}) => {
   return parsedProxy;
 };
 var getSnellVersion = (version) => {
-  if (version == null)
-    return void 0;
+  if (version == null) return void 0;
   const normalized = `${version}`.trim();
-  if (!/^\d+$/.test(normalized))
-    return NaN;
+  if (!/^\d+$/.test(normalized)) return NaN;
   return parseInt(normalized, 10);
 };
 var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
@@ -10487,13 +10342,12 @@ var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (outputVersion != null)
-    parsedProxy.version = outputVersion;
-  if (proxy._userkey)
-    parsedProxy.userkey = proxy._userkey;
+  if (outputVersion != null) parsedProxy.version = outputVersion;
+  if (proxy._userkey) parsedProxy.userkey = proxy._userkey;
   if (outputVersion === 6) {
-    if (proxy.mode)
-      parsedProxy.mode = proxy.mode;
+    if (proxy.mode) parsedProxy.mode = proxy.mode;
+    if (includeUnsupportedProxy && proxy["quic-proxy-mode"])
+      parsedProxy.quic_proxy_mode = !!proxy["quic-proxy-mode"];
   } else {
     if (proxy["obfs-opts"]?.mode && proxy["obfs-opts"].mode !== "shadow-tls")
       parsedProxy.obfs_mode = proxy["obfs-opts"].mode;
@@ -10508,8 +10362,7 @@ var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
     delete parsedProxy.server;
     delete parsedProxy.server_port;
   } else {
-    if (proxy["fast-open"])
-      parsedProxy.udp_fragment = true;
+    if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
     tfoParser(proxy, parsedProxy);
     detourParser(proxy, parsedProxy);
     ipVersionParser(proxy, parsedProxy);
@@ -10561,16 +10414,11 @@ var vmessParser = (proxy = {}) => {
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   vmessProtocolOptionsParser(proxy, parsedProxy);
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
-  if (proxy.network === "h2")
-    h2Parser(proxy, parsedProxy);
-  if (proxy.network === "http")
-    h1Parser(proxy, parsedProxy);
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
+  if (proxy.network === "h2") h2Parser(proxy, parsedProxy);
+  if (proxy.network === "http") h1Parser(proxy, parsedProxy);
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10592,18 +10440,12 @@ var vlessParser = (proxy = {}) => {
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   vmessVlessPacketEncodingParser(proxy, parsedProxy);
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.flow != null)
-    parsedProxy.flow = proxy.flow;
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
-  if (proxy.network === "h2")
-    h2Parser(proxy, parsedProxy);
-  if (proxy.network === "http")
-    h1Parser(proxy, parsedProxy);
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.flow != null) parsedProxy.flow = proxy.flow;
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
+  if (proxy.network === "h2") h2Parser(proxy, parsedProxy);
+  if (proxy.network === "http") h1Parser(proxy, parsedProxy);
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10624,12 +10466,9 @@ var trojanParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10649,12 +10488,9 @@ var naiveParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
@@ -10669,12 +10505,10 @@ var naiveParser = (proxy = {}) => {
     parsedProxy.insecure_concurrency = insecure_concurrency;
   if (proxy["extra-headers"])
     parsedProxy.extra_headers = proxy["extra-headers"];
-  if (proxy.quic)
-    parsedProxy.quic = !!proxy.quic;
+  if (proxy.quic) parsedProxy.quic = !!proxy.quic;
   if (proxy["quic-congestion-control"])
     parsedProxy.quic_congestion_control = proxy["quic-congestion-control"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
@@ -10707,12 +10541,9 @@ var hysteriaParser = (proxy = {}) => {
       const range = p.replace(/\s*-\s*/g, ":");
       return range.includes(":") ? range : `${range}:${range}`;
     });
-  if (proxy.auth_str)
-    parsedProxy.auth_str = `${proxy.auth_str}`;
-  if (proxy["auth-str"])
-    parsedProxy.auth_str = `${proxy["auth-str"]}`;
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy.auth_str) parsedProxy.auth_str = `${proxy.auth_str}`;
+  if (proxy["auth-str"]) parsedProxy.auth_str = `${proxy["auth-str"]}`;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   const reg = new RegExp("^[0-9]+[ 	]*[KMGT]*[Bb]ps$");
   if (reg.test(`${proxy.up}`) && !`${proxy.up}`.endsWith("Mbps")) {
     parsedProxy.up = `${proxy.up}`;
@@ -10724,16 +10555,13 @@ var hysteriaParser = (proxy = {}) => {
   } else {
     parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
   }
-  if (proxy.obfs)
-    parsedProxy.obfs = proxy.obfs;
+  if (proxy.obfs) parsedProxy.obfs = proxy.obfs;
   if (proxy.recv_window_conn)
     parsedProxy.recv_window_conn = proxy.recv_window_conn;
   if (proxy["recv-window-conn"])
     parsedProxy.recv_window_conn = proxy["recv-window-conn"];
-  if (proxy.recv_window)
-    parsedProxy.recv_window = proxy.recv_window;
-  if (proxy["recv-window"])
-    parsedProxy.recv_window = proxy["recv-window"];
+  if (proxy.recv_window) parsedProxy.recv_window = proxy.recv_window;
+  if (proxy["recv-window"]) parsedProxy.recv_window = proxy["recv-window"];
   if (proxy.disable_mtu_discovery) {
     if (typeof proxy.disable_mtu_discovery === "boolean") {
       parsedProxy.disable_mtu_discovery = proxy.disable_mtu_discovery;
@@ -10770,10 +10598,8 @@ var hysteria2Parser = (proxy = {}) => {
       const range = p.replace(/\s*-\s*/g, ":");
       return range.includes(":") ? range : `${range}:${range}`;
     });
-  if (proxy.up)
-    parsedProxy.up_mbps = parseInt(`${proxy.up}`, 10);
-  if (proxy.down)
-    parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
+  if (proxy.up) parsedProxy.up_mbps = parseInt(`${proxy.up}`, 10);
+  if (proxy.down) parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
   if (["salamander", "gecko"].includes(proxy.obfs))
     parsedProxy.obfs.type = proxy.obfs;
   if (proxy.obfs === "gecko") {
@@ -10797,17 +10623,14 @@ var hysteria2Parser = (proxy = {}) => {
           `Invalid obfs packet size for proxy ${proxy.name}: min=${minRaw} max=${maxRaw}`
         );
       } else {
-        if (hasMin)
-          parsedProxy.obfs.min_packet_size = minPacketSize;
-        if (hasMax)
-          parsedProxy.obfs.max_packet_size = maxPacketSize;
+        if (hasMin) parsedProxy.obfs.min_packet_size = minPacketSize;
+        if (hasMax) parsedProxy.obfs.max_packet_size = maxPacketSize;
       }
     }
   }
   if (proxy["obfs-password"])
     parsedProxy.obfs.password = proxy["obfs-password"];
-  if (!parsedProxy.obfs.type)
-    delete parsedProxy.obfs;
+  if (!parsedProxy.obfs.type) delete parsedProxy.obfs;
   networkParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
@@ -10829,16 +10652,13 @@ var tuic5Parser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   if (proxy["congestion-controller"] && proxy["congestion-controller"] !== "cubic")
     parsedProxy.congestion_control = proxy["congestion-controller"];
   if (proxy["udp-relay-mode"] && proxy["udp-relay-mode"] !== "native")
     parsedProxy.udp_relay_mode = proxy["udp-relay-mode"];
-  if (proxy["reduce-rtt"])
-    parsedProxy.zero_rtt_handshake = true;
-  if (proxy["udp-over-stream"])
-    parsedProxy.udp_over_stream = true;
+  if (proxy["reduce-rtt"]) parsedProxy.zero_rtt_handshake = true;
+  if (proxy["udp-over-stream"]) parsedProxy.udp_over_stream = true;
   if (proxy["heartbeat-interval"])
     parsedProxy.heartbeat = `${proxy["heartbeat-interval"]}ms`;
   networkParser(proxy, parsedProxy);
@@ -10850,7 +10670,7 @@ var tuic5Parser = (proxy = {}) => {
   domainResolverParser(proxy, parsedProxy);
   return parsedProxy;
 };
-var anytlsParser = (proxy = {}) => {
+var anytlsParser = (proxy = {}, includeUnsupportedProxy = false) => {
   const parsedProxy = {
     tag: proxy.name,
     type: "anytls",
@@ -10859,6 +10679,8 @@ var anytlsParser = (proxy = {}) => {
     password: proxy.password,
     tls: { enabled: true, server_name: proxy.server, insecure: false }
   };
+  if (includeUnsupportedProxy && proxy["client-name"])
+    parsedProxy.client_name = `${proxy["client-name"]}`;
   if (/^\d+$/.test(proxy["idle-session-check-interval"]))
     parsedProxy.idle_session_check_interval = `${proxy["idle-session-check-interval"]}s`;
   if (/^\d+$/.test(proxy["idle-session-timeout"]))
@@ -10947,13 +10769,11 @@ var wireguardParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   if (typeof proxy.reserved === "string") {
     parsedProxy.reserved = proxy.reserved;
   } else if (Array.isArray(proxy.reserved)) {
-    for (const r of proxy.reserved)
-      parsedProxy.reserved.push(r);
+    for (const r of proxy.reserved) parsedProxy.reserved.push(r);
   } else {
     delete parsedProxy.reserved;
   }
@@ -10987,8 +10807,7 @@ var wireguardParser = (proxy = {}) => {
       if (typeof p.reserved === "string") {
         peer.reserved.push(p.reserved);
       } else if (Array.isArray(p.reserved)) {
-        for (const r of p.reserved)
-          peer.reserved.push(r);
+        for (const r of p.reserved) peer.reserved.push(r);
       } else {
         delete peer.reserved;
       }
@@ -11195,7 +11014,12 @@ function singbox_Producer() {
             list.push(wireguardParser(proxy));
             break;
           case "anytls":
-            list.push(anytlsParser(proxy));
+            list.push(
+              anytlsParser(
+                proxy,
+                opts["include-unsupported-proxy"]
+              )
+            );
             break;
           case "tailscale":
             list.push(tailscaleParser(proxy));
@@ -11223,8 +11047,7 @@ function singbox_Producer() {
         app_default.error(e.message ?? e);
       }
     });
-    if (type2 === "internal")
-      return list;
+    if (type2 === "internal") return list;
     const categorized = list.reduce(
       (result, item) => {
         if (["wireguard", "tailscale"].includes(item.type)) {
@@ -11577,8 +11400,7 @@ function Egern_Producer() {
               }
             };
             flow = proxy.flow;
-            if (flow === "")
-              flow = void 0;
+            if (flow === "") flow = void 0;
           }
           proxy = {
             type: "vless",
@@ -11769,23 +11591,18 @@ function getUdpRelay(proxy) {
   return proxy.udp ?? proxy.udp_relay;
 }
 function getNonEmptyValue(value) {
-  if (value == null)
-    return void 0;
-  if (typeof value === "string" && value.length === 0)
-    return void 0;
+  if (value == null) return void 0;
+  if (typeof value === "string" && value.length === 0) return void 0;
   return value;
 }
 function getReality(proxy) {
   const realityOpts = proxy?.["reality-opts"];
-  if (!realityOpts)
-    return void 0;
+  if (!realityOpts) return void 0;
   const reality = {};
   const publicKey = getNonEmptyValue(realityOpts["public-key"]);
   const shortId = getNonEmptyValue(realityOpts["short-id"]);
-  if (publicKey != null)
-    reality.public_key = publicKey;
-  if (shortId != null)
-    reality.short_id = shortId;
+  if (publicKey != null) reality.public_key = publicKey;
+  if (shortId != null) reality.short_id = shortId;
   return Object.keys(reality).length > 0 ? reality : void 0;
 }
 function getGrpcTransport(proxy) {
@@ -11799,26 +11616,21 @@ function getGrpcTransport(proxy) {
   };
 }
 function isEgernGrpcGun(proxy) {
-  if (proxy.network !== "grpc")
-    return true;
+  if (proxy.network !== "grpc") return true;
   const grpcType = proxy["grpc-opts"]?.["_grpc-type"];
-  if (grpcType == null)
-    return true;
+  if (grpcType == null) return true;
   return `${grpcType}`.trim().toLowerCase() === "gun";
 }
 function normalizeSnellVersion(version) {
-  if (version == null)
-    return void 0;
+  if (version == null) return void 0;
   const normalized = `${version}`.trim();
-  if (!/^[1-5]$/.test(normalized))
-    return null;
+  if (!/^[1-5]$/.test(normalized)) return null;
   return parseInt(normalized, 10);
 }
 function getFirstHeaderValue(headers, ...keys) {
   for (const key of keys) {
     const value = getFirstValue(headers?.[key]);
-    if (value)
-      return value;
+    if (value) return value;
   }
   return void 0;
 }
@@ -11829,8 +11641,7 @@ function getH2Headers(h2Opts) {
   const headers = {};
   if (h2Opts?.headers && typeof h2Opts.headers === "object" && !Array.isArray(h2Opts.headers)) {
     for (const [key, value] of Object.entries(h2Opts.headers)) {
-      if (/^host$/i.test(key))
-        continue;
+      if (/^host$/i.test(key)) continue;
       const headerValue = getFirstValue(value);
       if (headerValue != null) {
         headers[key] = headerValue;
@@ -11844,16 +11655,13 @@ function getH2Headers(h2Opts) {
   return Object.keys(headers).length > 0 ? headers : void 0;
 }
 function getFirstValue(value) {
-  if (Array.isArray(value))
-    return value[0];
-  if (value != null)
-    return value;
+  if (Array.isArray(value)) return value[0];
+  if (value != null) return value;
   return void 0;
 }
 function getFingerprintSha256(proxy) {
   const fingerprint = proxy?.["tls-fingerprint"];
-  if (typeof fingerprint !== "string")
-    return void 0;
+  if (typeof fingerprint !== "string") return void 0;
   const trimmedFingerprint = fingerprint.trim();
   return trimmedFingerprint.length > 0 ? trimmedFingerprint : void 0;
 }
@@ -11863,8 +11671,7 @@ function supportsRootFingerprintSha256(original, proxy) {
   ) || original.type === "socks5" && proxy.type === "socks5_tls" || original.type === "http" && proxy.type === "https";
 }
 function addTransportFingerprintSha256(transport, fingerprintSha256) {
-  if (!transport)
-    return;
+  if (!transport) return;
   for (const key of ["grpc", "http2", "tls", "wss"]) {
     if (transport[key]) {
       transport[key].fingerprint_sha256 = fingerprintSha256;
@@ -11966,8 +11773,7 @@ function parseProxyLines(lines, opts) {
   const proxyList = [];
   let lastParser = null;
   for (const line of lines) {
-    if (line.length === 0)
-      continue;
+    if (line.length === 0) continue;
     let proxy = null;
     if (lastParser) {
       proxy = tryParseProxy(lastParser, line);
