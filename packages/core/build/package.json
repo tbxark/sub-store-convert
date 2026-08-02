@@ -1,6 +1,6 @@
 {
   "name": "sub-store-convert",
-  "version": "2.36.25",
+  "version": "2.36.27",
   "description": "Advanced Subscription Converter for QX, Loon, Surge, Stash and ShadowRocket.",
   "type": "module",
   "module": "./index.js",
@@ -9,10 +9,10 @@
     "index.js"
   ],
   "dependencies": {
-    "js-base64": "^3.9.2",
+    "js-base64": "^3.7.2",
     "json5": "^2.2.3",
-    "lodash": "^4.18.1",
-    "peggy": "^5.1.0",
+    "lodash": "^4.17.21",
+    "peggy": "^2.0.1",
     "yaml": "^2.9.0"
   },
   "devDependencies": {},
