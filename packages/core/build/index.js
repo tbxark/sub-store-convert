@@ -6336,10 +6336,13 @@ function mihomo(proxy, type, opts) {
         ...clashProxy,
         name: proxyName
       });
-      opts._merged.config = {
-        ...opts._merged.config,
-        ...opts?.config || proxy._config || {}
-      };
+      const configOverride = opts?.config || proxy._config;
+      if (configOverride) {
+        opts._merged.configOverride = {
+          ...opts._merged.configOverride || {},
+          ...configOverride
+        };
+      }
     } else {
       const external_proxy = {
         name: proxy.name,
@@ -10812,6 +10815,10 @@ var hysteria2Parser = (proxy = {}) => {
     parsedProxy.obfs.password = proxy["obfs-password"];
   if (!parsedProxy.obfs.type)
     delete parsedProxy.obfs;
+  if (proxy["bbr-profile"])
+    parsedProxy.bbr_profile = proxy["bbr-profile"];
+  if (proxy["disable-chrome-parrot"])
+    parsedProxy.disable_chrome_parrot = !!proxy["disable-chrome-parrot"];
   networkParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
@@ -10863,8 +10870,8 @@ var anytlsParser = (proxy = {}, includeUnsupportedProxy = false) => {
     password: proxy.password,
     tls: { enabled: true, server_name: proxy.server, insecure: false }
   };
-  if (includeUnsupportedProxy && proxy["client-name"])
-    parsedProxy.client_name = `${proxy["client-name"]}`;
+  if (proxy["client-metadata"])
+    parsedProxy.client_metadata = `${proxy["client-metadata"]}`;
   if (/^\d+$/.test(proxy["idle-session-check-interval"]))
     parsedProxy.idle_session_check_interval = `${proxy["idle-session-check-interval"]}s`;
   if (/^\d+$/.test(proxy["idle-session-timeout"]))
@@ -11554,7 +11561,7 @@ function Egern_Producer() {
             };
           } else if (proxy.network === "http") {
             proxy.transport = {
-              http: {
+              http1: {
                 method: proxy["http-opts"]?.method,
                 path: Array.isArray(
                   proxy["http-opts"]?.path
@@ -11774,7 +11781,7 @@ function hasHeaders(proxy) {
   return proxy?.headers && typeof proxy.headers === "object" && Object.keys(proxy.headers).length > 0;
 }
 function getTfo(proxy) {
-  return proxy.tfo ?? proxy["fast-open"];
+  return !!(proxy.tfo ?? proxy["fast-open"]);
 }
 function getUdpRelay(proxy) {
   return proxy.udp ?? proxy.udp_relay;
