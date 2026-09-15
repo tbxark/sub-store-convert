@@ -21,7 +21,8 @@ for pkg_json in "$ROOT/package.json" "$ROOT/packages"/*/package.json; do
   (cd "$pkg" && npm pkg set version="$TAG")
 done
 
-# 3. Sync existing core dependency versions from Sub-Store backend package.json
+# 3. Sync existing core dependency versions from Sub-Store backend package.json.
+#    A locally pinned version is kept when it is newer than Sub-Store's, so upstream never downgrades core.
 node - "$CORE_PACKAGE_JSON" "$VENDOR_PACKAGE_JSON" <<'NODE'
 const fs = require('fs');
 
@@ -36,14 +37,49 @@ const vendorVersions = {
   ...vendorPackage.optionalDependencies,
 };
 
+// Parse a semver-ish range (^1.2.3, >=1.2, 1.2.3-beta.1, 1.2.x) into a comparable tuple.
+// Returns null for values that carry no version (workspace:*, file:..., git URLs, latest, ...).
+function parseVersion(range) {
+  const match = /^[\s^~><=v]*(\d+)(?:\.(\d+|[x*]))?(?:\.(\d+|[x*]))?(?:-([0-9A-Za-z.-]+))?/i.exec(String(range).trim());
+  if (!match) return null;
+  const num = (value) => (value === undefined || value === 'x' || value === '*' ? 0 : Number(value));
+  return { major: num(match[1]), minor: num(match[2]), patch: num(match[3]), prerelease: match[4] || '' };
+}
+
+function compareVersions(a, b) {
+  for (const key of ['major', 'minor', 'patch']) {
+    if (a[key] !== b[key]) return a[key] > b[key] ? 1 : -1;
+  }
+  // A release is newer than a prerelease of the same version
+  if (a.prerelease === b.prerelease) return 0;
+  if (a.prerelease === '') return 1;
+  if (b.prerelease === '') return -1;
+  return a.prerelease > b.prerelease ? 1 : -1;
+}
+
 for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies']) {
   const dependencies = corePackage[section];
   if (!dependencies) continue;
 
   for (const name of Object.keys(dependencies)) {
-    if (vendorVersions[name]) {
-      dependencies[name] = vendorVersions[name];
+    const vendorVersion = vendorVersions[name];
+    if (!vendorVersion) continue;
+
+    const currentVersion = dependencies[name];
+    const current = parseVersion(currentVersion);
+    const vendor = parseVersion(vendorVersion);
+
+    if (current && vendor && compareVersions(current, vendor) >= 0) {
+      if (currentVersion !== vendorVersion) {
+        console.log(`  keep ${section} ${name}@${currentVersion} (sub-store uses ${vendorVersion})`);
+      }
+      continue;
     }
+
+    if (currentVersion !== vendorVersion) {
+      console.log(`  sync ${section} ${name}@${currentVersion} -> ${vendorVersion}`);
+    }
+    dependencies[name] = vendorVersion;
   }
 }
 

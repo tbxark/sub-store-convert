@@ -35,6 +35,8 @@ esbuild.build({
   outfile: './build/index.js',
   format: 'esm',
   loader: { '.peg': 'text' },
+  // `buffer` is intentionally a devDependency: vendor code (QX producer/parser) imports it,
+  // and since only `dependencies` are externalized, its browser polyfill gets bundled in.
   external: [
     ...dependenciesLoader('./package.json')
   ],

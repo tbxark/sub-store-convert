@@ -1,3 +1,1809 @@
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __commonJS = (cb, mod) => function __require() {
+  try {
+    return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
+  } catch (e) {
+    throw mod = 0, e;
+  }
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+
+// ../../node_modules/.pnpm/base64-js@1.5.1/node_modules/base64-js/index.js
+var require_base64_js = __commonJS({
+  "../../node_modules/.pnpm/base64-js@1.5.1/node_modules/base64-js/index.js"(exports) {
+    "use strict";
+    exports.byteLength = byteLength;
+    exports.toByteArray = toByteArray;
+    exports.fromByteArray = fromByteArray;
+    var lookup = [];
+    var revLookup = [];
+    var Arr = typeof Uint8Array !== "undefined" ? Uint8Array : Array;
+    var code = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    for (i = 0, len = code.length; i < len; ++i) {
+      lookup[i] = code[i];
+      revLookup[code.charCodeAt(i)] = i;
+    }
+    var i;
+    var len;
+    revLookup["-".charCodeAt(0)] = 62;
+    revLookup["_".charCodeAt(0)] = 63;
+    function getLens(b64) {
+      var len2 = b64.length;
+      if (len2 % 4 > 0) {
+        throw new Error("Invalid string. Length must be a multiple of 4");
+      }
+      var validLen = b64.indexOf("=");
+      if (validLen === -1) validLen = len2;
+      var placeHoldersLen = validLen === len2 ? 0 : 4 - validLen % 4;
+      return [validLen, placeHoldersLen];
+    }
+    function byteLength(b64) {
+      var lens = getLens(b64);
+      var validLen = lens[0];
+      var placeHoldersLen = lens[1];
+      return (validLen + placeHoldersLen) * 3 / 4 - placeHoldersLen;
+    }
+    function _byteLength(b64, validLen, placeHoldersLen) {
+      return (validLen + placeHoldersLen) * 3 / 4 - placeHoldersLen;
+    }
+    function toByteArray(b64) {
+      var tmp;
+      var lens = getLens(b64);
+      var validLen = lens[0];
+      var placeHoldersLen = lens[1];
+      var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen));
+      var curByte = 0;
+      var len2 = placeHoldersLen > 0 ? validLen - 4 : validLen;
+      var i2;
+      for (i2 = 0; i2 < len2; i2 += 4) {
+        tmp = revLookup[b64.charCodeAt(i2)] << 18 | revLookup[b64.charCodeAt(i2 + 1)] << 12 | revLookup[b64.charCodeAt(i2 + 2)] << 6 | revLookup[b64.charCodeAt(i2 + 3)];
+        arr[curByte++] = tmp >> 16 & 255;
+        arr[curByte++] = tmp >> 8 & 255;
+        arr[curByte++] = tmp & 255;
+      }
+      if (placeHoldersLen === 2) {
+        tmp = revLookup[b64.charCodeAt(i2)] << 2 | revLookup[b64.charCodeAt(i2 + 1)] >> 4;
+        arr[curByte++] = tmp & 255;
+      }
+      if (placeHoldersLen === 1) {
+        tmp = revLookup[b64.charCodeAt(i2)] << 10 | revLookup[b64.charCodeAt(i2 + 1)] << 4 | revLookup[b64.charCodeAt(i2 + 2)] >> 2;
+        arr[curByte++] = tmp >> 8 & 255;
+        arr[curByte++] = tmp & 255;
+      }
+      return arr;
+    }
+    function tripletToBase64(num) {
+      return lookup[num >> 18 & 63] + lookup[num >> 12 & 63] + lookup[num >> 6 & 63] + lookup[num & 63];
+    }
+    function encodeChunk(uint8, start, end) {
+      var tmp;
+      var output = [];
+      for (var i2 = start; i2 < end; i2 += 3) {
+        tmp = (uint8[i2] << 16 & 16711680) + (uint8[i2 + 1] << 8 & 65280) + (uint8[i2 + 2] & 255);
+        output.push(tripletToBase64(tmp));
+      }
+      return output.join("");
+    }
+    function fromByteArray(uint8) {
+      var tmp;
+      var len2 = uint8.length;
+      var extraBytes = len2 % 3;
+      var parts = [];
+      var maxChunkLength = 16383;
+      for (var i2 = 0, len22 = len2 - extraBytes; i2 < len22; i2 += maxChunkLength) {
+        parts.push(encodeChunk(uint8, i2, i2 + maxChunkLength > len22 ? len22 : i2 + maxChunkLength));
+      }
+      if (extraBytes === 1) {
+        tmp = uint8[len2 - 1];
+        parts.push(
+          lookup[tmp >> 2] + lookup[tmp << 4 & 63] + "=="
+        );
+      } else if (extraBytes === 2) {
+        tmp = (uint8[len2 - 2] << 8) + uint8[len2 - 1];
+        parts.push(
+          lookup[tmp >> 10] + lookup[tmp >> 4 & 63] + lookup[tmp << 2 & 63] + "="
+        );
+      }
+      return parts.join("");
+    }
+  }
+});
+
+// ../../node_modules/.pnpm/ieee754@1.2.1/node_modules/ieee754/index.js
+var require_ieee754 = __commonJS({
+  "../../node_modules/.pnpm/ieee754@1.2.1/node_modules/ieee754/index.js"(exports) {
+    exports.read = function(buffer, offset, isLE, mLen, nBytes) {
+      var e, m;
+      var eLen = nBytes * 8 - mLen - 1;
+      var eMax = (1 << eLen) - 1;
+      var eBias = eMax >> 1;
+      var nBits = -7;
+      var i = isLE ? nBytes - 1 : 0;
+      var d = isLE ? -1 : 1;
+      var s = buffer[offset + i];
+      i += d;
+      e = s & (1 << -nBits) - 1;
+      s >>= -nBits;
+      nBits += eLen;
+      for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {
+      }
+      m = e & (1 << -nBits) - 1;
+      e >>= -nBits;
+      nBits += mLen;
+      for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {
+      }
+      if (e === 0) {
+        e = 1 - eBias;
+      } else if (e === eMax) {
+        return m ? NaN : (s ? -1 : 1) * Infinity;
+      } else {
+        m = m + Math.pow(2, mLen);
+        e = e - eBias;
+      }
+      return (s ? -1 : 1) * m * Math.pow(2, e - mLen);
+    };
+    exports.write = function(buffer, value, offset, isLE, mLen, nBytes) {
+      var e, m, c;
+      var eLen = nBytes * 8 - mLen - 1;
+      var eMax = (1 << eLen) - 1;
+      var eBias = eMax >> 1;
+      var rt = mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0;
+      var i = isLE ? 0 : nBytes - 1;
+      var d = isLE ? 1 : -1;
+      var s = value < 0 || value === 0 && 1 / value < 0 ? 1 : 0;
+      value = Math.abs(value);
+      if (isNaN(value) || value === Infinity) {
+        m = isNaN(value) ? 1 : 0;
+        e = eMax;
+      } else {
+        e = Math.floor(Math.log(value) / Math.LN2);
+        if (value * (c = Math.pow(2, -e)) < 1) {
+          e--;
+          c *= 2;
+        }
+        if (e + eBias >= 1) {
+          value += rt / c;
+        } else {
+          value += rt * Math.pow(2, 1 - eBias);
+        }
+        if (value * c >= 2) {
+          e++;
+          c /= 2;
+        }
+        if (e + eBias >= eMax) {
+          m = 0;
+          e = eMax;
+        } else if (e + eBias >= 1) {
+          m = (value * c - 1) * Math.pow(2, mLen);
+          e = e + eBias;
+        } else {
+          m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen);
+          e = 0;
+        }
+      }
+      for (; mLen >= 8; buffer[offset + i] = m & 255, i += d, m /= 256, mLen -= 8) {
+      }
+      e = e << mLen | m;
+      eLen += mLen;
+      for (; eLen > 0; buffer[offset + i] = e & 255, i += d, e /= 256, eLen -= 8) {
+      }
+      buffer[offset + i - d] |= s * 128;
+    };
+  }
+});
+
+// ../../node_modules/.pnpm/buffer@6.0.3/node_modules/buffer/index.js
+var require_buffer = __commonJS({
+  "../../node_modules/.pnpm/buffer@6.0.3/node_modules/buffer/index.js"(exports) {
+    "use strict";
+    var base64 = require_base64_js();
+    var ieee754 = require_ieee754();
+    var customInspectSymbol = typeof Symbol === "function" && typeof Symbol["for"] === "function" ? Symbol["for"]("nodejs.util.inspect.custom") : null;
+    exports.Buffer = Buffer4;
+    exports.SlowBuffer = SlowBuffer;
+    exports.INSPECT_MAX_BYTES = 50;
+    var K_MAX_LENGTH = 2147483647;
+    exports.kMaxLength = K_MAX_LENGTH;
+    Buffer4.TYPED_ARRAY_SUPPORT = typedArraySupport();
+    if (!Buffer4.TYPED_ARRAY_SUPPORT && typeof console !== "undefined" && typeof console.error === "function") {
+      console.error(
+        "This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support."
+      );
+    }
+    function typedArraySupport() {
+      try {
+        const arr = new Uint8Array(1);
+        const proto = { foo: function() {
+          return 42;
+        } };
+        Object.setPrototypeOf(proto, Uint8Array.prototype);
+        Object.setPrototypeOf(arr, proto);
+        return arr.foo() === 42;
+      } catch (e) {
+        return false;
+      }
+    }
+    Object.defineProperty(Buffer4.prototype, "parent", {
+      enumerable: true,
+      get: function() {
+        if (!Buffer4.isBuffer(this)) return void 0;
+        return this.buffer;
+      }
+    });
+    Object.defineProperty(Buffer4.prototype, "offset", {
+      enumerable: true,
+      get: function() {
+        if (!Buffer4.isBuffer(this)) return void 0;
+        return this.byteOffset;
+      }
+    });
+    function createBuffer(length) {
+      if (length > K_MAX_LENGTH) {
+        throw new RangeError('The value "' + length + '" is invalid for option "size"');
+      }
+      const buf = new Uint8Array(length);
+      Object.setPrototypeOf(buf, Buffer4.prototype);
+      return buf;
+    }
+    function Buffer4(arg, encodingOrOffset, length) {
+      if (typeof arg === "number") {
+        if (typeof encodingOrOffset === "string") {
+          throw new TypeError(
+            'The "string" argument must be of type string. Received type number'
+          );
+        }
+        return allocUnsafe(arg);
+      }
+      return from(arg, encodingOrOffset, length);
+    }
+    Buffer4.poolSize = 8192;
+    function from(value, encodingOrOffset, length) {
+      if (typeof value === "string") {
+        return fromString(value, encodingOrOffset);
+      }
+      if (ArrayBuffer.isView(value)) {
+        return fromArrayView(value);
+      }
+      if (value == null) {
+        throw new TypeError(
+          "The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof value
+        );
+      }
+      if (isInstance(value, ArrayBuffer) || value && isInstance(value.buffer, ArrayBuffer)) {
+        return fromArrayBuffer(value, encodingOrOffset, length);
+      }
+      if (typeof SharedArrayBuffer !== "undefined" && (isInstance(value, SharedArrayBuffer) || value && isInstance(value.buffer, SharedArrayBuffer))) {
+        return fromArrayBuffer(value, encodingOrOffset, length);
+      }
+      if (typeof value === "number") {
+        throw new TypeError(
+          'The "value" argument must not be of type number. Received type number'
+        );
+      }
+      const valueOf = value.valueOf && value.valueOf();
+      if (valueOf != null && valueOf !== value) {
+        return Buffer4.from(valueOf, encodingOrOffset, length);
+      }
+      const b = fromObject(value);
+      if (b) return b;
+      if (typeof Symbol !== "undefined" && Symbol.toPrimitive != null && typeof value[Symbol.toPrimitive] === "function") {
+        return Buffer4.from(value[Symbol.toPrimitive]("string"), encodingOrOffset, length);
+      }
+      throw new TypeError(
+        "The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof value
+      );
+    }
+    Buffer4.from = function(value, encodingOrOffset, length) {
+      return from(value, encodingOrOffset, length);
+    };
+    Object.setPrototypeOf(Buffer4.prototype, Uint8Array.prototype);
+    Object.setPrototypeOf(Buffer4, Uint8Array);
+    function assertSize(size) {
+      if (typeof size !== "number") {
+        throw new TypeError('"size" argument must be of type number');
+      } else if (size < 0) {
+        throw new RangeError('The value "' + size + '" is invalid for option "size"');
+      }
+    }
+    function alloc(size, fill, encoding) {
+      assertSize(size);
+      if (size <= 0) {
+        return createBuffer(size);
+      }
+      if (fill !== void 0) {
+        return typeof encoding === "string" ? createBuffer(size).fill(fill, encoding) : createBuffer(size).fill(fill);
+      }
+      return createBuffer(size);
+    }
+    Buffer4.alloc = function(size, fill, encoding) {
+      return alloc(size, fill, encoding);
+    };
+    function allocUnsafe(size) {
+      assertSize(size);
+      return createBuffer(size < 0 ? 0 : checked(size) | 0);
+    }
+    Buffer4.allocUnsafe = function(size) {
+      return allocUnsafe(size);
+    };
+    Buffer4.allocUnsafeSlow = function(size) {
+      return allocUnsafe(size);
+    };
+    function fromString(string, encoding) {
+      if (typeof encoding !== "string" || encoding === "") {
+        encoding = "utf8";
+      }
+      if (!Buffer4.isEncoding(encoding)) {
+        throw new TypeError("Unknown encoding: " + encoding);
+      }
+      const length = byteLength(string, encoding) | 0;
+      let buf = createBuffer(length);
+      const actual = buf.write(string, encoding);
+      if (actual !== length) {
+        buf = buf.slice(0, actual);
+      }
+      return buf;
+    }
+    function fromArrayLike(array) {
+      const length = array.length < 0 ? 0 : checked(array.length) | 0;
+      const buf = createBuffer(length);
+      for (let i = 0; i < length; i += 1) {
+        buf[i] = array[i] & 255;
+      }
+      return buf;
+    }
+    function fromArrayView(arrayView) {
+      if (isInstance(arrayView, Uint8Array)) {
+        const copy = new Uint8Array(arrayView);
+        return fromArrayBuffer(copy.buffer, copy.byteOffset, copy.byteLength);
+      }
+      return fromArrayLike(arrayView);
+    }
+    function fromArrayBuffer(array, byteOffset, length) {
+      if (byteOffset < 0 || array.byteLength < byteOffset) {
+        throw new RangeError('"offset" is outside of buffer bounds');
+      }
+      if (array.byteLength < byteOffset + (length || 0)) {
+        throw new RangeError('"length" is outside of buffer bounds');
+      }
+      let buf;
+      if (byteOffset === void 0 && length === void 0) {
+        buf = new Uint8Array(array);
+      } else if (length === void 0) {
+        buf = new Uint8Array(array, byteOffset);
+      } else {
+        buf = new Uint8Array(array, byteOffset, length);
+      }
+      Object.setPrototypeOf(buf, Buffer4.prototype);
+      return buf;
+    }
+    function fromObject(obj) {
+      if (Buffer4.isBuffer(obj)) {
+        const len = checked(obj.length) | 0;
+        const buf = createBuffer(len);
+        if (buf.length === 0) {
+          return buf;
+        }
+        obj.copy(buf, 0, 0, len);
+        return buf;
+      }
+      if (obj.length !== void 0) {
+        if (typeof obj.length !== "number" || numberIsNaN(obj.length)) {
+          return createBuffer(0);
+        }
+        return fromArrayLike(obj);
+      }
+      if (obj.type === "Buffer" && Array.isArray(obj.data)) {
+        return fromArrayLike(obj.data);
+      }
+    }
+    function checked(length) {
+      if (length >= K_MAX_LENGTH) {
+        throw new RangeError("Attempt to allocate Buffer larger than maximum size: 0x" + K_MAX_LENGTH.toString(16) + " bytes");
+      }
+      return length | 0;
+    }
+    function SlowBuffer(length) {
+      if (+length != length) {
+        length = 0;
+      }
+      return Buffer4.alloc(+length);
+    }
+    Buffer4.isBuffer = function isBuffer(b) {
+      return b != null && b._isBuffer === true && b !== Buffer4.prototype;
+    };
+    Buffer4.compare = function compare(a, b) {
+      if (isInstance(a, Uint8Array)) a = Buffer4.from(a, a.offset, a.byteLength);
+      if (isInstance(b, Uint8Array)) b = Buffer4.from(b, b.offset, b.byteLength);
+      if (!Buffer4.isBuffer(a) || !Buffer4.isBuffer(b)) {
+        throw new TypeError(
+          'The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array'
+        );
+      }
+      if (a === b) return 0;
+      let x = a.length;
+      let y = b.length;
+      for (let i = 0, len = Math.min(x, y); i < len; ++i) {
+        if (a[i] !== b[i]) {
+          x = a[i];
+          y = b[i];
+          break;
+        }
+      }
+      if (x < y) return -1;
+      if (y < x) return 1;
+      return 0;
+    };
+    Buffer4.isEncoding = function isEncoding(encoding) {
+      switch (String(encoding).toLowerCase()) {
+        case "hex":
+        case "utf8":
+        case "utf-8":
+        case "ascii":
+        case "latin1":
+        case "binary":
+        case "base64":
+        case "ucs2":
+        case "ucs-2":
+        case "utf16le":
+        case "utf-16le":
+          return true;
+        default:
+          return false;
+      }
+    };
+    Buffer4.concat = function concat(list, length) {
+      if (!Array.isArray(list)) {
+        throw new TypeError('"list" argument must be an Array of Buffers');
+      }
+      if (list.length === 0) {
+        return Buffer4.alloc(0);
+      }
+      let i;
+      if (length === void 0) {
+        length = 0;
+        for (i = 0; i < list.length; ++i) {
+          length += list[i].length;
+        }
+      }
+      const buffer = Buffer4.allocUnsafe(length);
+      let pos = 0;
+      for (i = 0; i < list.length; ++i) {
+        let buf = list[i];
+        if (isInstance(buf, Uint8Array)) {
+          if (pos + buf.length > buffer.length) {
+            if (!Buffer4.isBuffer(buf)) buf = Buffer4.from(buf);
+            buf.copy(buffer, pos);
+          } else {
+            Uint8Array.prototype.set.call(
+              buffer,
+              buf,
+              pos
+            );
+          }
+        } else if (!Buffer4.isBuffer(buf)) {
+          throw new TypeError('"list" argument must be an Array of Buffers');
+        } else {
+          buf.copy(buffer, pos);
+        }
+        pos += buf.length;
+      }
+      return buffer;
+    };
+    function byteLength(string, encoding) {
+      if (Buffer4.isBuffer(string)) {
+        return string.length;
+      }
+      if (ArrayBuffer.isView(string) || isInstance(string, ArrayBuffer)) {
+        return string.byteLength;
+      }
+      if (typeof string !== "string") {
+        throw new TypeError(
+          'The "string" argument must be one of type string, Buffer, or ArrayBuffer. Received type ' + typeof string
+        );
+      }
+      const len = string.length;
+      const mustMatch = arguments.length > 2 && arguments[2] === true;
+      if (!mustMatch && len === 0) return 0;
+      let loweredCase = false;
+      for (; ; ) {
+        switch (encoding) {
+          case "ascii":
+          case "latin1":
+          case "binary":
+            return len;
+          case "utf8":
+          case "utf-8":
+            return utf8ToBytes(string).length;
+          case "ucs2":
+          case "ucs-2":
+          case "utf16le":
+          case "utf-16le":
+            return len * 2;
+          case "hex":
+            return len >>> 1;
+          case "base64":
+            return base64ToBytes(string).length;
+          default:
+            if (loweredCase) {
+              return mustMatch ? -1 : utf8ToBytes(string).length;
+            }
+            encoding = ("" + encoding).toLowerCase();
+            loweredCase = true;
+        }
+      }
+    }
+    Buffer4.byteLength = byteLength;
+    function slowToString(encoding, start, end) {
+      let loweredCase = false;
+      if (start === void 0 || start < 0) {
+        start = 0;
+      }
+      if (start > this.length) {
+        return "";
+      }
+      if (end === void 0 || end > this.length) {
+        end = this.length;
+      }
+      if (end <= 0) {
+        return "";
+      }
+      end >>>= 0;
+      start >>>= 0;
+      if (end <= start) {
+        return "";
+      }
+      if (!encoding) encoding = "utf8";
+      while (true) {
+        switch (encoding) {
+          case "hex":
+            return hexSlice(this, start, end);
+          case "utf8":
+          case "utf-8":
+            return utf8Slice(this, start, end);
+          case "ascii":
+            return asciiSlice(this, start, end);
+          case "latin1":
+          case "binary":
+            return latin1Slice(this, start, end);
+          case "base64":
+            return base64Slice(this, start, end);
+          case "ucs2":
+          case "ucs-2":
+          case "utf16le":
+          case "utf-16le":
+            return utf16leSlice(this, start, end);
+          default:
+            if (loweredCase) throw new TypeError("Unknown encoding: " + encoding);
+            encoding = (encoding + "").toLowerCase();
+            loweredCase = true;
+        }
+      }
+    }
+    Buffer4.prototype._isBuffer = true;
+    function swap(b, n, m) {
+      const i = b[n];
+      b[n] = b[m];
+      b[m] = i;
+    }
+    Buffer4.prototype.swap16 = function swap16() {
+      const len = this.length;
+      if (len % 2 !== 0) {
+        throw new RangeError("Buffer size must be a multiple of 16-bits");
+      }
+      for (let i = 0; i < len; i += 2) {
+        swap(this, i, i + 1);
+      }
+      return this;
+    };
+    Buffer4.prototype.swap32 = function swap32() {
+      const len = this.length;
+      if (len % 4 !== 0) {
+        throw new RangeError("Buffer size must be a multiple of 32-bits");
+      }
+      for (let i = 0; i < len; i += 4) {
+        swap(this, i, i + 3);
+        swap(this, i + 1, i + 2);
+      }
+      return this;
+    };
+    Buffer4.prototype.swap64 = function swap64() {
+      const len = this.length;
+      if (len % 8 !== 0) {
+        throw new RangeError("Buffer size must be a multiple of 64-bits");
+      }
+      for (let i = 0; i < len; i += 8) {
+        swap(this, i, i + 7);
+        swap(this, i + 1, i + 6);
+        swap(this, i + 2, i + 5);
+        swap(this, i + 3, i + 4);
+      }
+      return this;
+    };
+    Buffer4.prototype.toString = function toString() {
+      const length = this.length;
+      if (length === 0) return "";
+      if (arguments.length === 0) return utf8Slice(this, 0, length);
+      return slowToString.apply(this, arguments);
+    };
+    Buffer4.prototype.toLocaleString = Buffer4.prototype.toString;
+    Buffer4.prototype.equals = function equals(b) {
+      if (!Buffer4.isBuffer(b)) throw new TypeError("Argument must be a Buffer");
+      if (this === b) return true;
+      return Buffer4.compare(this, b) === 0;
+    };
+    Buffer4.prototype.inspect = function inspect() {
+      let str = "";
+      const max = exports.INSPECT_MAX_BYTES;
+      str = this.toString("hex", 0, max).replace(/(.{2})/g, "$1 ").trim();
+      if (this.length > max) str += " ... ";
+      return "<Buffer " + str + ">";
+    };
+    if (customInspectSymbol) {
+      Buffer4.prototype[customInspectSymbol] = Buffer4.prototype.inspect;
+    }
+    Buffer4.prototype.compare = function compare(target, start, end, thisStart, thisEnd) {
+      if (isInstance(target, Uint8Array)) {
+        target = Buffer4.from(target, target.offset, target.byteLength);
+      }
+      if (!Buffer4.isBuffer(target)) {
+        throw new TypeError(
+          'The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof target
+        );
+      }
+      if (start === void 0) {
+        start = 0;
+      }
+      if (end === void 0) {
+        end = target ? target.length : 0;
+      }
+      if (thisStart === void 0) {
+        thisStart = 0;
+      }
+      if (thisEnd === void 0) {
+        thisEnd = this.length;
+      }
+      if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+        throw new RangeError("out of range index");
+      }
+      if (thisStart >= thisEnd && start >= end) {
+        return 0;
+      }
+      if (thisStart >= thisEnd) {
+        return -1;
+      }
+      if (start >= end) {
+        return 1;
+      }
+      start >>>= 0;
+      end >>>= 0;
+      thisStart >>>= 0;
+      thisEnd >>>= 0;
+      if (this === target) return 0;
+      let x = thisEnd - thisStart;
+      let y = end - start;
+      const len = Math.min(x, y);
+      const thisCopy = this.slice(thisStart, thisEnd);
+      const targetCopy = target.slice(start, end);
+      for (let i = 0; i < len; ++i) {
+        if (thisCopy[i] !== targetCopy[i]) {
+          x = thisCopy[i];
+          y = targetCopy[i];
+          break;
+        }
+      }
+      if (x < y) return -1;
+      if (y < x) return 1;
+      return 0;
+    };
+    function bidirectionalIndexOf(buffer, val, byteOffset, encoding, dir) {
+      if (buffer.length === 0) return -1;
+      if (typeof byteOffset === "string") {
+        encoding = byteOffset;
+        byteOffset = 0;
+      } else if (byteOffset > 2147483647) {
+        byteOffset = 2147483647;
+      } else if (byteOffset < -2147483648) {
+        byteOffset = -2147483648;
+      }
+      byteOffset = +byteOffset;
+      if (numberIsNaN(byteOffset)) {
+        byteOffset = dir ? 0 : buffer.length - 1;
+      }
+      if (byteOffset < 0) byteOffset = buffer.length + byteOffset;
+      if (byteOffset >= buffer.length) {
+        if (dir) return -1;
+        else byteOffset = buffer.length - 1;
+      } else if (byteOffset < 0) {
+        if (dir) byteOffset = 0;
+        else return -1;
+      }
+      if (typeof val === "string") {
+        val = Buffer4.from(val, encoding);
+      }
+      if (Buffer4.isBuffer(val)) {
+        if (val.length === 0) {
+          return -1;
+        }
+        return arrayIndexOf(buffer, val, byteOffset, encoding, dir);
+      } else if (typeof val === "number") {
+        val = val & 255;
+        if (typeof Uint8Array.prototype.indexOf === "function") {
+          if (dir) {
+            return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset);
+          } else {
+            return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset);
+          }
+        }
+        return arrayIndexOf(buffer, [val], byteOffset, encoding, dir);
+      }
+      throw new TypeError("val must be string, number or Buffer");
+    }
+    function arrayIndexOf(arr, val, byteOffset, encoding, dir) {
+      let indexSize = 1;
+      let arrLength = arr.length;
+      let valLength = val.length;
+      if (encoding !== void 0) {
+        encoding = String(encoding).toLowerCase();
+        if (encoding === "ucs2" || encoding === "ucs-2" || encoding === "utf16le" || encoding === "utf-16le") {
+          if (arr.length < 2 || val.length < 2) {
+            return -1;
+          }
+          indexSize = 2;
+          arrLength /= 2;
+          valLength /= 2;
+          byteOffset /= 2;
+        }
+      }
+      function read(buf, i2) {
+        if (indexSize === 1) {
+          return buf[i2];
+        } else {
+          return buf.readUInt16BE(i2 * indexSize);
+        }
+      }
+      let i;
+      if (dir) {
+        let foundIndex = -1;
+        for (i = byteOffset; i < arrLength; i++) {
+          if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+            if (foundIndex === -1) foundIndex = i;
+            if (i - foundIndex + 1 === valLength) return foundIndex * indexSize;
+          } else {
+            if (foundIndex !== -1) i -= i - foundIndex;
+            foundIndex = -1;
+          }
+        }
+      } else {
+        if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength;
+        for (i = byteOffset; i >= 0; i--) {
+          let found = true;
+          for (let j = 0; j < valLength; j++) {
+            if (read(arr, i + j) !== read(val, j)) {
+              found = false;
+              break;
+            }
+          }
+          if (found) return i;
+        }
+      }
+      return -1;
+    }
+    Buffer4.prototype.includes = function includes(val, byteOffset, encoding) {
+      return this.indexOf(val, byteOffset, encoding) !== -1;
+    };
+    Buffer4.prototype.indexOf = function indexOf(val, byteOffset, encoding) {
+      return bidirectionalIndexOf(this, val, byteOffset, encoding, true);
+    };
+    Buffer4.prototype.lastIndexOf = function lastIndexOf(val, byteOffset, encoding) {
+      return bidirectionalIndexOf(this, val, byteOffset, encoding, false);
+    };
+    function hexWrite(buf, string, offset, length) {
+      offset = Number(offset) || 0;
+      const remaining = buf.length - offset;
+      if (!length) {
+        length = remaining;
+      } else {
+        length = Number(length);
+        if (length > remaining) {
+          length = remaining;
+        }
+      }
+      const strLen = string.length;
+      if (length > strLen / 2) {
+        length = strLen / 2;
+      }
+      let i;
+      for (i = 0; i < length; ++i) {
+        const parsed = parseInt(string.substr(i * 2, 2), 16);
+        if (numberIsNaN(parsed)) return i;
+        buf[offset + i] = parsed;
+      }
+      return i;
+    }
+    function utf8Write(buf, string, offset, length) {
+      return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length);
+    }
+    function asciiWrite(buf, string, offset, length) {
+      return blitBuffer(asciiToBytes(string), buf, offset, length);
+    }
+    function base64Write(buf, string, offset, length) {
+      return blitBuffer(base64ToBytes(string), buf, offset, length);
+    }
+    function ucs2Write(buf, string, offset, length) {
+      return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length);
+    }
+    Buffer4.prototype.write = function write(string, offset, length, encoding) {
+      if (offset === void 0) {
+        encoding = "utf8";
+        length = this.length;
+        offset = 0;
+      } else if (length === void 0 && typeof offset === "string") {
+        encoding = offset;
+        length = this.length;
+        offset = 0;
+      } else if (isFinite(offset)) {
+        offset = offset >>> 0;
+        if (isFinite(length)) {
+          length = length >>> 0;
+          if (encoding === void 0) encoding = "utf8";
+        } else {
+          encoding = length;
+          length = void 0;
+        }
+      } else {
+        throw new Error(
+          "Buffer.write(string, encoding, offset[, length]) is no longer supported"
+        );
+      }
+      const remaining = this.length - offset;
+      if (length === void 0 || length > remaining) length = remaining;
+      if (string.length > 0 && (length < 0 || offset < 0) || offset > this.length) {
+        throw new RangeError("Attempt to write outside buffer bounds");
+      }
+      if (!encoding) encoding = "utf8";
+      let loweredCase = false;
+      for (; ; ) {
+        switch (encoding) {
+          case "hex":
+            return hexWrite(this, string, offset, length);
+          case "utf8":
+          case "utf-8":
+            return utf8Write(this, string, offset, length);
+          case "ascii":
+          case "latin1":
+          case "binary":
+            return asciiWrite(this, string, offset, length);
+          case "base64":
+            return base64Write(this, string, offset, length);
+          case "ucs2":
+          case "ucs-2":
+          case "utf16le":
+          case "utf-16le":
+            return ucs2Write(this, string, offset, length);
+          default:
+            if (loweredCase) throw new TypeError("Unknown encoding: " + encoding);
+            encoding = ("" + encoding).toLowerCase();
+            loweredCase = true;
+        }
+      }
+    };
+    Buffer4.prototype.toJSON = function toJSON() {
+      return {
+        type: "Buffer",
+        data: Array.prototype.slice.call(this._arr || this, 0)
+      };
+    };
+    function base64Slice(buf, start, end) {
+      if (start === 0 && end === buf.length) {
+        return base64.fromByteArray(buf);
+      } else {
+        return base64.fromByteArray(buf.slice(start, end));
+      }
+    }
+    function utf8Slice(buf, start, end) {
+      end = Math.min(buf.length, end);
+      const res = [];
+      let i = start;
+      while (i < end) {
+        const firstByte = buf[i];
+        let codePoint = null;
+        let bytesPerSequence = firstByte > 239 ? 4 : firstByte > 223 ? 3 : firstByte > 191 ? 2 : 1;
+        if (i + bytesPerSequence <= end) {
+          let secondByte, thirdByte, fourthByte, tempCodePoint;
+          switch (bytesPerSequence) {
+            case 1:
+              if (firstByte < 128) {
+                codePoint = firstByte;
+              }
+              break;
+            case 2:
+              secondByte = buf[i + 1];
+              if ((secondByte & 192) === 128) {
+                tempCodePoint = (firstByte & 31) << 6 | secondByte & 63;
+                if (tempCodePoint > 127) {
+                  codePoint = tempCodePoint;
+                }
+              }
+              break;
+            case 3:
+              secondByte = buf[i + 1];
+              thirdByte = buf[i + 2];
+              if ((secondByte & 192) === 128 && (thirdByte & 192) === 128) {
+                tempCodePoint = (firstByte & 15) << 12 | (secondByte & 63) << 6 | thirdByte & 63;
+                if (tempCodePoint > 2047 && (tempCodePoint < 55296 || tempCodePoint > 57343)) {
+                  codePoint = tempCodePoint;
+                }
+              }
+              break;
+            case 4:
+              secondByte = buf[i + 1];
+              thirdByte = buf[i + 2];
+              fourthByte = buf[i + 3];
+              if ((secondByte & 192) === 128 && (thirdByte & 192) === 128 && (fourthByte & 192) === 128) {
+                tempCodePoint = (firstByte & 15) << 18 | (secondByte & 63) << 12 | (thirdByte & 63) << 6 | fourthByte & 63;
+                if (tempCodePoint > 65535 && tempCodePoint < 1114112) {
+                  codePoint = tempCodePoint;
+                }
+              }
+          }
+        }
+        if (codePoint === null) {
+          codePoint = 65533;
+          bytesPerSequence = 1;
+        } else if (codePoint > 65535) {
+          codePoint -= 65536;
+          res.push(codePoint >>> 10 & 1023 | 55296);
+          codePoint = 56320 | codePoint & 1023;
+        }
+        res.push(codePoint);
+        i += bytesPerSequence;
+      }
+      return decodeCodePointsArray(res);
+    }
+    var MAX_ARGUMENTS_LENGTH = 4096;
+    function decodeCodePointsArray(codePoints) {
+      const len = codePoints.length;
+      if (len <= MAX_ARGUMENTS_LENGTH) {
+        return String.fromCharCode.apply(String, codePoints);
+      }
+      let res = "";
+      let i = 0;
+      while (i < len) {
+        res += String.fromCharCode.apply(
+          String,
+          codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+        );
+      }
+      return res;
+    }
+    function asciiSlice(buf, start, end) {
+      let ret = "";
+      end = Math.min(buf.length, end);
+      for (let i = start; i < end; ++i) {
+        ret += String.fromCharCode(buf[i] & 127);
+      }
+      return ret;
+    }
+    function latin1Slice(buf, start, end) {
+      let ret = "";
+      end = Math.min(buf.length, end);
+      for (let i = start; i < end; ++i) {
+        ret += String.fromCharCode(buf[i]);
+      }
+      return ret;
+    }
+    function hexSlice(buf, start, end) {
+      const len = buf.length;
+      if (!start || start < 0) start = 0;
+      if (!end || end < 0 || end > len) end = len;
+      let out = "";
+      for (let i = start; i < end; ++i) {
+        out += hexSliceLookupTable[buf[i]];
+      }
+      return out;
+    }
+    function utf16leSlice(buf, start, end) {
+      const bytes = buf.slice(start, end);
+      let res = "";
+      for (let i = 0; i < bytes.length - 1; i += 2) {
+        res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256);
+      }
+      return res;
+    }
+    Buffer4.prototype.slice = function slice(start, end) {
+      const len = this.length;
+      start = ~~start;
+      end = end === void 0 ? len : ~~end;
+      if (start < 0) {
+        start += len;
+        if (start < 0) start = 0;
+      } else if (start > len) {
+        start = len;
+      }
+      if (end < 0) {
+        end += len;
+        if (end < 0) end = 0;
+      } else if (end > len) {
+        end = len;
+      }
+      if (end < start) end = start;
+      const newBuf = this.subarray(start, end);
+      Object.setPrototypeOf(newBuf, Buffer4.prototype);
+      return newBuf;
+    };
+    function checkOffset(offset, ext, length) {
+      if (offset % 1 !== 0 || offset < 0) throw new RangeError("offset is not uint");
+      if (offset + ext > length) throw new RangeError("Trying to access beyond buffer length");
+    }
+    Buffer4.prototype.readUintLE = Buffer4.prototype.readUIntLE = function readUIntLE(offset, byteLength2, noAssert) {
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) checkOffset(offset, byteLength2, this.length);
+      let val = this[offset];
+      let mul = 1;
+      let i = 0;
+      while (++i < byteLength2 && (mul *= 256)) {
+        val += this[offset + i] * mul;
+      }
+      return val;
+    };
+    Buffer4.prototype.readUintBE = Buffer4.prototype.readUIntBE = function readUIntBE(offset, byteLength2, noAssert) {
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) {
+        checkOffset(offset, byteLength2, this.length);
+      }
+      let val = this[offset + --byteLength2];
+      let mul = 1;
+      while (byteLength2 > 0 && (mul *= 256)) {
+        val += this[offset + --byteLength2] * mul;
+      }
+      return val;
+    };
+    Buffer4.prototype.readUint8 = Buffer4.prototype.readUInt8 = function readUInt8(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 1, this.length);
+      return this[offset];
+    };
+    Buffer4.prototype.readUint16LE = Buffer4.prototype.readUInt16LE = function readUInt16LE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 2, this.length);
+      return this[offset] | this[offset + 1] << 8;
+    };
+    Buffer4.prototype.readUint16BE = Buffer4.prototype.readUInt16BE = function readUInt16BE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 2, this.length);
+      return this[offset] << 8 | this[offset + 1];
+    };
+    Buffer4.prototype.readUint32LE = Buffer4.prototype.readUInt32LE = function readUInt32LE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return (this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16) + this[offset + 3] * 16777216;
+    };
+    Buffer4.prototype.readUint32BE = Buffer4.prototype.readUInt32BE = function readUInt32BE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return this[offset] * 16777216 + (this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3]);
+    };
+    Buffer4.prototype.readBigUInt64LE = defineBigIntMethod(function readBigUInt64LE(offset) {
+      offset = offset >>> 0;
+      validateNumber(offset, "offset");
+      const first = this[offset];
+      const last = this[offset + 7];
+      if (first === void 0 || last === void 0) {
+        boundsError(offset, this.length - 8);
+      }
+      const lo = first + this[++offset] * 2 ** 8 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 24;
+      const hi = this[++offset] + this[++offset] * 2 ** 8 + this[++offset] * 2 ** 16 + last * 2 ** 24;
+      return BigInt(lo) + (BigInt(hi) << BigInt(32));
+    });
+    Buffer4.prototype.readBigUInt64BE = defineBigIntMethod(function readBigUInt64BE(offset) {
+      offset = offset >>> 0;
+      validateNumber(offset, "offset");
+      const first = this[offset];
+      const last = this[offset + 7];
+      if (first === void 0 || last === void 0) {
+        boundsError(offset, this.length - 8);
+      }
+      const hi = first * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + this[++offset];
+      const lo = this[++offset] * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + last;
+      return (BigInt(hi) << BigInt(32)) + BigInt(lo);
+    });
+    Buffer4.prototype.readIntLE = function readIntLE(offset, byteLength2, noAssert) {
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) checkOffset(offset, byteLength2, this.length);
+      let val = this[offset];
+      let mul = 1;
+      let i = 0;
+      while (++i < byteLength2 && (mul *= 256)) {
+        val += this[offset + i] * mul;
+      }
+      mul *= 128;
+      if (val >= mul) val -= Math.pow(2, 8 * byteLength2);
+      return val;
+    };
+    Buffer4.prototype.readIntBE = function readIntBE(offset, byteLength2, noAssert) {
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) checkOffset(offset, byteLength2, this.length);
+      let i = byteLength2;
+      let mul = 1;
+      let val = this[offset + --i];
+      while (i > 0 && (mul *= 256)) {
+        val += this[offset + --i] * mul;
+      }
+      mul *= 128;
+      if (val >= mul) val -= Math.pow(2, 8 * byteLength2);
+      return val;
+    };
+    Buffer4.prototype.readInt8 = function readInt8(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 1, this.length);
+      if (!(this[offset] & 128)) return this[offset];
+      return (255 - this[offset] + 1) * -1;
+    };
+    Buffer4.prototype.readInt16LE = function readInt16LE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 2, this.length);
+      const val = this[offset] | this[offset + 1] << 8;
+      return val & 32768 ? val | 4294901760 : val;
+    };
+    Buffer4.prototype.readInt16BE = function readInt16BE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 2, this.length);
+      const val = this[offset + 1] | this[offset] << 8;
+      return val & 32768 ? val | 4294901760 : val;
+    };
+    Buffer4.prototype.readInt32LE = function readInt32LE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16 | this[offset + 3] << 24;
+    };
+    Buffer4.prototype.readInt32BE = function readInt32BE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return this[offset] << 24 | this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3];
+    };
+    Buffer4.prototype.readBigInt64LE = defineBigIntMethod(function readBigInt64LE(offset) {
+      offset = offset >>> 0;
+      validateNumber(offset, "offset");
+      const first = this[offset];
+      const last = this[offset + 7];
+      if (first === void 0 || last === void 0) {
+        boundsError(offset, this.length - 8);
+      }
+      const val = this[offset + 4] + this[offset + 5] * 2 ** 8 + this[offset + 6] * 2 ** 16 + (last << 24);
+      return (BigInt(val) << BigInt(32)) + BigInt(first + this[++offset] * 2 ** 8 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 24);
+    });
+    Buffer4.prototype.readBigInt64BE = defineBigIntMethod(function readBigInt64BE(offset) {
+      offset = offset >>> 0;
+      validateNumber(offset, "offset");
+      const first = this[offset];
+      const last = this[offset + 7];
+      if (first === void 0 || last === void 0) {
+        boundsError(offset, this.length - 8);
+      }
+      const val = (first << 24) + // Overflow
+      this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + this[++offset];
+      return (BigInt(val) << BigInt(32)) + BigInt(this[++offset] * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + last);
+    });
+    Buffer4.prototype.readFloatLE = function readFloatLE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return ieee754.read(this, offset, true, 23, 4);
+    };
+    Buffer4.prototype.readFloatBE = function readFloatBE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 4, this.length);
+      return ieee754.read(this, offset, false, 23, 4);
+    };
+    Buffer4.prototype.readDoubleLE = function readDoubleLE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 8, this.length);
+      return ieee754.read(this, offset, true, 52, 8);
+    };
+    Buffer4.prototype.readDoubleBE = function readDoubleBE(offset, noAssert) {
+      offset = offset >>> 0;
+      if (!noAssert) checkOffset(offset, 8, this.length);
+      return ieee754.read(this, offset, false, 52, 8);
+    };
+    function checkInt(buf, value, offset, ext, max, min) {
+      if (!Buffer4.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance');
+      if (value > max || value < min) throw new RangeError('"value" argument is out of bounds');
+      if (offset + ext > buf.length) throw new RangeError("Index out of range");
+    }
+    Buffer4.prototype.writeUintLE = Buffer4.prototype.writeUIntLE = function writeUIntLE(value, offset, byteLength2, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) {
+        const maxBytes = Math.pow(2, 8 * byteLength2) - 1;
+        checkInt(this, value, offset, byteLength2, maxBytes, 0);
+      }
+      let mul = 1;
+      let i = 0;
+      this[offset] = value & 255;
+      while (++i < byteLength2 && (mul *= 256)) {
+        this[offset + i] = value / mul & 255;
+      }
+      return offset + byteLength2;
+    };
+    Buffer4.prototype.writeUintBE = Buffer4.prototype.writeUIntBE = function writeUIntBE(value, offset, byteLength2, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      byteLength2 = byteLength2 >>> 0;
+      if (!noAssert) {
+        const maxBytes = Math.pow(2, 8 * byteLength2) - 1;
+        checkInt(this, value, offset, byteLength2, maxBytes, 0);
+      }
+      let i = byteLength2 - 1;
+      let mul = 1;
+      this[offset + i] = value & 255;
+      while (--i >= 0 && (mul *= 256)) {
+        this[offset + i] = value / mul & 255;
+      }
+      return offset + byteLength2;
+    };
+    Buffer4.prototype.writeUint8 = Buffer4.prototype.writeUInt8 = function writeUInt8(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 1, 255, 0);
+      this[offset] = value & 255;
+      return offset + 1;
+    };
+    Buffer4.prototype.writeUint16LE = Buffer4.prototype.writeUInt16LE = function writeUInt16LE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 2, 65535, 0);
+      this[offset] = value & 255;
+      this[offset + 1] = value >>> 8;
+      return offset + 2;
+    };
+    Buffer4.prototype.writeUint16BE = Buffer4.prototype.writeUInt16BE = function writeUInt16BE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 2, 65535, 0);
+      this[offset] = value >>> 8;
+      this[offset + 1] = value & 255;
+      return offset + 2;
+    };
+    Buffer4.prototype.writeUint32LE = Buffer4.prototype.writeUInt32LE = function writeUInt32LE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 4, 4294967295, 0);
+      this[offset + 3] = value >>> 24;
+      this[offset + 2] = value >>> 16;
+      this[offset + 1] = value >>> 8;
+      this[offset] = value & 255;
+      return offset + 4;
+    };
+    Buffer4.prototype.writeUint32BE = Buffer4.prototype.writeUInt32BE = function writeUInt32BE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 4, 4294967295, 0);
+      this[offset] = value >>> 24;
+      this[offset + 1] = value >>> 16;
+      this[offset + 2] = value >>> 8;
+      this[offset + 3] = value & 255;
+      return offset + 4;
+    };
+    function wrtBigUInt64LE(buf, value, offset, min, max) {
+      checkIntBI(value, min, max, buf, offset, 7);
+      let lo = Number(value & BigInt(4294967295));
+      buf[offset++] = lo;
+      lo = lo >> 8;
+      buf[offset++] = lo;
+      lo = lo >> 8;
+      buf[offset++] = lo;
+      lo = lo >> 8;
+      buf[offset++] = lo;
+      let hi = Number(value >> BigInt(32) & BigInt(4294967295));
+      buf[offset++] = hi;
+      hi = hi >> 8;
+      buf[offset++] = hi;
+      hi = hi >> 8;
+      buf[offset++] = hi;
+      hi = hi >> 8;
+      buf[offset++] = hi;
+      return offset;
+    }
+    function wrtBigUInt64BE(buf, value, offset, min, max) {
+      checkIntBI(value, min, max, buf, offset, 7);
+      let lo = Number(value & BigInt(4294967295));
+      buf[offset + 7] = lo;
+      lo = lo >> 8;
+      buf[offset + 6] = lo;
+      lo = lo >> 8;
+      buf[offset + 5] = lo;
+      lo = lo >> 8;
+      buf[offset + 4] = lo;
+      let hi = Number(value >> BigInt(32) & BigInt(4294967295));
+      buf[offset + 3] = hi;
+      hi = hi >> 8;
+      buf[offset + 2] = hi;
+      hi = hi >> 8;
+      buf[offset + 1] = hi;
+      hi = hi >> 8;
+      buf[offset] = hi;
+      return offset + 8;
+    }
+    Buffer4.prototype.writeBigUInt64LE = defineBigIntMethod(function writeBigUInt64LE(value, offset = 0) {
+      return wrtBigUInt64LE(this, value, offset, BigInt(0), BigInt("0xffffffffffffffff"));
+    });
+    Buffer4.prototype.writeBigUInt64BE = defineBigIntMethod(function writeBigUInt64BE(value, offset = 0) {
+      return wrtBigUInt64BE(this, value, offset, BigInt(0), BigInt("0xffffffffffffffff"));
+    });
+    Buffer4.prototype.writeIntLE = function writeIntLE(value, offset, byteLength2, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) {
+        const limit = Math.pow(2, 8 * byteLength2 - 1);
+        checkInt(this, value, offset, byteLength2, limit - 1, -limit);
+      }
+      let i = 0;
+      let mul = 1;
+      let sub = 0;
+      this[offset] = value & 255;
+      while (++i < byteLength2 && (mul *= 256)) {
+        if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+          sub = 1;
+        }
+        this[offset + i] = (value / mul >> 0) - sub & 255;
+      }
+      return offset + byteLength2;
+    };
+    Buffer4.prototype.writeIntBE = function writeIntBE(value, offset, byteLength2, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) {
+        const limit = Math.pow(2, 8 * byteLength2 - 1);
+        checkInt(this, value, offset, byteLength2, limit - 1, -limit);
+      }
+      let i = byteLength2 - 1;
+      let mul = 1;
+      let sub = 0;
+      this[offset + i] = value & 255;
+      while (--i >= 0 && (mul *= 256)) {
+        if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+          sub = 1;
+        }
+        this[offset + i] = (value / mul >> 0) - sub & 255;
+      }
+      return offset + byteLength2;
+    };
+    Buffer4.prototype.writeInt8 = function writeInt8(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 1, 127, -128);
+      if (value < 0) value = 255 + value + 1;
+      this[offset] = value & 255;
+      return offset + 1;
+    };
+    Buffer4.prototype.writeInt16LE = function writeInt16LE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 2, 32767, -32768);
+      this[offset] = value & 255;
+      this[offset + 1] = value >>> 8;
+      return offset + 2;
+    };
+    Buffer4.prototype.writeInt16BE = function writeInt16BE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 2, 32767, -32768);
+      this[offset] = value >>> 8;
+      this[offset + 1] = value & 255;
+      return offset + 2;
+    };
+    Buffer4.prototype.writeInt32LE = function writeInt32LE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 4, 2147483647, -2147483648);
+      this[offset] = value & 255;
+      this[offset + 1] = value >>> 8;
+      this[offset + 2] = value >>> 16;
+      this[offset + 3] = value >>> 24;
+      return offset + 4;
+    };
+    Buffer4.prototype.writeInt32BE = function writeInt32BE(value, offset, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) checkInt(this, value, offset, 4, 2147483647, -2147483648);
+      if (value < 0) value = 4294967295 + value + 1;
+      this[offset] = value >>> 24;
+      this[offset + 1] = value >>> 16;
+      this[offset + 2] = value >>> 8;
+      this[offset + 3] = value & 255;
+      return offset + 4;
+    };
+    Buffer4.prototype.writeBigInt64LE = defineBigIntMethod(function writeBigInt64LE(value, offset = 0) {
+      return wrtBigUInt64LE(this, value, offset, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
+    });
+    Buffer4.prototype.writeBigInt64BE = defineBigIntMethod(function writeBigInt64BE(value, offset = 0) {
+      return wrtBigUInt64BE(this, value, offset, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
+    });
+    function checkIEEE754(buf, value, offset, ext, max, min) {
+      if (offset + ext > buf.length) throw new RangeError("Index out of range");
+      if (offset < 0) throw new RangeError("Index out of range");
+    }
+    function writeFloat(buf, value, offset, littleEndian, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) {
+        checkIEEE754(buf, value, offset, 4, 34028234663852886e22, -34028234663852886e22);
+      }
+      ieee754.write(buf, value, offset, littleEndian, 23, 4);
+      return offset + 4;
+    }
+    Buffer4.prototype.writeFloatLE = function writeFloatLE(value, offset, noAssert) {
+      return writeFloat(this, value, offset, true, noAssert);
+    };
+    Buffer4.prototype.writeFloatBE = function writeFloatBE(value, offset, noAssert) {
+      return writeFloat(this, value, offset, false, noAssert);
+    };
+    function writeDouble(buf, value, offset, littleEndian, noAssert) {
+      value = +value;
+      offset = offset >>> 0;
+      if (!noAssert) {
+        checkIEEE754(buf, value, offset, 8, 17976931348623157e292, -17976931348623157e292);
+      }
+      ieee754.write(buf, value, offset, littleEndian, 52, 8);
+      return offset + 8;
+    }
+    Buffer4.prototype.writeDoubleLE = function writeDoubleLE(value, offset, noAssert) {
+      return writeDouble(this, value, offset, true, noAssert);
+    };
+    Buffer4.prototype.writeDoubleBE = function writeDoubleBE(value, offset, noAssert) {
+      return writeDouble(this, value, offset, false, noAssert);
+    };
+    Buffer4.prototype.copy = function copy(target, targetStart, start, end) {
+      if (!Buffer4.isBuffer(target)) throw new TypeError("argument should be a Buffer");
+      if (!start) start = 0;
+      if (!end && end !== 0) end = this.length;
+      if (targetStart >= target.length) targetStart = target.length;
+      if (!targetStart) targetStart = 0;
+      if (end > 0 && end < start) end = start;
+      if (end === start) return 0;
+      if (target.length === 0 || this.length === 0) return 0;
+      if (targetStart < 0) {
+        throw new RangeError("targetStart out of bounds");
+      }
+      if (start < 0 || start >= this.length) throw new RangeError("Index out of range");
+      if (end < 0) throw new RangeError("sourceEnd out of bounds");
+      if (end > this.length) end = this.length;
+      if (target.length - targetStart < end - start) {
+        end = target.length - targetStart + start;
+      }
+      const len = end - start;
+      if (this === target && typeof Uint8Array.prototype.copyWithin === "function") {
+        this.copyWithin(targetStart, start, end);
+      } else {
+        Uint8Array.prototype.set.call(
+          target,
+          this.subarray(start, end),
+          targetStart
+        );
+      }
+      return len;
+    };
+    Buffer4.prototype.fill = function fill(val, start, end, encoding) {
+      if (typeof val === "string") {
+        if (typeof start === "string") {
+          encoding = start;
+          start = 0;
+          end = this.length;
+        } else if (typeof end === "string") {
+          encoding = end;
+          end = this.length;
+        }
+        if (encoding !== void 0 && typeof encoding !== "string") {
+          throw new TypeError("encoding must be a string");
+        }
+        if (typeof encoding === "string" && !Buffer4.isEncoding(encoding)) {
+          throw new TypeError("Unknown encoding: " + encoding);
+        }
+        if (val.length === 1) {
+          const code = val.charCodeAt(0);
+          if (encoding === "utf8" && code < 128 || encoding === "latin1") {
+            val = code;
+          }
+        }
+      } else if (typeof val === "number") {
+        val = val & 255;
+      } else if (typeof val === "boolean") {
+        val = Number(val);
+      }
+      if (start < 0 || this.length < start || this.length < end) {
+        throw new RangeError("Out of range index");
+      }
+      if (end <= start) {
+        return this;
+      }
+      start = start >>> 0;
+      end = end === void 0 ? this.length : end >>> 0;
+      if (!val) val = 0;
+      let i;
+      if (typeof val === "number") {
+        for (i = start; i < end; ++i) {
+          this[i] = val;
+        }
+      } else {
+        const bytes = Buffer4.isBuffer(val) ? val : Buffer4.from(val, encoding);
+        const len = bytes.length;
+        if (len === 0) {
+          throw new TypeError('The value "' + val + '" is invalid for argument "value"');
+        }
+        for (i = 0; i < end - start; ++i) {
+          this[i + start] = bytes[i % len];
+        }
+      }
+      return this;
+    };
+    var errors = {};
+    function E(sym, getMessage, Base) {
+      errors[sym] = class NodeError extends Base {
+        constructor() {
+          super();
+          Object.defineProperty(this, "message", {
+            value: getMessage.apply(this, arguments),
+            writable: true,
+            configurable: true
+          });
+          this.name = `${this.name} [${sym}]`;
+          this.stack;
+          delete this.name;
+        }
+        get code() {
+          return sym;
+        }
+        set code(value) {
+          Object.defineProperty(this, "code", {
+            configurable: true,
+            enumerable: true,
+            value,
+            writable: true
+          });
+        }
+        toString() {
+          return `${this.name} [${sym}]: ${this.message}`;
+        }
+      };
+    }
+    E(
+      "ERR_BUFFER_OUT_OF_BOUNDS",
+      function(name) {
+        if (name) {
+          return `${name} is outside of buffer bounds`;
+        }
+        return "Attempt to access memory outside buffer bounds";
+      },
+      RangeError
+    );
+    E(
+      "ERR_INVALID_ARG_TYPE",
+      function(name, actual) {
+        return `The "${name}" argument must be of type number. Received type ${typeof actual}`;
+      },
+      TypeError
+    );
+    E(
+      "ERR_OUT_OF_RANGE",
+      function(str, range, input) {
+        let msg = `The value of "${str}" is out of range.`;
+        let received = input;
+        if (Number.isInteger(input) && Math.abs(input) > 2 ** 32) {
+          received = addNumericalSeparator(String(input));
+        } else if (typeof input === "bigint") {
+          received = String(input);
+          if (input > BigInt(2) ** BigInt(32) || input < -(BigInt(2) ** BigInt(32))) {
+            received = addNumericalSeparator(received);
+          }
+          received += "n";
+        }
+        msg += ` It must be ${range}. Received ${received}`;
+        return msg;
+      },
+      RangeError
+    );
+    function addNumericalSeparator(val) {
+      let res = "";
+      let i = val.length;
+      const start = val[0] === "-" ? 1 : 0;
+      for (; i >= start + 4; i -= 3) {
+        res = `_${val.slice(i - 3, i)}${res}`;
+      }
+      return `${val.slice(0, i)}${res}`;
+    }
+    function checkBounds(buf, offset, byteLength2) {
+      validateNumber(offset, "offset");
+      if (buf[offset] === void 0 || buf[offset + byteLength2] === void 0) {
+        boundsError(offset, buf.length - (byteLength2 + 1));
+      }
+    }
+    function checkIntBI(value, min, max, buf, offset, byteLength2) {
+      if (value > max || value < min) {
+        const n = typeof min === "bigint" ? "n" : "";
+        let range;
+        if (byteLength2 > 3) {
+          if (min === 0 || min === BigInt(0)) {
+            range = `>= 0${n} and < 2${n} ** ${(byteLength2 + 1) * 8}${n}`;
+          } else {
+            range = `>= -(2${n} ** ${(byteLength2 + 1) * 8 - 1}${n}) and < 2 ** ${(byteLength2 + 1) * 8 - 1}${n}`;
+          }
+        } else {
+          range = `>= ${min}${n} and <= ${max}${n}`;
+        }
+        throw new errors.ERR_OUT_OF_RANGE("value", range, value);
+      }
+      checkBounds(buf, offset, byteLength2);
+    }
+    function validateNumber(value, name) {
+      if (typeof value !== "number") {
+        throw new errors.ERR_INVALID_ARG_TYPE(name, "number", value);
+      }
+    }
+    function boundsError(value, length, type) {
+      if (Math.floor(value) !== value) {
+        validateNumber(value, type);
+        throw new errors.ERR_OUT_OF_RANGE(type || "offset", "an integer", value);
+      }
+      if (length < 0) {
+        throw new errors.ERR_BUFFER_OUT_OF_BOUNDS();
+      }
+      throw new errors.ERR_OUT_OF_RANGE(
+        type || "offset",
+        `>= ${type ? 1 : 0} and <= ${length}`,
+        value
+      );
+    }
+    var INVALID_BASE64_RE = /[^+/0-9A-Za-z-_]/g;
+    function base64clean(str) {
+      str = str.split("=")[0];
+      str = str.trim().replace(INVALID_BASE64_RE, "");
+      if (str.length < 2) return "";
+      while (str.length % 4 !== 0) {
+        str = str + "=";
+      }
+      return str;
+    }
+    function utf8ToBytes(string, units) {
+      units = units || Infinity;
+      let codePoint;
+      const length = string.length;
+      let leadSurrogate = null;
+      const bytes = [];
+      for (let i = 0; i < length; ++i) {
+        codePoint = string.charCodeAt(i);
+        if (codePoint > 55295 && codePoint < 57344) {
+          if (!leadSurrogate) {
+            if (codePoint > 56319) {
+              if ((units -= 3) > -1) bytes.push(239, 191, 189);
+              continue;
+            } else if (i + 1 === length) {
+              if ((units -= 3) > -1) bytes.push(239, 191, 189);
+              continue;
+            }
+            leadSurrogate = codePoint;
+            continue;
+          }
+          if (codePoint < 56320) {
+            if ((units -= 3) > -1) bytes.push(239, 191, 189);
+            leadSurrogate = codePoint;
+            continue;
+          }
+          codePoint = (leadSurrogate - 55296 << 10 | codePoint - 56320) + 65536;
+        } else if (leadSurrogate) {
+          if ((units -= 3) > -1) bytes.push(239, 191, 189);
+        }
+        leadSurrogate = null;
+        if (codePoint < 128) {
+          if ((units -= 1) < 0) break;
+          bytes.push(codePoint);
+        } else if (codePoint < 2048) {
+          if ((units -= 2) < 0) break;
+          bytes.push(
+            codePoint >> 6 | 192,
+            codePoint & 63 | 128
+          );
+        } else if (codePoint < 65536) {
+          if ((units -= 3) < 0) break;
+          bytes.push(
+            codePoint >> 12 | 224,
+            codePoint >> 6 & 63 | 128,
+            codePoint & 63 | 128
+          );
+        } else if (codePoint < 1114112) {
+          if ((units -= 4) < 0) break;
+          bytes.push(
+            codePoint >> 18 | 240,
+            codePoint >> 12 & 63 | 128,
+            codePoint >> 6 & 63 | 128,
+            codePoint & 63 | 128
+          );
+        } else {
+          throw new Error("Invalid code point");
+        }
+      }
+      return bytes;
+    }
+    function asciiToBytes(str) {
+      const byteArray = [];
+      for (let i = 0; i < str.length; ++i) {
+        byteArray.push(str.charCodeAt(i) & 255);
+      }
+      return byteArray;
+    }
+    function utf16leToBytes(str, units) {
+      let c, hi, lo;
+      const byteArray = [];
+      for (let i = 0; i < str.length; ++i) {
+        if ((units -= 2) < 0) break;
+        c = str.charCodeAt(i);
+        hi = c >> 8;
+        lo = c % 256;
+        byteArray.push(lo);
+        byteArray.push(hi);
+      }
+      return byteArray;
+    }
+    function base64ToBytes(str) {
+      return base64.toByteArray(base64clean(str));
+    }
+    function blitBuffer(src, dst, offset, length) {
+      let i;
+      for (i = 0; i < length; ++i) {
+        if (i + offset >= dst.length || i >= src.length) break;
+        dst[i + offset] = src[i];
+      }
+      return i;
+    }
+    function isInstance(obj, type) {
+      return obj instanceof type || obj != null && obj.constructor != null && obj.constructor.name != null && obj.constructor.name === type.name;
+    }
+    function numberIsNaN(obj) {
+      return obj !== obj;
+    }
+    var hexSliceLookupTable = (function() {
+      const alphabet = "0123456789abcdef";
+      const table = new Array(256);
+      for (let i = 0; i < 16; ++i) {
+        const i16 = i * 16;
+        for (let j = 0; j < 16; ++j) {
+          table[i16 + j] = alphabet[i] + alphabet[j];
+        }
+      }
+      return table;
+    })();
+    function defineBigIntMethod(fn) {
+      return typeof BigInt === "undefined" ? BufferBigIntNotDefined : fn;
+    }
+    function BufferBigIntNotDefined() {
+      throw new Error("BigInt not supported");
+    }
+  }
+});
+
 // src/vendors/Sub-Store/backend/src/utils/index.js
 var IPV4_REGEX = /^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)(\.(?!$)|$)){4}$/;
 var IPV6_REGEX = /^(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|:((:[0-9a-fA-F]{1,4}){1,7}|:)|fe80:(:[0-9a-fA-F]{0,4}){0,4}%[0-9a-zA-Z]{1,}|::(ffff(:0{1,4}){0,1}:){0,1}((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9])\.){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))$/;
@@ -410,7 +2216,7 @@ var grammars = String.raw`
     }
 }
 
-start = (anytls/shadowsocks/vmess/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
+start = (masque/anytls/shadowsocks/vmess/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
     return proxy;
 }
 
@@ -500,8 +2306,12 @@ anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_prox
     proxy.type = "anytls";
     proxy.tls = true;
 }
-trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/others)* {
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
     proxy.type = "trusttunnel";
+    proxy.tls = true;
+}
+masque = tag equals "masque" address (usernamek/passwordk/port_hopping_interval/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/fast_open/tfo/udp_relay/ecn/block_quic/others)* {
+    proxy.type = "masque-surge";
     proxy.tls = true;
 }
 
@@ -660,6 +2470,7 @@ alpn = comma "alpn" equals match:quoted_value {
     const values = parseAlpn(match);
     if (values.length > 0) proxy.alpn = values;
 }
+h3 = comma "h3" equals flag:bool { if (flag) proxy.network = "h3"; }
 quoted_value = '"' match:$[^"]* '"' { return match; } / "'" match:$[^']* "'" { return match; } / match:$[^,]+ { return match; }
 uuidk = comma "uuid" equals match:[^,]+ { proxy.uuid = match.join(""); }
 salamander_password = comma "salamander-password" equals match:[^,]+ { proxy['obfs-password'] = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); proxy.obfs = 'salamander'; }
@@ -961,7 +2772,22 @@ function getParser2() {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/qx.js
+var import_buffer = __toESM(require_buffer());
 import peggy3 from "peggy";
+function decodeQxAlpn(raw) {
+  if (typeof raw !== "string") return void 0;
+  const hex = raw.trim().replace(/:/g, "");
+  if (!hex || hex.length % 2 || /[^0-9a-f]/i.test(hex)) return void 0;
+  const bytes = import_buffer.Buffer.from(hex, "hex");
+  const alpn = [];
+  for (let offset = 0; offset < bytes.length; ) {
+    const length = bytes[offset++];
+    if (!length || offset + length > bytes.length) return void 0;
+    alpn.push(bytes.subarray(offset, offset + length).toString("utf8"));
+    offset += length;
+  }
+  return alpn;
+}
 var grammars3 = String.raw`
 // global initializer
 {{
@@ -1133,7 +2959,8 @@ port = digits:[0-9]+ {
 }
 
 username = comma "username" equals username:[^,]+ { proxy.username = username.join("").trim(); }
-password = comma "password" equals password:[^,]+ { proxy.password = password.join("").trim(); }
+password = comma "password" equals password:$((!next_parameter .)+) { proxy.password = password.trim(); }
+next_parameter = "," _ [^=,]+ equals
 uuid = comma "password" equals uuid:[^,]+ { proxy.uuid = uuid.join("").trim(); }
 
 method = comma "method" equals cipher:cipher { 
@@ -1223,7 +3050,15 @@ bool = b:("true"/"false") { return b === "true" }
 var parser3;
 function getParser3() {
   if (!parser3) {
-    parser3 = peggy3.generate(grammars3);
+    const generated = peggy3.generate(grammars3);
+    parser3 = {
+      parse(input, options) {
+        const proxy = generated.parse(input, options);
+        const alpn = decodeQxAlpn(proxy["tls-alpn"]);
+        if (alpn) proxy.alpn = alpn;
+        return proxy;
+      }
+    };
   }
   return parser3;
 }
@@ -1250,8 +3085,7 @@ function splitQueryPart(part) {
   };
 }
 function parseSafeIntegerValue(value) {
-  if (!/^\d+$/.test(`${value}`))
-    return null;
+  if (!/^\d+$/.test(`${value}`)) return null;
   const parsed = parseInt(`${value}`, 10);
   return Number.isSafeInteger(parsed) ? parsed : null;
 }
@@ -1269,8 +3103,7 @@ function extractPathQueryParam(rawPath, paramName) {
   const keptParts = [];
   let value = "";
   for (const part of query.split("&")) {
-    if (part === "")
-      continue;
+    if (part === "") continue;
     const parsed = splitQueryPart(part);
     if (parsed.key === paramName) {
       if (value === "" && parsed.value !== "") {
@@ -1288,12 +3121,10 @@ function extractPathQueryParam(rawPath, paramName) {
 function getPathQueryParam(rawPath, paramName) {
   const path = rawPath == null ? "" : `${rawPath}`;
   const queryIndex = path.indexOf("?");
-  if (queryIndex === -1)
-    return "";
+  if (queryIndex === -1) return "";
   const query = path.slice(queryIndex + 1);
   for (const part of query.split("&")) {
-    if (part === "")
-      continue;
+    if (part === "") continue;
     const parsed = splitQueryPart(part);
     if (parsed.key === paramName && parsed.value !== "") {
       return parsed.value;
@@ -1328,8 +3159,7 @@ function setPathQueryParam(rawPath, paramName, value) {
 }
 function normalizeWebSocketEarlyDataPath(wsOpts) {
   const networkPath = wsOpts?.path;
-  if (!wsOpts)
-    return;
+  if (!wsOpts) return;
   const { value: ed, parsed: maxEarlyData } = getSafeIntegerPathQueryParam(
     networkPath,
     "ed"
@@ -1346,8 +3176,7 @@ function normalizeWebSocketEarlyDataPath(wsOpts) {
     delete wsOpts["max-early-data"];
     return;
   }
-  if (ed === "")
-    return;
+  if (ed === "") return;
   wsOpts.path = extractPathQueryParam(networkPath, "ed").path;
   if (wsOpts["early-data-header-name"] == null) {
     wsOpts["early-data-header-name"] = "Sec-WebSocket-Protocol";
@@ -1357,8 +3186,7 @@ function normalizeWebSocketEarlyDataPath(wsOpts) {
   }
 }
 function deleteHttpUpgradeEarlyDataMetadata(wsOpts) {
-  if (!wsOpts)
-    return;
+  if (!wsOpts) return;
   delete wsOpts["_v2ray-http-upgrade-ed"];
 }
 
@@ -1366,10 +3194,8 @@ function deleteHttpUpgradeEarlyDataMetadata(wsOpts) {
 var unsafePathSegments = /* @__PURE__ */ new Set(["__proto__", "constructor", "prototype"]);
 var parser4;
 function $set(obj, path, value) {
-  if (Object(obj) !== obj)
-    return obj;
-  if (!Array.isArray(path))
-    path = path.toString().match(/[^.[\]]+/g) || [];
+  if (Object(obj) !== obj) return obj;
+  if (!Array.isArray(path)) path = path.toString().match(/[^.[\]]+/g) || [];
   if (path.some((segment) => unsafePathSegments.has(segment))) {
     throw new Error("Unsafe property path");
   }
@@ -1377,8 +3203,7 @@ function $set(obj, path, value) {
   return obj;
 }
 function toBool(str) {
-  if (str == null)
-    return void 0;
+  if (str == null) return void 0;
   return /(TRUE)|1/i.test(str);
 }
 function isNumericEarlyData(value) {
@@ -1887,8 +3712,7 @@ var VMESS_SECURITY_ALIASES = {
   "chacha20-ietf-poly1305": "chacha20-poly1305"
 };
 function normalizeSecurityValue(security) {
-  if (security == null)
-    return "";
+  if (security == null) return "";
   return `${security}`.trim().toLowerCase();
 }
 function canonicalizeVmessSecurity(security) {
@@ -1896,8 +3720,7 @@ function canonicalizeVmessSecurity(security) {
 }
 function normalizeVmessSecurity(security, supportedValues = VMESS_SECURITY_COMMON_VALUES, { acceptAliases = true, fallback = VMESS_SECURITY_AUTO } = {}) {
   const normalized = normalizeSecurityValue(security);
-  if (!normalized)
-    return fallback;
+  if (!normalized) return fallback;
   const normalizedSupported = supportedValues.map(normalizeSecurityValue);
   if (normalizedSupported.includes(normalized)) {
     return canonicalizeVmessSecurity(normalized);
@@ -1928,8 +3751,7 @@ function formatSurgeVmessEncryptMethod(security) {
     "aes-128-gcm",
     "chacha20-poly1305"
   ]);
-  if (normalized === VMESS_SECURITY_AUTO)
-    return void 0;
+  if (normalized === VMESS_SECURITY_AUTO) return void 0;
   return normalized === "chacha20-poly1305" ? "chacha20-ietf-poly1305" : normalized;
 }
 
@@ -1965,8 +3787,7 @@ function decodeShadowsocksUserInfo(rawUserInfoStr) {
   return Base64.decode(decodedUserInfoStr);
 }
 function isNumericEarlyData2(value) {
-  if (value == null || !/^\d+$/.test(`${value}`))
-    return false;
+  if (value == null || !/^\d+$/.test(`${value}`)) return false;
   return Number.isSafeInteger(parseInt(`${value}`, 10));
 }
 function extractEarlyDataFromPath(path) {
@@ -2004,21 +3825,16 @@ function splitURIHostList(host) {
   return hosts.length > 0 ? hosts : void 0;
 }
 function parseWireGuardURIAddressValue(value) {
-  if (value == null)
-    return null;
+  if (value == null) return null;
   const raw = `${value}`.trim();
-  if (!raw)
-    return null;
+  if (!raw) return null;
   const [, hostRaw = raw, cidrRaw] = /^(.*?)(?:\/(\d+))?$/.exec(raw) || [];
   const host = `${hostRaw}`.trim().replace(/^\[/, "").replace(/\]$/, "");
   const normalizeCIDR = (cidr, max) => {
-    if (cidr == null)
-      return void 0;
-    if (!/^\d+$/.test(cidr))
-      return void 0;
+    if (cidr == null) return void 0;
+    if (!/^\d+$/.test(cidr)) return void 0;
     const parsed = parseInt(cidr, 10);
-    if (parsed < 0 || parsed > max)
-      return void 0;
+    if (parsed < 0 || parsed > max) return void 0;
     return parsed;
   };
   if (isIPv4(host)) {
@@ -2273,14 +4089,12 @@ function URI_SS() {
       for (const item of pluginInfo) {
         const separatorIndex = item.indexOf("=");
         if (separatorIndex === -1) {
-          if (item)
-            params2[item] = true;
+          if (item) params2[item] = true;
           continue;
         }
         const key = item.slice(0, separatorIndex);
         const val = item.slice(separatorIndex + 1).replace(/\\=/g, "=");
-        if (key)
-          params2[key] = val || true;
+        if (key) params2[key] = val || true;
       }
       switch (params2.plugin) {
         case "obfs-local":
@@ -2421,7 +4235,9 @@ function URI_SSR() {
       ...proxy,
       name: other_params.remarks ? Base64.decode(other_params.remarks) : proxy.server,
       "protocol-param": getIfNotBlank(
-        Base64.decode(other_params.protoparam || "").replace(/\s/g, "")
+        Base64.decode(
+          other_params.protoparam || other_params.protocolparam || ""
+        ).replace(/\s/g, "")
       ),
       "obfs-param": getIfNotBlank(
         Base64.decode(other_params.obfsparam || "").replace(/\s/g, "")
@@ -2437,6 +4253,9 @@ function URI_VMess() {
     return /^vmess:\/\//.test(line);
   };
   const parse2 = (line) => {
+    if (/^vmess:\/\/[^/?#]+@/.test(line)) {
+      return URI_VLESS().parse(line, "vmess");
+    }
     let { content: lineWithoutFragment, fragment: fragmentName } = splitURIFragment(line.split("vmess://")[1]);
     let content = Base64.decode(lineWithoutFragment.replace(/\?.*?$/, ""));
     if (/=\s*vmess/.test(content)) {
@@ -2659,7 +4478,7 @@ function URI_VLESS() {
   const test = (line) => {
     return /^vless:\/\//.test(line);
   };
-  const parse2 = (line) => {
+  const parse2 = (line, protocol = "vless") => {
     const mapXmuxToReuseSettings = (xmux) => {
       if (!isPlainObject(xmux)) {
         return void 0;
@@ -3369,7 +5188,7 @@ function URI_VLESS() {
       }
       return Object.keys(parsedDownloadSettings).length > 0 ? parsedDownloadSettings : void 0;
     };
-    line = line.split("vless://")[1];
+    line = line.split(`${protocol}://`)[1];
     let isShadowrocket;
     let parsed = /^(.*?)@(.*?):(\d+)\/?(\?(.*?))?(?:#(.*?))?$/.exec(line);
     if (!parsed) {
@@ -3388,7 +5207,7 @@ function URI_VLESS() {
       name2 = decodeURIComponent(name2);
     }
     const proxy = {
-      type: "vless",
+      type: protocol,
       name: name2,
       server,
       port,
@@ -3398,13 +5217,11 @@ function URI_VLESS() {
     const params = {};
     for (const addon of addons.split("&")) {
       if (addon) {
-        const [key, valueRaw] = addon.split("=");
-        let value = valueRaw;
-        value = decodeURIComponent(valueRaw);
-        params[key] = value;
+        const [key, ...value] = addon.split("=");
+        params[key] = decodeURIComponent(value.join("="));
       }
     }
-    proxy.name = name2 ?? params.remarks ?? params.remark ?? `VLESS ${server}:${port}`;
+    proxy.name = name2 ?? params.remarks ?? params.remark ?? `${protocol === "vmess" ? "VMess" : "VLESS"} ${server}:${port}`;
     proxy.tls = params.security && params.security !== "none";
     if (params.pbk) {
       params.security = "reality";
@@ -3450,6 +5267,10 @@ function URI_VLESS() {
       const opts = {};
       if (params.pbk) {
         opts["public-key"] = params.pbk;
+        const mlkem = params["support-x25519mlkem768"];
+        if (["1", "t", "T", "true", "TRUE", "True"].includes(mlkem)) {
+          opts["support-x25519mlkem768"] = true;
+        }
       }
       if (params.sid) {
         opts["short-id"] = params.sid;
@@ -3612,7 +5433,11 @@ function URI_VLESS() {
         proxy._mode = params.mode;
       }
     }
-    if (params.encryption) {
+    if (protocol === "vmess") {
+      proxy.cipher = normalizeVmessSecurity(params.encryption);
+      proxy.alterId = 0;
+      delete proxy.flow;
+    } else if (params.encryption) {
       proxy.encryption = params.encryption;
     }
     if (params.pqv) {
@@ -3943,8 +5768,7 @@ function URI_WireGuard() {
         } else if (["address", "ip"].includes(key)) {
           value.split(",").map((i) => {
             const parsed = parseWireGuardURIAddressValue(i);
-            if (!parsed)
-              return;
+            if (!parsed) return;
             if (parsed.family === "ipv4") {
               proxy.ip = parsed.address;
               if (typeof parsed.cidr !== "undefined") {
@@ -4026,12 +5850,14 @@ function Clash_All() {
       "gost-relay",
       "openvpn",
       "tailscale",
+      "easytier",
       "trusttunnel",
       "h2-connect",
       "naive",
       "anytls",
       "mieru",
       "masque",
+      "masque-surge",
       "sudoku",
       "juicity",
       "ss",
@@ -4342,6 +6168,19 @@ function Surge_TrustTunnel() {
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
+function Surge_Masque() {
+  const name = "Surge MASQUE Parser";
+  const test = (line) => {
+    return /^.*=\s*masque/.test(line.split(",")[0]);
+  };
+  const parse2 = (raw) => {
+    const { port_hopping, line } = surge_port_hopping(raw);
+    const proxy = getParser().parse(line);
+    proxy.ports = port_hopping;
+    return proxy;
+  };
+  return { name, test, parse: parse2 };
+}
 function Surge_H2Connect() {
   const name = "Surge HTTP/2 CONNECT Parser";
   const test = (line) => {
@@ -4521,6 +6360,7 @@ var parsers_default = [
   Surge_Direct(),
   Surge_AnyTLS(),
   Surge_TrustTunnel(),
+  Surge_Masque(),
   Surge_H2Connect(),
   Surge_SSH(),
   Surge_SS(),
@@ -4656,8 +6496,7 @@ function fallbackBase64Encoded() {
 function Clash() {
   const name = "Clash Pre-processor";
   const test = function(raw) {
-    if (!/proxies/.test(raw))
-      return false;
+    if (!/proxies/.test(raw)) return false;
     const content = safeLoad(raw);
     return Array.isArray(content.proxies) || Array.isArray(content["proxy-groups"]);
   };
@@ -4754,16 +6593,12 @@ function isShadowsocksOverTls(proxy) {
   return proxy?.type === "ss" && proxy?.tls === true && !isPresent2(proxy, "plugin") && (!isPresent2(proxy, "network") || normalizedNetwork === "tcp");
 }
 function normalizePluginMuxValue(mux) {
-  if (typeof mux === "boolean")
-    return Number(mux);
+  if (typeof mux === "boolean") return Number(mux);
   if (typeof mux === "string") {
     const normalized = mux.trim().toLowerCase();
-    if (normalized === "true")
-      return 1;
-    if (normalized === "false")
-      return 0;
-    if (/^\d+$/.test(normalized))
-      return parseInt(normalized, 10);
+    if (normalized === "true") return 1;
+    if (normalized === "false") return 0;
+    if (/^\d+$/.test(normalized)) return parseInt(normalized, 10);
   }
   return mux;
 }
@@ -4771,8 +6606,7 @@ function normalizePluginMuxBooleanValue(mux) {
   return Boolean(normalizePluginMuxValue(mux));
 }
 function supportsShadowsocksV2rayPluginMode(proxy, supportedModes) {
-  if (proxy?.type !== "ss" || proxy?.plugin !== "v2ray-plugin")
-    return true;
+  if (proxy?.type !== "ss" || proxy?.plugin !== "v2ray-plugin") return true;
   const normalizedMode = typeof proxy?.["plugin-opts"]?.mode === "string" ? proxy["plugin-opts"].mode.trim().toLowerCase() : proxy?.["plugin-opts"]?.mode;
   return supportedModes.includes(normalizedMode);
 }
@@ -4786,10 +6620,8 @@ function restoreShadowTLSOpts(target, serverNameKey) {
     password: opts.password,
     version: opts.version
   };
-  if (opts.host != null)
-    target[serverNameKey] = opts.host;
-  if (opts.alpn != null)
-    target.alpn = opts.alpn;
+  if (opts.host != null) target[serverNameKey] = opts.host;
+  if (opts.alpn != null) target.alpn = opts.alpn;
   delete target.plugin;
   delete target["plugin-opts"];
   return enabled;
@@ -4809,28 +6641,22 @@ function restoreShadowTLSProxyOpts(proxy) {
   }
 }
 function parseWireGuardCIDR(cidr, max) {
-  if (cidr == null)
-    return void 0;
+  if (cidr == null) return void 0;
   const normalized = `${cidr}`.trim();
-  if (!/^\d+$/.test(normalized))
-    return void 0;
+  if (!/^\d+$/.test(normalized)) return void 0;
   const parsed = parseInt(normalized, 10);
-  if (parsed < 0 || parsed > max)
-    return void 0;
+  if (parsed < 0 || parsed > max) return void 0;
   return parsed;
 }
 function parseWireGuardInterfaceAddress(value, family) {
-  if (value == null)
-    return null;
+  if (value == null) return null;
   const raw = `${value}`.trim();
-  if (!raw)
-    return null;
+  if (!raw) return null;
   const [, hostRaw = raw, cidrRaw] = /^(.*?)(?:\/(\d+))?$/.exec(raw) || [];
   const host = `${hostRaw}`.trim().replace(/^\[/, "").replace(/\]$/, "");
   const isIPv4Family = family === "ipv4";
   const isValid = isIPv4Family ? isIPv4(host) : isIPv6(host);
-  if (!isValid)
-    return null;
+  if (!isValid) return null;
   const max = isIPv4Family ? 32 : 128;
   return {
     address: host,
@@ -4843,8 +6669,7 @@ function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
     proxy[config.addressKey],
     family
   );
-  if (!parsed)
-    return void 0;
+  if (!parsed) return void 0;
   const normalizedCIDR = parseWireGuardCIDR(
     proxy[config.cidrKey],
     config.defaultCIDR
@@ -4852,8 +6677,7 @@ function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
   return `${parsed.address}/${normalizedCIDR ?? parsed.cidr ?? config.defaultCIDR}`;
 }
 function produceProxyListOutput(list, type, opts = {}) {
-  if (type === "internal")
-    return list;
+  if (type === "internal") return list;
   if (opts.prettyYaml || opts["pretty-yaml"]) {
     return normalizeClashYaml(
       yaml_default.safeDump(
@@ -4888,8 +6712,7 @@ var ipVersions = {
   "ipv6-prefer": "prefer-v6"
 };
 function stripSurgeQuotes(value) {
-  if (typeof value !== "string")
-    return value;
+  if (typeof value !== "string") return value;
   const trimmed = value.trim();
   const quote = trimmed[0];
   if ((quote === '"' || quote === "'") && trimmed[trimmed.length - 1] === quote) {
@@ -4910,23 +6733,19 @@ function formatSurgeAlpn(alpn) {
 }
 function appendAlpn(result, proxy) {
   const alpn = formatSurgeAlpn(proxy.alpn);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
 }
 function getShadowTLSAlpn(proxy) {
   return formatSurgeAlpn(proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn);
 }
 function appendShadowTLS(result, proxy, includeUdpPort = false) {
-  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"])
-    return;
+  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"]) return;
   const password = proxy["plugin-opts"].password;
   const host = proxy["plugin-opts"].host;
   const version = proxy["plugin-opts"].version;
-  if (!password)
-    return;
+  if (!password) return;
   result.append(`,shadow-tls-password="${password}"`);
-  if (host)
-    result.append(`,shadow-tls-sni=${host}`);
+  if (host) result.append(`,shadow-tls-sni=${host}`);
   if (version) {
     if (version < 2) {
       throw unsupported(`shadow-tls version ${version} is not supported`);
@@ -4934,8 +6753,7 @@ function appendShadowTLS(result, proxy, includeUdpPort = false) {
     result.append(`,shadow-tls-version=${version}`);
   }
   const alpn = getShadowTLSAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
   if (includeUdpPort) {
     result.appendIfPresent(`,udp-port=${proxy["udp-port"]}`, "udp-port");
   }
@@ -4974,11 +6792,9 @@ function appendSshPrivateKey(result, proxy) {
   }
 }
 function warnMaxStreamsIfNeeded(proxy) {
-  if (!isPresent2(proxy, "max-streams"))
-    return;
+  if (!isPresent2(proxy, "max-streams")) return;
   const maxStreams = Number(stripSurgeQuotes(proxy["max-streams"]));
-  if (!Number.isInteger(maxStreams) || maxStreams <= 3)
-    return;
+  if (!Number.isInteger(maxStreams) || maxStreams <= 3) return;
   app_default.warn(
     `Surge ${proxy.type} proxy ${proxy.name}: max-streams=${maxStreams} is greater than 3. Too many streams sharing one TCP connection may hurt performance.`
   );
@@ -5027,6 +6843,8 @@ function Surge_Producer() {
         return ssh(proxy);
       case "trusttunnel":
         return trusttunnel(proxy);
+      case "masque-surge":
+        return masque_surge(proxy);
     }
     if (opts["include-unsupported-proxy"] && proxy.type === "wireguard") {
       return wireguard(proxy);
@@ -5147,7 +6965,6 @@ function trojan(proxy) {
   result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
   appendTlsProxyParams(result, proxy);
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5185,7 +7002,6 @@ function anytls(proxy) {
   );
   appendTlsProxyParams(result, proxy);
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5222,6 +7038,7 @@ function trusttunnel(proxy) {
     `,max-streams=${proxy["max-streams"]}`,
     "max-streams"
   );
+  if (proxy.network === "h3") result.append(",h3=true");
   const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
   result.appendIfPresent(
@@ -5230,7 +7047,6 @@ function trusttunnel(proxy) {
   );
   appendTlsProxyParams(result, proxy);
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5254,6 +7070,56 @@ function trusttunnel(proxy) {
     "underlying-proxy"
   );
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  return result.toString();
+}
+function masque_surge(proxy) {
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=masque,${proxy.server},${proxy.port}`);
+  result.appendIfPresent(`,username="${proxy.username}"`, "username");
+  result.appendIfPresent(`,password="${proxy.password}"`, "password");
+  if (hasNonBlankValue(proxy.ports)) {
+    result.append(
+      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
+    );
+  }
+  if (hasNonBlankValue(proxy["hop-interval"])) {
+    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
+  }
+  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
+  result.appendIfPresent(
+    `,no-error-alert=${proxy["no-error-alert"]}`,
+    "no-error-alert"
+  );
+  appendTlsProxyParams(result, proxy);
+  if (isPresent2(proxy, "tfo")) {
+    result.append(`,tfo=${proxy.tfo}`);
+  } else if (isPresent2(proxy, "fast-open")) {
+    result.append(`,tfo=${proxy["fast-open"]}`);
+  }
+  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
+  result.appendIfPresent(
+    `,test-timeout=${proxy["test-timeout"]}`,
+    "test-timeout"
+  );
+  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
+  result.appendIfPresent(`,hybrid=${proxy.hybrid}`, "hybrid");
+  result.appendIfPresent(`,tos=${proxy.tos}`, "tos");
+  result.appendIfPresent(
+    `,allow-other-interface=${proxy["allow-other-interface"]}`,
+    "allow-other-interface"
+  );
+  result.appendIfPresent(
+    `,interface=${proxy["interface-name"]}`,
+    "interface-name"
+  );
+  result.appendIfPresent(`,interface=${proxy.interface}`, "interface");
+  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(
+    `,underlying-proxy=${proxy["underlying-proxy"]}`,
+    "underlying-proxy"
+  );
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   return result.toString();
 }
 function h2Connect(proxy) {
@@ -5326,7 +7192,6 @@ function vmess(proxy, includeUnsupportedProxy) {
   result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
   appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5373,7 +7238,6 @@ function ssh(proxy) {
     "no-error-alert"
   );
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5413,7 +7277,6 @@ function http(proxy) {
   );
   appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5450,7 +7313,6 @@ function direct(proxy) {
     "no-error-alert"
   );
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5565,7 +7427,6 @@ function snell(proxy) {
     "obfs-opts.path"
   );
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
     `,test-timeout=${proxy["test-timeout"]}`,
@@ -5902,11 +7763,16 @@ function ClashMeta_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "h2-connect") {
         app_default.error(
           `mihomo does not support HTTP/2 CONNECT proxy type. Proxy ${proxy.name} has been filtered.`
+        );
+        return false;
+      }
+      if (proxy.type === "masque-surge") {
+        app_default.error(
+          `mihomo does not support Surge MASQUE proxy type. Proxy ${proxy.name} has been filtered.`
         );
         return false;
       }
@@ -6210,6 +8076,8 @@ function SurgeMac_Producer() {
     switch (proxy.type) {
       case "external":
         return external(proxy);
+      // case 'ssr':
+      //     return shadowsocksr(proxy);
       default: {
         if (opts.mihomoExternal || proxy._mihomoExternal) {
           return mihomo(proxy, type, opts) || "";
@@ -6399,8 +8267,7 @@ function Clash_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (![
         "ss",
         "ssr",
@@ -6555,8 +8422,7 @@ function Stash_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (![
         "ss",
         "ssr",
@@ -6574,7 +8440,9 @@ function Stash_Producer() {
         "juicity",
         "anytls",
         "tailscale",
-        "trusttunnel"
+        "trusttunnel",
+        "masque",
+        "mieru"
       ].includes(proxy.type) || proxy.type === "ss" && ![
         "aes-128-gcm",
         "aes-192-gcm",
@@ -6592,7 +8460,7 @@ function Stash_Producer() {
         "xchacha20-ietf-poly1305",
         "2022-blake3-aes-128-gcm",
         "2022-blake3-aes-256-gcm"
-      ].includes(proxy.cipher) || proxy.type === "snell" && proxy.version >= 4) {
+      ].includes(proxy.cipher) || proxy.type === "snell" && proxy.version > 6) {
         return false;
       } else if (!supportsShadowsocksV2rayPluginMode(proxy, ["websocket"])) {
         return false;
@@ -6600,9 +8468,7 @@ function Stash_Producer() {
         return false;
       } else if (["anytls"].includes(proxy.type) && proxy.network && (!["tcp"].includes(proxy.network) || ["tcp"].includes(proxy.network) && proxy["reality-opts"])) {
         return false;
-      } else if (["xhttp"].includes(proxy.network)) {
-        return false;
-      } else if (proxy.encryption && proxy.encryption !== "none" && ["vless"].includes(proxy.type)) {
+      } else if (!["vless"].includes(proxy.type) && ["xhttp"].includes(proxy.network)) {
         return false;
       } else if (["ws"].includes(proxy.network) && proxy["ws-opts"]?.["v2ray-http-upgrade"]) {
         return false;
@@ -6846,13 +8712,11 @@ function Loon_Producer() {
 }
 function appendTlsProfile(result, proxy) {
   const tlsProfile = getLoonTlsProfile(proxy);
-  if (tlsProfile)
-    result.append(`,tls-profile=${tlsProfile}`);
+  if (tlsProfile) result.append(`,tls-profile=${tlsProfile}`);
 }
 function appendAlpn2(result, proxy) {
   const alpn = getLoonAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
 }
 function getLoonShadowTLSAlpn(proxy) {
   const values = proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn;
@@ -6860,16 +8724,13 @@ function getLoonShadowTLSAlpn(proxy) {
   return normalized.map((item) => `${item}`.trim()).filter((item) => item !== "").join(",");
 }
 function appendShadowTLS2(result, proxy) {
-  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"])
-    return;
+  if (proxy.plugin !== "shadow-tls" || !proxy["plugin-opts"]) return;
   const password = proxy["plugin-opts"].password;
   const host = proxy["plugin-opts"].host;
   const version = proxy["plugin-opts"].version;
-  if (!password)
-    return;
+  if (!password) return;
   result.append(`,shadow-tls-password=${password}`);
-  if (host)
-    result.append(`,shadow-tls-sni=${host}`);
+  if (host) result.append(`,shadow-tls-sni=${host}`);
   if (version) {
     if (version < 2) {
       throw new Error(`shadow-tls version ${version} is not supported`);
@@ -6878,8 +8739,7 @@ function appendShadowTLS2(result, proxy) {
   }
   appendTlsProfile(result, proxy);
   const alpn = getLoonShadowTLSAlpn(proxy);
-  if (alpn)
-    result.append(`,alpn="${alpn}"`);
+  if (alpn) result.append(`,alpn="${alpn}"`);
   result.appendIfPresent(`,udp-port=${proxy["udp-port"]}`, "udp-port");
 }
 function appendReality(result, proxy) {
@@ -7462,8 +9322,7 @@ function getHttpUpgradeEarlyData(transportOpts, path) {
   const httpUpgradeEd = getSafeEarlyDataValue(
     transportOpts?.["_v2ray-http-upgrade-ed"]
   );
-  if (httpUpgradeEd !== "")
-    return httpUpgradeEd;
+  if (httpUpgradeEd !== "") return httpUpgradeEd;
   const pathEd = getSafeEarlyDataValue(
     extractPathQueryParam(path || "/", "ed").value
   );
@@ -7495,8 +9354,7 @@ function setWebSocketEarlyDataPath(path, transportOpts) {
   return setPathQueryParam(path || "/", "ed", earlyData);
 }
 function getSafeEarlyDataValue(value) {
-  if (value == null || `${value}` === "")
-    return "";
+  if (value == null || `${value}` === "") return "";
   return parseSafeIntegerValue(value) == null ? "" : `${value}`;
 }
 function parseIntegerLikeValue(value) {
@@ -7855,6 +9713,10 @@ function vless2(proxy) {
     const publicKey = proxy["reality-opts"]?.["public-key"];
     if (publicKey) {
       pbk = `&pbk=${encodeURIComponent(publicKey)}`;
+      const mlkem = proxy["reality-opts"]["support-x25519mlkem768"];
+      if (mlkem) {
+        pbk += `&support-x25519mlkem768=${encodeURIComponent(mlkem)}`;
+      }
     }
     const shortId = proxy["reality-opts"]?.["short-id"];
     if (shortId) {
@@ -8222,10 +10084,25 @@ function URI_Producer() {
         break;
       case "ssr":
         result = `${proxy.server}:${proxy.port}:${proxy.protocol}:${proxy.cipher}:${proxy.obfs}:${Base644.encode(proxy.password)}/`;
-        result += `?remarks=${Base644.encode(proxy.name)}${proxy["obfs-param"] ? "&obfsparam=" + Base644.encode(proxy["obfs-param"]) : ""}${proxy["protocol-param"] ? "&protocolparam=" + Base644.encode(proxy["protocol-param"]) : ""}`;
+        result += `?remarks=${Base644.encode(proxy.name)}${proxy["obfs-param"] ? "&obfsparam=" + Base644.encode(proxy["obfs-param"]) : ""}${proxy["protocol-param"] ? "&protoparam=" + Base644.encode(proxy["protocol-param"]) : ""}`;
         result = "ssr://" + Base644.encode(result);
         break;
       case "vmess":
+        if (proxy["reality-opts"]) {
+          if (proxy.aead === false || proxy.aead !== true && Number(proxy.alterId || 0) !== 0) {
+            throw new Error(
+              "VMess REALITY URI requires AEAD (alterId=0)"
+            );
+          }
+          result = vless2({
+            ...proxy,
+            server: isIPv6(proxy.server) ? `[${proxy.server}]` : proxy.server,
+            network: proxy.network || "tcp",
+            encryption: normalizeVmessSecurity(proxy.cipher),
+            flow: void 0
+          }).replace(/^vless:\/\//, "vmess://");
+          break;
+        }
         let type2 = "";
         let net = proxy.network || "tcp";
         if (proxy.network === "http") {
@@ -8713,7 +10590,26 @@ Reason: ${err}`);
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/qx.js
+var import_buffer2 = __toESM(require_buffer());
 var targetPlatform4 = "QX";
+function encodeQxAlpn(alpn) {
+  const protocols = (Array.isArray(alpn) ? alpn : `${alpn}`.split(",")).map((protocol) => `${protocol}`.trim()).filter(Boolean);
+  return protocols.map((protocol) => {
+    const bytes = import_buffer2.Buffer.from(protocol, "utf8");
+    if (bytes.length > 255) {
+      throw new Error("QX ALPN protocol exceeds 255 bytes");
+    }
+    return `${bytes.length.toString(16).padStart(2, "0")}${bytes.toString("hex")}`;
+  }).join("") || void 0;
+}
+function appendTlsAlpn(result, proxy) {
+  if (isPresent2(proxy, "tls-alpn")) {
+    result.append(`,tls-alpn=${proxy["tls-alpn"]}`);
+    return;
+  }
+  const encoded = isPresent2(proxy, "alpn") && encodeQxAlpn(proxy.alpn);
+  if (encoded) result.append(`,tls-alpn=${encoded}`);
+}
 function QX_Producer() {
   const produce2 = (proxy, type, opts = {}) => {
     if (["ws"].includes(proxy.network) && proxy["ws-opts"]?.["v2ray-http-upgrade"]) {
@@ -8833,10 +10729,8 @@ function shadowsocks3(proxy) {
       }
     } else if (proxy.plugin === "v2ray-plugin" && proxy["plugin-opts"].mode === "websocket") {
       const opts = proxy["plugin-opts"];
-      if (opts.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (opts.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else {
       throw new Error(`plugin is not supported`);
     }
@@ -8854,7 +10748,7 @@ function shadowsocks3(proxy) {
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -8921,10 +10815,8 @@ function trojan3(proxy) {
   append(`,password=${proxy.password}`);
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (needTls(proxy))
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (needTls(proxy)) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
       appendIfPresent(
         `,obfs-uri=${proxy["ws-opts"]?.path}`,
         "ws-opts.path"
@@ -8945,7 +10837,7 @@ function trojan3(proxy) {
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -8983,15 +10875,12 @@ function vmess3(proxy) {
   }
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (proxy.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (proxy.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else if (proxy.network === "http") {
       append(`,obfs=${getQxHttpObfs(proxy)}`);
     } else if (["tcp"].includes(proxy.network)) {
-      if (proxy.tls)
-        append(`,obfs=over-tls`);
+      if (proxy.tls) append(`,obfs=over-tls`);
     } else if (!["tcp"].includes(proxy.network)) {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9006,15 +10895,14 @@ function vmess3(proxy) {
       `${proxy.network}-opts.headers.Host`
     );
   } else {
-    if (proxy.tls)
-      append(`,obfs=over-tls`);
+    if (proxy.tls) append(`,obfs=over-tls`);
   }
   if (needTls(proxy)) {
     appendIfPresent(
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -9059,15 +10947,12 @@ function vless3(proxy) {
   }
   if (isPresent2(proxy, "network")) {
     if (proxy.network === "ws") {
-      if (proxy.tls)
-        append(`,obfs=wss`);
-      else
-        append(`,obfs=ws`);
+      if (proxy.tls) append(`,obfs=wss`);
+      else append(`,obfs=ws`);
     } else if (proxy.network === "http") {
       append(`,obfs=${getQxHttpObfs(proxy)}`);
     } else if (["tcp"].includes(proxy.network)) {
-      if (proxy.tls)
-        append(`,obfs=over-tls`);
+      if (proxy.tls) append(`,obfs=over-tls`);
     } else if (!["tcp"].includes(proxy.network)) {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9082,15 +10967,14 @@ function vless3(proxy) {
       `${proxy.network}-opts.headers.Host`
     );
   } else {
-    if (proxy.tls)
-      append(`,obfs=over-tls`);
+    if (proxy.tls) append(`,obfs=over-tls`);
   }
   if (needTls(proxy)) {
     appendIfPresent(
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -9134,7 +11018,7 @@ function anytls3(proxy) {
     `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
     "tls-pubkey-sha256"
   );
-  appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+  appendTlsAlpn(result, proxy);
   appendIfPresent(
     `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
     "tls-no-session-ticket"
@@ -9174,7 +11058,7 @@ function http3(proxy) {
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -9215,7 +11099,7 @@ function socks53(proxy) {
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
     );
-    appendIfPresent(`,tls-alpn=${proxy["tls-alpn"]}`, "tls-alpn");
+    appendTlsAlpn(result, proxy);
     appendIfPresent(
       `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
       "tls-no-session-ticket"
@@ -9249,8 +11133,7 @@ function Shadowrocket_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
-      if (opts["include-unsupported-proxy"])
-        return true;
+      if (opts["include-unsupported-proxy"]) return true;
       if (!supportsShadowsocksV2rayPluginMode(proxy, [
         "websocket",
         "quic",
@@ -9273,7 +11156,9 @@ function Shadowrocket_Producer() {
         "openvpn",
         "gost-relay",
         "shadowquic",
-        "zerotier"
+        "zerotier",
+        "masque-surge",
+        "easytier"
       ].includes(proxy.type)) {
         return false;
       } else if (["xhttp"].includes(proxy.network)) {
@@ -9791,10 +11676,8 @@ var domainResolverParser = (proxy, parsedProxy) => {
 };
 var hasControlHTTPClient = (proxy) => {
   const value = proxy["control-http-client"];
-  if (value === void 0 || value === null)
-    return false;
-  if (typeof value === "string")
-    return value.trim() !== "";
+  if (value === void 0 || value === null) return false;
+  if (typeof value === "string") return value.trim() !== "";
   if (isPlainObject(value)) {
     return Object.values(value).some(
       (item) => item !== void 0 && item !== null && item !== ""
@@ -9816,18 +11699,13 @@ var networkParser = (proxy, parsedProxy) => {
 };
 var tfoParser = (proxy, parsedProxy) => {
   parsedProxy.tcp_fast_open = false;
-  if (proxy.tfo)
-    parsedProxy.tcp_fast_open = true;
-  if (proxy.tcp_fast_open)
-    parsedProxy.tcp_fast_open = true;
-  if (proxy["tcp-fast-open"])
-    parsedProxy.tcp_fast_open = true;
-  if (!parsedProxy.tcp_fast_open)
-    delete parsedProxy.tcp_fast_open;
+  if (proxy.tfo) parsedProxy.tcp_fast_open = true;
+  if (proxy.tcp_fast_open) parsedProxy.tcp_fast_open = true;
+  if (proxy["tcp-fast-open"]) parsedProxy.tcp_fast_open = true;
+  if (!parsedProxy.tcp_fast_open) delete parsedProxy.tcp_fast_open;
 };
 var smuxParser = (smux, proxy) => {
-  if (!smux || !smux.enabled)
-    return;
+  if (!smux || !smux.enabled) return;
   proxy.multiplex = { enabled: true };
   proxy.multiplex.protocol = smux.protocol;
   if (smux["max-connections"])
@@ -9839,8 +11717,7 @@ var smuxParser = (smux, proxy) => {
     proxy.multiplex.max_streams = parseInt(`${smux["max-streams"]}`, 10);
   if (smux["min-streams"])
     proxy.multiplex.min_streams = parseInt(`${smux["min-streams"]}`, 10);
-  if (smux.padding)
-    proxy.multiplex.padding = true;
+  if (smux.padding) proxy.multiplex.padding = true;
   if (smux["brutal-opts"]?.up || smux["brutal-opts"]?.down) {
     proxy.multiplex.brutal = {
       enabled: true
@@ -9868,25 +11745,20 @@ var wsParser = (proxy, parsedProxy) => {
     } = proxy["ws-opts"];
     transport.early_data_header_name = early_data_header_name;
     transport.max_early_data = max_early_data ? parseInt(max_early_data, 10) : void 0;
-    if (wsPath !== "")
-      transport.path = `${wsPath}`;
+    if (wsPath !== "") transport.path = `${wsPath}`;
     if (Object.keys(wsHeaders).length > 0) {
       const headers = {};
       for (const key of Object.keys(wsHeaders)) {
         let value = wsHeaders[key];
-        if (value === "")
-          continue;
-        if (!Array.isArray(value))
-          value = [`${value}`];
-        if (value.length > 0)
-          headers[key] = value;
+        if (value === "") continue;
+        if (!Array.isArray(value)) value = [`${value}`];
+        if (value.length > 0) headers[key] = value;
       }
       const { Host: wsHost } = headers;
       if (wsHost.length === 1)
         for (const item of `Host:${wsHost[0]}`.split("\n")) {
           const [key, value] = item.split(":");
-          if (value.trim() === "")
-            continue;
+          if (value.trim() === "") continue;
           headers[key.trim()] = value.trim().split(",");
         }
       transport.headers = headers;
@@ -9896,19 +11768,15 @@ var wsParser = (proxy, parsedProxy) => {
     const headers = {};
     for (const key of Object.keys(proxy["ws-headers"])) {
       let value = proxy["ws-headers"][key];
-      if (value === "")
-        continue;
-      if (!Array.isArray(value))
-        value = [`${value}`];
-      if (value.length > 0)
-        headers[key] = value;
+      if (value === "") continue;
+      if (!Array.isArray(value)) value = [`${value}`];
+      if (value.length > 0) headers[key] = value;
     }
     const { Host: wsHost } = headers;
     if (wsHost.length === 1)
       for (const item of `Host:${wsHost[0]}`.split("\n")) {
         const [key, value] = item.split(":");
-        if (value.trim() === "")
-          continue;
+        if (value.trim() === "") continue;
         headers[key.trim()] = value.trim().split(",");
       }
     for (const key of Object.keys(headers))
@@ -9932,15 +11800,13 @@ var wsParser = (proxy, parsedProxy) => {
       transport.host = transport.headers.Host[0];
       delete transport.headers.Host;
     }
-    if (transport.max_early_data)
-      delete transport.max_early_data;
+    if (transport.max_early_data) delete transport.max_early_data;
     if (transport.early_data_header_name)
       delete transport.early_data_header_name;
   }
   for (const key of Object.keys(transport.headers)) {
     const value = transport.headers[key];
-    if (value.length === 1)
-      transport.headers[key] = value[0];
+    if (value.length === 1) transport.headers[key] = value[0];
   }
   parsedProxy.transport = transport;
 };
@@ -9952,52 +11818,43 @@ var h1Parser = (proxy, parsedProxy) => {
       path: h1Path = "",
       headers: h1Headers = {}
     } = proxy["http-opts"];
-    if (method !== "")
-      transport.method = method;
+    if (method !== "") transport.method = method;
     if (Array.isArray(h1Path)) {
       transport.path = `${h1Path[0]}`;
-    } else if (h1Path !== "")
-      transport.path = `${h1Path}`;
+    } else if (h1Path !== "") transport.path = `${h1Path}`;
     for (const key of Object.keys(h1Headers)) {
       let value = h1Headers[key];
-      if (value === "")
-        continue;
+      if (value === "") continue;
       if (key.toLowerCase() === "host") {
         let host = value;
         if (!Array.isArray(host))
           host = `${host}`.split(",").map((i) => i.trim());
-        if (host.length > 0)
-          transport.host = host;
+        if (host.length > 0) transport.host = host;
         continue;
       }
       if (!Array.isArray(value))
         value = `${value}`.split(",").map((i) => i.trim());
-      if (value.length > 0)
-        transport.headers[key] = value;
+      if (value.length > 0) transport.headers[key] = value;
     }
   }
   if (proxy["http-host"] && proxy["http-host"] !== "") {
     let host = proxy["http-host"];
     if (!Array.isArray(host))
       host = `${host}`.split(",").map((i) => i.trim());
-    if (host.length > 0)
-      transport.host = host;
+    if (host.length > 0) transport.host = host;
   }
   if (proxy["http-path"] && proxy["http-path"] !== "") {
     const path = proxy["http-path"];
     if (Array.isArray(path)) {
       transport.path = `${path[0]}`;
-    } else if (path !== "")
-      transport.path = `${path}`;
+    } else if (path !== "") transport.path = `${path}`;
   }
   if (parsedProxy.tls.insecure)
     parsedProxy.tls.server_name = transport.host[0];
-  if (transport.host?.length === 1)
-    transport.host = transport.host[0];
+  if (transport.host?.length === 1) transport.host = transport.host[0];
   for (const key of Object.keys(transport.headers)) {
     const value = transport.headers[key];
-    if (value.length === 1)
-      transport.headers[key] = value[0];
+    if (value.length === 1) transport.headers[key] = value[0];
   }
   parsedProxy.transport = transport;
 };
@@ -10005,29 +11862,25 @@ var h2Parser = (proxy, parsedProxy) => {
   const transport = { type: "http" };
   if (proxy["h2-opts"]) {
     let { host = "", path = "" } = proxy["h2-opts"];
-    if (path !== "")
-      transport.path = `${path}`;
+    if (path !== "") transport.path = `${path}`;
     if (host !== "") {
       if (!Array.isArray(host))
         host = `${host}`.split(",").map((i) => i.trim());
-      if (host.length > 0)
-        transport.host = host;
+      if (host.length > 0) transport.host = host;
     }
   }
   if (proxy["h2-host"] && proxy["h2-host"] !== "") {
     let host = proxy["h2-host"];
     if (!Array.isArray(host))
       host = `${host}`.split(",").map((i) => i.trim());
-    if (host.length > 0)
-      transport.host = host;
+    if (host.length > 0) transport.host = host;
   }
   if (proxy["h2-path"] && proxy["h2-path"] !== "")
     transport.path = `${proxy["h2-path"]}`;
   parsedProxy.tls.enabled = true;
   if (parsedProxy.tls.insecure)
     parsedProxy.tls.server_name = transport.host[0];
-  if (transport.host.length === 1)
-    transport.host = transport.host[0];
+  if (transport.host.length === 1) transport.host = transport.host[0];
   parsedProxy.transport = transport;
 };
 var grpcParser = (proxy, parsedProxy) => {
@@ -10044,16 +11897,13 @@ var normalizePemLines = (value, label) => {
   const lines = [];
   for (const item of items) {
     const normalized = `${item}`.trim().replace(/\\r\\n/g, "\n").replace(/\\n/g, "\n");
-    if (normalized === "")
-      continue;
+    if (normalized === "") continue;
     for (const line of normalized.split(/\r?\n/)) {
       const trimmed = line.trim();
-      if (trimmed !== "")
-        lines.push(trimmed);
+      if (trimmed !== "") lines.push(trimmed);
     }
   }
-  if (lines.length === 0)
-    return void 0;
+  if (lines.length === 0) return void 0;
   if (lines.some((line) => /^-----BEGIN [A-Za-z0-9 -]+-----$/.test(line))) {
     return lines;
   }
@@ -10073,34 +11923,24 @@ var singBoxUtlsFingerprints = [
 ];
 var getSingBoxUtlsFingerprint = (value) => {
   const fingerprint = `${value || ""}`.trim().toLowerCase();
-  if (singBoxUtlsFingerprints.includes(fingerprint))
-    return fingerprint;
+  if (singBoxUtlsFingerprints.includes(fingerprint)) return fingerprint;
 };
 var tlsParser = (proxy, parsedProxy) => {
-  if (proxy.tls)
-    parsedProxy.tls.enabled = true;
+  if (proxy.tls) parsedProxy.tls.enabled = true;
   if (proxy.servername && proxy.servername !== "")
     parsedProxy.tls.server_name = proxy.servername;
   if (proxy.peer && proxy.peer !== "")
     parsedProxy.tls.server_name = proxy.peer;
-  if (proxy.sni && proxy.sni !== "")
-    parsedProxy.tls.server_name = proxy.sni;
-  if (proxy["skip-cert-verify"])
-    parsedProxy.tls.insecure = true;
-  if (proxy.insecure)
-    parsedProxy.tls.insecure = true;
-  if (proxy["disable-sni"])
-    parsedProxy.tls.disable_sni = true;
+  if (proxy.sni && proxy.sni !== "") parsedProxy.tls.server_name = proxy.sni;
+  if (proxy["skip-cert-verify"]) parsedProxy.tls.insecure = true;
+  if (proxy.insecure) parsedProxy.tls.insecure = true;
+  if (proxy["disable-sni"]) parsedProxy.tls.disable_sni = true;
   if (typeof proxy.alpn === "string") {
     parsedProxy.tls.alpn = [proxy.alpn];
-  } else if (Array.isArray(proxy.alpn))
-    parsedProxy.tls.alpn = proxy.alpn;
-  if (proxy.ca)
-    parsedProxy.tls.certificate_path = `${proxy.ca}`;
-  if (proxy.ca_str)
-    parsedProxy.tls.certificate = [proxy.ca_str];
-  if (proxy["ca-str"])
-    parsedProxy.tls.certificate = [proxy["ca-str"]];
+  } else if (Array.isArray(proxy.alpn)) parsedProxy.tls.alpn = proxy.alpn;
+  if (proxy.ca) parsedProxy.tls.certificate_path = `${proxy.ca}`;
+  if (proxy.ca_str) parsedProxy.tls.certificate = [proxy.ca_str];
+  if (proxy["ca-str"]) parsedProxy.tls.certificate = [proxy["ca-str"]];
   if (proxy["reality-opts"]) {
     parsedProxy.tls.reality = { enabled: true };
     if (proxy["reality-opts"]["public-key"])
@@ -10128,8 +11968,7 @@ var tlsParser = (proxy, parsedProxy) => {
     const echOptsConfig = proxy["ech-opts"].config;
     if (Array.isArray(echOptsConfig) || typeof echOptsConfig === "string") {
       const config = normalizePemLines(echOptsConfig, "ECH CONFIGS");
-      if (config)
-        parsedProxy.tls.ech.config = config;
+      if (config) parsedProxy.tls.ech.config = config;
     }
     parsedProxy.tls.ech.query_server_name = proxy["ech-opts"]["query-server-name"];
     parsedProxy.tls.ech.config_path = proxy["ech-opts"]["config-path"];
@@ -10140,8 +11979,7 @@ var tlsParser = (proxy, parsedProxy) => {
   if (proxy._curve_preferences && Array.isArray(proxy._curve_preferences)) {
     parsedProxy.tls.curve_preferences = proxy._curve_preferences;
   }
-  if (proxy["_fragment"])
-    parsedProxy.tls.fragment = !!proxy["_fragment"];
+  if (proxy["_fragment"]) parsedProxy.tls.fragment = !!proxy["_fragment"];
   if (proxy["_fragment_fallback_delay"])
     parsedProxy.tls.fragment_fallback_delay = proxy["_fragment_fallback_delay"];
   if (proxy["_record_fragment"])
@@ -10156,12 +11994,16 @@ var tlsParser = (proxy, parsedProxy) => {
     parsedProxy.tls.client_certificate = proxy["_client_certificate"];
   if (proxy["_client_certificate_path"])
     parsedProxy.tls.client_certificate_path = proxy["_client_certificate_path"];
-  if (proxy["_client_key"])
-    parsedProxy.tls.client_key = proxy["_client_key"];
+  if (proxy["_client_key"]) parsedProxy.tls.client_key = proxy["_client_key"];
   if (proxy["_client_key_path"])
     parsedProxy.tls.client_key_path = proxy["_client_key_path"];
-  if (!parsedProxy.tls.enabled)
+  if (!parsedProxy.tls.enabled) {
     delete parsedProxy.tls;
+  } else if ((proxy.fingerprint || proxy["tls-fingerprint"]) && !parsedProxy.tls.reality && !parsedProxy.tls.certificate && !parsedProxy.tls.certificate_path && !parsedProxy.tls.certificate_public_key_sha256) {
+    app_default.warn(
+      `Platform sing-box does not support certificate fingerprint pinning, it is dropped for proxy ${proxy.name}. Set _certificate_public_key_sha256 to pin the certificate public key instead`
+    );
+  }
 };
 var sshParser = (proxy = {}) => {
   const parsedProxy = {
@@ -10172,12 +12014,9 @@ var sshParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.user = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy["privateKey"])
-    parsedProxy.private_key_path = proxy["privateKey"];
+  if (proxy.username) parsedProxy.user = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy["privateKey"]) parsedProxy.private_key_path = proxy["privateKey"];
   if (proxy["private-key"])
     parsedProxy.private_key_path = proxy["private-key"];
   if (proxy["private-key-passphrase"])
@@ -10188,12 +12027,10 @@ var sshParser = (proxy = {}) => {
       proxy["server-fingerprint"].split(" ")[0]
     ];
   }
-  if (proxy["host-key"])
-    parsedProxy.host_key = proxy["host-key"];
+  if (proxy["host-key"]) parsedProxy.host_key = proxy["host-key"];
   if (proxy["host-key-algorithms"])
     parsedProxy.host_key_algorithms = proxy["host-key-algorithms"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   ipVersionParser(proxy, parsedProxy);
@@ -10210,10 +12047,8 @@ var httpParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
   if (proxy.headers) {
     parsedProxy.headers = {};
     for (const k of Object.keys(proxy.headers)) {
@@ -10222,8 +12057,7 @@ var httpParser = (proxy = {}) => {
     if (Object.keys(parsedProxy.headers).length === 0)
       delete parsedProxy.headers;
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
@@ -10241,20 +12075,16 @@ var socks5Parser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
       version: !proxy["udp-over-tcp-version"] || proxy["udp-over-tcp-version"] === 1 ? 1 : 2
     };
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10271,8 +12101,7 @@ var shadowTLSParser = (proxy = {}) => {
     password: proxy.password,
     detour: getShadowTLSTag(proxy)
   };
-  if (proxy.uot)
-    ssPart.udp_over_tcp = true;
+  if (proxy.uot) ssPart.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     ssPart.udp_over_tcp = {
       enabled: true,
@@ -10306,13 +12135,11 @@ var normalizeALPN = (alpn) => {
   if (typeof alpn === "string") {
     return alpn.split(",").map((item) => item.trim()).filter((item) => item !== "");
   }
-  if (Array.isArray(alpn))
-    return alpn;
+  if (Array.isArray(alpn)) return alpn;
   return void 0;
 };
 var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
-  if (!pluginOpts)
-    throw new Error("shadow-tls plugin options are missing");
+  if (!pluginOpts) throw new Error("shadow-tls plugin options are missing");
   const fingerprint = getSingBoxUtlsFingerprint(proxy["client-fingerprint"]);
   const stPart = {
     tag: getShadowTLSTag(proxy),
@@ -10326,8 +12153,7 @@ var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
       server_name: pluginOpts.host
     }
   };
-  if (proxy["skip-cert-verify"])
-    stPart.tls.insecure = true;
+  if (proxy["skip-cert-verify"]) stPart.tls.insecure = true;
   if (fingerprint) {
     stPart.tls.utls = {
       enabled: true,
@@ -10337,10 +12163,8 @@ var shadowTLSOutboundParser = (proxy = {}, pluginOpts) => {
   if (stPart.server_port < 0 || stPart.server_port > 65535)
     throw "\u7AEF\u53E3\u503C\u975E\u6CD5";
   const alpn = normalizeALPN(pluginOpts.alpn) ?? normalizeALPN(proxy.alpn);
-  if (alpn)
-    stPart.tls.alpn = alpn;
-  if (proxy["fast-open"] === true)
-    stPart.udp_fragment = true;
+  if (alpn) stPart.tls.alpn = alpn;
+  if (proxy["fast-open"] === true) stPart.udp_fragment = true;
   tfoParser(proxy, stPart);
   detourParser(proxy, stPart);
   ipVersionParser(proxy, stPart);
@@ -10358,16 +12182,14 @@ var ssParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
       version: !proxy["udp-over-tcp-version"] || proxy["udp-over-tcp-version"] === 1 ? 1 : 2
     };
   }
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10397,15 +12219,12 @@ var ssParser = (proxy = {}) => {
     }
     if (proxy.plugin === "v2ray-plugin") {
       parsedProxy.plugin = "v2ray-plugin";
-      if (proxy["ws-host"])
-        proxy["plugin-opts"].host = proxy["ws-host"];
-      if (proxy["ws-path"])
-        proxy["plugin-opts"].path = proxy["ws-path"];
+      if (proxy["ws-host"]) proxy["plugin-opts"].host = proxy["ws-host"];
+      if (proxy["ws-path"]) proxy["plugin-opts"].path = proxy["ws-path"];
       Object.keys(proxy["plugin-opts"]).forEach((k) => {
         switch (k) {
           case "tls":
-            if (proxy["plugin-opts"].tls)
-              optArr.push("tls");
+            if (proxy["plugin-opts"].tls) optArr.push("tls");
             break;
           case "host":
             optArr.push(`host=${proxy["plugin-opts"].host}`);
@@ -10424,8 +12243,7 @@ var ssParser = (proxy = {}) => {
             const mux = normalizePluginMuxValue(
               proxy["plugin-opts"].mux
             );
-            if (mux)
-              parsedProxy.multiplex = { enabled: true };
+            if (mux) parsedProxy.multiplex = { enabled: true };
             optArr.push(`mux=${mux}`);
             break;
           }
@@ -10451,12 +12269,10 @@ var ssrParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["obfs-param"])
-    parsedProxy.obfs_param = proxy["obfs-param"];
+  if (proxy["obfs-param"]) parsedProxy.obfs_param = proxy["obfs-param"];
   if (proxy["protocol-param"] && proxy["protocol-param"] !== "")
     parsedProxy.protocol_param = proxy["protocol-param"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10466,11 +12282,9 @@ var ssrParser = (proxy = {}) => {
   return parsedProxy;
 };
 var getSnellVersion = (version) => {
-  if (version == null)
-    return void 0;
+  if (version == null) return void 0;
   const normalized = `${version}`.trim();
-  if (!/^\d+$/.test(normalized))
-    return NaN;
+  if (!/^\d+$/.test(normalized)) return NaN;
   return parseInt(normalized, 10);
 };
 var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
@@ -10492,13 +12306,10 @@ var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (outputVersion != null)
-    parsedProxy.version = outputVersion;
-  if (proxy._userkey)
-    parsedProxy.userkey = proxy._userkey;
+  if (outputVersion != null) parsedProxy.version = outputVersion;
+  if (proxy._userkey) parsedProxy.userkey = proxy._userkey;
   if (outputVersion === 6) {
-    if (proxy.mode)
-      parsedProxy.mode = proxy.mode;
+    if (proxy.mode) parsedProxy.mode = proxy.mode;
     if (includeUnsupportedProxy && proxy["quic-proxy-mode"])
       parsedProxy.quic_proxy_mode = !!proxy["quic-proxy-mode"];
   } else {
@@ -10515,8 +12326,7 @@ var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
     delete parsedProxy.server;
     delete parsedProxy.server_port;
   } else {
-    if (proxy["fast-open"])
-      parsedProxy.udp_fragment = true;
+    if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
     tfoParser(proxy, parsedProxy);
     detourParser(proxy, parsedProxy);
     ipVersionParser(proxy, parsedProxy);
@@ -10568,16 +12378,11 @@ var vmessParser = (proxy = {}) => {
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   vmessProtocolOptionsParser(proxy, parsedProxy);
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
-  if (proxy.network === "h2")
-    h2Parser(proxy, parsedProxy);
-  if (proxy.network === "http")
-    h1Parser(proxy, parsedProxy);
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
+  if (proxy.network === "h2") h2Parser(proxy, parsedProxy);
+  if (proxy.network === "http") h1Parser(proxy, parsedProxy);
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10599,18 +12404,12 @@ var vlessParser = (proxy = {}) => {
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   vmessVlessPacketEncodingParser(proxy, parsedProxy);
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.flow != null)
-    parsedProxy.flow = proxy.flow;
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
-  if (proxy.network === "h2")
-    h2Parser(proxy, parsedProxy);
-  if (proxy.network === "http")
-    h1Parser(proxy, parsedProxy);
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.flow != null) parsedProxy.flow = proxy.flow;
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
+  if (proxy.network === "h2") h2Parser(proxy, parsedProxy);
+  if (proxy.network === "http") h1Parser(proxy, parsedProxy);
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10631,12 +12430,9 @@ var trojanParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
-  if (proxy.network === "grpc")
-    grpcParser(proxy, parsedProxy);
-  if (proxy.network === "ws")
-    wsParser(proxy, parsedProxy);
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
+  if (proxy.network === "grpc") grpcParser(proxy, parsedProxy);
+  if (proxy.network === "ws") wsParser(proxy, parsedProxy);
   networkParser(proxy, parsedProxy);
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
@@ -10656,12 +12452,9 @@ var naiveParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy.username)
-    parsedProxy.username = proxy.username;
-  if (proxy.password)
-    parsedProxy.password = proxy.password;
-  if (proxy.uot)
-    parsedProxy.udp_over_tcp = true;
+  if (proxy.username) parsedProxy.username = proxy.username;
+  if (proxy.password) parsedProxy.password = proxy.password;
+  if (proxy.uot) parsedProxy.udp_over_tcp = true;
   if (proxy["udp-over-tcp"]) {
     parsedProxy.udp_over_tcp = {
       enabled: true,
@@ -10676,12 +12469,10 @@ var naiveParser = (proxy = {}) => {
     parsedProxy.insecure_concurrency = insecure_concurrency;
   if (proxy["extra-headers"])
     parsedProxy.extra_headers = proxy["extra-headers"];
-  if (proxy.quic)
-    parsedProxy.quic = !!proxy.quic;
+  if (proxy.quic) parsedProxy.quic = !!proxy.quic;
   if (proxy["quic-congestion-control"])
     parsedProxy.quic_congestion_control = proxy["quic-congestion-control"];
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   tfoParser(proxy, parsedProxy);
   detourParser(proxy, parsedProxy);
   tlsParser(proxy, parsedProxy);
@@ -10714,12 +12505,9 @@ var hysteriaParser = (proxy = {}) => {
       const range = p.replace(/\s*-\s*/g, ":");
       return range.includes(":") ? range : `${range}:${range}`;
     });
-  if (proxy.auth_str)
-    parsedProxy.auth_str = `${proxy.auth_str}`;
-  if (proxy["auth-str"])
-    parsedProxy.auth_str = `${proxy["auth-str"]}`;
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy.auth_str) parsedProxy.auth_str = `${proxy.auth_str}`;
+  if (proxy["auth-str"]) parsedProxy.auth_str = `${proxy["auth-str"]}`;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   const reg = new RegExp("^[0-9]+[ 	]*[KMGT]*[Bb]ps$");
   if (reg.test(`${proxy.up}`) && !`${proxy.up}`.endsWith("Mbps")) {
     parsedProxy.up = `${proxy.up}`;
@@ -10731,16 +12519,13 @@ var hysteriaParser = (proxy = {}) => {
   } else {
     parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
   }
-  if (proxy.obfs)
-    parsedProxy.obfs = proxy.obfs;
+  if (proxy.obfs) parsedProxy.obfs = proxy.obfs;
   if (proxy.recv_window_conn)
     parsedProxy.recv_window_conn = proxy.recv_window_conn;
   if (proxy["recv-window-conn"])
     parsedProxy.recv_window_conn = proxy["recv-window-conn"];
-  if (proxy.recv_window)
-    parsedProxy.recv_window = proxy.recv_window;
-  if (proxy["recv-window"])
-    parsedProxy.recv_window = proxy["recv-window"];
+  if (proxy.recv_window) parsedProxy.recv_window = proxy.recv_window;
+  if (proxy["recv-window"]) parsedProxy.recv_window = proxy["recv-window"];
   if (proxy.disable_mtu_discovery) {
     if (typeof proxy.disable_mtu_discovery === "boolean") {
       parsedProxy.disable_mtu_discovery = proxy.disable_mtu_discovery;
@@ -10777,10 +12562,8 @@ var hysteria2Parser = (proxy = {}) => {
       const range = p.replace(/\s*-\s*/g, ":");
       return range.includes(":") ? range : `${range}:${range}`;
     });
-  if (proxy.up)
-    parsedProxy.up_mbps = parseInt(`${proxy.up}`, 10);
-  if (proxy.down)
-    parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
+  if (proxy.up) parsedProxy.up_mbps = parseInt(`${proxy.up}`, 10);
+  if (proxy.down) parsedProxy.down_mbps = parseInt(`${proxy.down}`, 10);
   if (["salamander", "gecko"].includes(proxy.obfs))
     parsedProxy.obfs.type = proxy.obfs;
   if (proxy.obfs === "gecko") {
@@ -10804,19 +12587,15 @@ var hysteria2Parser = (proxy = {}) => {
           `Invalid obfs packet size for proxy ${proxy.name}: min=${minRaw} max=${maxRaw}`
         );
       } else {
-        if (hasMin)
-          parsedProxy.obfs.min_packet_size = minPacketSize;
-        if (hasMax)
-          parsedProxy.obfs.max_packet_size = maxPacketSize;
+        if (hasMin) parsedProxy.obfs.min_packet_size = minPacketSize;
+        if (hasMax) parsedProxy.obfs.max_packet_size = maxPacketSize;
       }
     }
   }
   if (proxy["obfs-password"])
     parsedProxy.obfs.password = proxy["obfs-password"];
-  if (!parsedProxy.obfs.type)
-    delete parsedProxy.obfs;
-  if (proxy["bbr-profile"])
-    parsedProxy.bbr_profile = proxy["bbr-profile"];
+  if (!parsedProxy.obfs.type) delete parsedProxy.obfs;
+  if (proxy["bbr-profile"]) parsedProxy.bbr_profile = proxy["bbr-profile"];
   if (proxy["disable-chrome-parrot"])
     parsedProxy.disable_chrome_parrot = !!proxy["disable-chrome-parrot"];
   networkParser(proxy, parsedProxy);
@@ -10840,16 +12619,13 @@ var tuic5Parser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   if (proxy["congestion-controller"] && proxy["congestion-controller"] !== "cubic")
     parsedProxy.congestion_control = proxy["congestion-controller"];
   if (proxy["udp-relay-mode"] && proxy["udp-relay-mode"] !== "native")
     parsedProxy.udp_relay_mode = proxy["udp-relay-mode"];
-  if (proxy["reduce-rtt"])
-    parsedProxy.zero_rtt_handshake = true;
-  if (proxy["udp-over-stream"])
-    parsedProxy.udp_over_stream = true;
+  if (proxy["reduce-rtt"]) parsedProxy.zero_rtt_handshake = true;
+  if (proxy["udp-over-stream"]) parsedProxy.udp_over_stream = true;
   if (proxy["heartbeat-interval"])
     parsedProxy.heartbeat = `${proxy["heartbeat-interval"]}ms`;
   networkParser(proxy, parsedProxy);
@@ -10960,13 +12736,11 @@ var wireguardParser = (proxy = {}) => {
   };
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
-  if (proxy["fast-open"])
-    parsedProxy.udp_fragment = true;
+  if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
   if (typeof proxy.reserved === "string") {
     parsedProxy.reserved = proxy.reserved;
   } else if (Array.isArray(proxy.reserved)) {
-    for (const r of proxy.reserved)
-      parsedProxy.reserved.push(r);
+    for (const r of proxy.reserved) parsedProxy.reserved.push(r);
   } else {
     delete parsedProxy.reserved;
   }
@@ -11000,8 +12774,7 @@ var wireguardParser = (proxy = {}) => {
       if (typeof p.reserved === "string") {
         peer.reserved.push(p.reserved);
       } else if (Array.isArray(p.reserved)) {
-        for (const r of p.reserved)
-          peer.reserved.push(r);
+        for (const r of p.reserved) peer.reserved.push(r);
       } else {
         delete peer.reserved;
       }
@@ -11241,8 +13014,7 @@ function singbox_Producer() {
         app_default.error(e.message ?? e);
       }
     });
-    if (type2 === "internal")
-      return list;
+    if (type2 === "internal") return list;
     const categorized = list.reduce(
       (result, item) => {
         if (["wireguard", "tailscale"].includes(item.type)) {
@@ -11260,6 +13032,17 @@ function singbox_Producer() {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/egern.js
+var ipVersions5 = {
+  dual: "dual_stack",
+  ipv4: "v4_only",
+  ipv6: "v6_only",
+  "v4-only": "v4_only",
+  "v6-only": "v6_only",
+  "ipv4-prefer": "v4_prefer",
+  "ipv6-prefer": "v6_prefer",
+  "prefer-v4": "v4_prefer",
+  "prefer-v6": "v6_prefer"
+};
 function Egern_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
@@ -11269,6 +13052,7 @@ function Egern_Producer() {
         "https",
         "socks5",
         "ss",
+        "ssr",
         "trojan",
         "hysteria2",
         "vless",
@@ -11318,6 +13102,8 @@ function Egern_Producer() {
       )) || proxy.type === "tuic" && proxy.token && proxy.token.length !== 0) {
         return false;
       } else if (proxy.type === "snell" && normalizeSnellVersion(proxy.version) === null) {
+        return false;
+      } else if (proxy.type === "ssr" && !isEgernSsr(proxy)) {
         return false;
       } else if (["anytls"].includes(proxy.type) && proxy.network && !["tcp"].includes(proxy.network)) {
         return false;
@@ -11406,6 +13192,21 @@ function Egern_Producer() {
               );
             }
           }
+        } else if (proxy.type === "ssr") {
+          proxy = {
+            type: "shadowsocksr",
+            name: proxy.name,
+            method: normalizeSsrMethod(proxy.cipher),
+            server: proxy.server,
+            port: proxy.port,
+            password: proxy.password,
+            protocol: normalizeSsrPlugin(proxy.protocol),
+            protocol_param: proxy["protocol-param"],
+            obfs: normalizeSsrPlugin(proxy.obfs),
+            obfs_param: proxy["obfs-param"],
+            tfo: getTfo(proxy),
+            udp_relay: getUdpRelay(proxy)
+          };
         } else if (proxy.type === "hysteria2") {
           proxy = {
             type: "hysteria2",
@@ -11595,8 +13396,7 @@ function Egern_Producer() {
               }
             };
             flow = proxy.flow;
-            if (flow === "")
-              flow = void 0;
+            if (flow === "") flow = void 0;
           }
           proxy = {
             type: "vless",
@@ -11680,6 +13480,7 @@ function Egern_Producer() {
           "https",
           "socks5",
           "ss",
+          "ssr",
           "trojan",
           "vless",
           "vmess",
@@ -11711,6 +13512,7 @@ function Egern_Producer() {
         if ([
           "socks5",
           "ss",
+          "ssr",
           "trojan",
           "vless",
           "vmess",
@@ -11731,8 +13533,11 @@ function Egern_Producer() {
             proxy.block_quic = false;
           }
         }
-        if (["ss"].includes(original.type) && proxy.shadow_tls && original["udp-port"] > 0 && original["udp-port"] <= 65535) {
+        if (["ss", "ssr"].includes(original.type) && proxy.shadow_tls && original["udp-port"] > 0 && original["udp-port"] <= 65535) {
           proxy["udp_port"] = original["udp-port"];
+        }
+        if (original["ip-version"]) {
+          proxy.ip_version = ipVersions5[original["ip-version"]] || original["ip-version"];
         }
         delete proxy.subName;
         delete proxy.collectionName;
@@ -11787,23 +13592,18 @@ function getUdpRelay(proxy) {
   return proxy.udp ?? proxy.udp_relay;
 }
 function getNonEmptyValue(value) {
-  if (value == null)
-    return void 0;
-  if (typeof value === "string" && value.length === 0)
-    return void 0;
+  if (value == null) return void 0;
+  if (typeof value === "string" && value.length === 0) return void 0;
   return value;
 }
 function getReality(proxy) {
   const realityOpts = proxy?.["reality-opts"];
-  if (!realityOpts)
-    return void 0;
+  if (!realityOpts) return void 0;
   const reality = {};
   const publicKey = getNonEmptyValue(realityOpts["public-key"]);
   const shortId = getNonEmptyValue(realityOpts["short-id"]);
-  if (publicKey != null)
-    reality.public_key = publicKey;
-  if (shortId != null)
-    reality.short_id = shortId;
+  if (publicKey != null) reality.public_key = publicKey;
+  if (shortId != null) reality.short_id = shortId;
   return Object.keys(reality).length > 0 ? reality : void 0;
 }
 function getGrpcTransport(proxy) {
@@ -11817,26 +13617,71 @@ function getGrpcTransport(proxy) {
   };
 }
 function isEgernGrpcGun(proxy) {
-  if (proxy.network !== "grpc")
-    return true;
+  if (proxy.network !== "grpc") return true;
   const grpcType = proxy["grpc-opts"]?.["_grpc-type"];
-  if (grpcType == null)
-    return true;
+  if (grpcType == null) return true;
   return `${grpcType}`.trim().toLowerCase() === "gun";
 }
 function normalizeSnellVersion(version) {
-  if (version == null)
-    return void 0;
+  if (version == null) return void 0;
   const normalized = `${version}`.trim();
-  if (!/^[1-5]$/.test(normalized))
-    return null;
+  if (!/^[1-5]$/.test(normalized)) return null;
   return parseInt(normalized, 10);
+}
+var EGERN_SSR_METHODS = [
+  "none",
+  "dummy",
+  "rc4-md5",
+  "aes-128-cfb",
+  "aes-192-cfb",
+  "aes-256-cfb",
+  "aes-128-ctr",
+  "aes-192-ctr",
+  "aes-256-ctr",
+  "chacha20",
+  "chacha20-ietf",
+  "xchacha20"
+];
+var EGERN_SSR_PROTOCOLS = [
+  "origin",
+  "auth_sha1_v4",
+  "auth_aes128_md5",
+  "auth_aes128_sha1",
+  "auth_chain_a",
+  "auth_chain_b"
+];
+var EGERN_SSR_OBFS = [
+  "plain",
+  "http_simple",
+  "http_post",
+  "random_head",
+  "tls1.2_ticket_auth",
+  "tls1.2_ticket_fastauth"
+];
+function normalizeSsrPlugin(value) {
+  if (value == null) return void 0;
+  const normalized = `${value}`.trim().toLowerCase();
+  return normalized.length > 0 ? normalized : void 0;
+}
+function normalizeSsrMethod(cipher) {
+  const method = normalizeSsrPlugin(cipher);
+  return method === "plain" ? "none" : method;
+}
+function isEgernSsr(proxy) {
+  if (!EGERN_SSR_METHODS.includes(normalizeSsrMethod(proxy.cipher))) {
+    return false;
+  }
+  const protocol = normalizeSsrPlugin(proxy.protocol);
+  if (protocol != null && !EGERN_SSR_PROTOCOLS.includes(protocol)) {
+    return false;
+  }
+  const obfs = normalizeSsrPlugin(proxy.obfs);
+  return obfs == null || EGERN_SSR_OBFS.includes(obfs);
 }
 function getFirstHeaderValue(headers, ...keys) {
   for (const key of keys) {
     const value = getFirstValue(headers?.[key]);
-    if (value)
-      return value;
+    if (value) return value;
   }
   return void 0;
 }
@@ -11847,8 +13692,7 @@ function getH2Headers(h2Opts) {
   const headers = {};
   if (h2Opts?.headers && typeof h2Opts.headers === "object" && !Array.isArray(h2Opts.headers)) {
     for (const [key, value] of Object.entries(h2Opts.headers)) {
-      if (/^host$/i.test(key))
-        continue;
+      if (/^host$/i.test(key)) continue;
       const headerValue = getFirstValue(value);
       if (headerValue != null) {
         headers[key] = headerValue;
@@ -11862,16 +13706,13 @@ function getH2Headers(h2Opts) {
   return Object.keys(headers).length > 0 ? headers : void 0;
 }
 function getFirstValue(value) {
-  if (Array.isArray(value))
-    return value[0];
-  if (value != null)
-    return value;
+  if (Array.isArray(value)) return value[0];
+  if (value != null) return value;
   return void 0;
 }
 function getFingerprintSha256(proxy) {
   const fingerprint = proxy?.["tls-fingerprint"];
-  if (typeof fingerprint !== "string")
-    return void 0;
+  if (typeof fingerprint !== "string") return void 0;
   const trimmedFingerprint = fingerprint.trim();
   return trimmedFingerprint.length > 0 ? trimmedFingerprint : void 0;
 }
@@ -11881,8 +13722,7 @@ function supportsRootFingerprintSha256(original, proxy) {
   ) || original.type === "socks5" && proxy.type === "socks5_tls" || original.type === "http" && proxy.type === "https";
 }
 function addTransportFingerprintSha256(transport, fingerprintSha256) {
-  if (!transport)
-    return;
+  if (!transport) return;
   for (const key of ["grpc", "http2", "tls", "wss"]) {
     if (transport[key]) {
       transport[key].fingerprint_sha256 = fingerprintSha256;
@@ -11984,8 +13824,7 @@ function parseProxyLines(lines, opts) {
   const proxyList = [];
   let lastParser = null;
   for (const line of lines) {
-    if (line.length === 0)
-      continue;
+    if (line.length === 0) continue;
     let proxy = null;
     if (lastParser) {
       proxy = tryParseProxy(lastParser, line);
@@ -12041,3 +13880,16 @@ export {
   produceOutput,
   tryParseProxy
 };
+/*! Bundled license information:
+
+ieee754/index.js:
+  (*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> *)
+
+buffer/index.js:
+  (*!
+   * The buffer module from node.js, for the browser.
+   *
+   * @author   Feross Aboukhadijeh <https://feross.org>
+   * @license  MIT
+   *)
+*/
