@@ -2557,6 +2557,7 @@ var grammars2 = String.raw`
     function loonClientFingerprint(tlsProfile) {
         switch (String(tlsProfile || "").trim()) {
             case "chrome":
+            case "chrome147":
                 return "chrome";
             case "ios18":
             case "ios26":
@@ -2756,12 +2757,19 @@ max_stream_count = comma "max-stream-count" equals match:$[0-9]+ { proxy["max-st
 
 udp_over_tcp = comma "udp-over-tcp" equals flag:bool { proxy["udp-over-tcp"] = true; proxy["udp-over-tcp-version"] = 2; }
 
+server_dns = comma "server-dns" equals value:(
+    '"' match:$[^"]* '"' { return match; }
+    / $(!(comma [a-zA-Z0-9_-]+ equals) [^"])*
+) {
+    proxy["server-dns"] = value.split(",").map((item) => item.trim()).filter(Boolean);
+}
+
 tag = match:[^=,]* { proxy.name = match.join("").trim(); }
 comma = _ "," _
 equals = _ "=" _
 _ = [ \r\t]*
 bool = b:("true"/"false") { return b === "true" }
-others = comma [^=,]+ equals [^=,]+
+others = server_dns / (comma [^=,]+ equals [^=,]+)
 `;
 var parser2;
 function getParser2() {
@@ -5443,6 +5451,14 @@ function URI_VLESS() {
     if (params.pqv) {
       proxy._pqv = params.pqv;
     }
+    if (params.fm) {
+      try {
+        const finalmask = JSON.parse(params.fm);
+        proxy._finalmask = isPlainObject(finalmask) ? finalmask : params.fm;
+      } catch (e) {
+        proxy._finalmask = params.fm;
+      }
+    }
     return proxy;
   };
   return { name, test, parse: parse2 };
@@ -6079,6 +6095,9 @@ function Loon_WireGuard() {
       reserved = JSON.parse(reserved);
     }
     let dns;
+    const serverDns = line.match(
+      /(?:^|,)\s*server-dns\s*=\s*(?:"([^"]*)"|([^"]*?))(?=\s*(?:,\s*[\w-]+\s*=|$))/i
+    );
     let dnsv4 = line.match(/(,|^)\s*?dns\s*?=\s*?"?(.+?)"?\s*?(,|$)/i)?.[2];
     let dnsv6 = line.match(
       /(,|^)\s*?dnsv6\s*?=\s*?"?(.+?)"?\s*?(,|$)/i
@@ -6122,6 +6141,7 @@ function Loon_WireGuard() {
       "allowed-ips": allowedIps,
       "preshared-key": preSharedKey,
       dns,
+      "server-dns": (serverDns?.[1] ?? serverDns?.[2])?.split(",").map((item) => item.trim()).filter(Boolean),
       udp: true,
       peers: [
         {
@@ -6221,7 +6241,7 @@ function Surge_Trojan() {
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
-var LOON_ONLY_OPTIONS = /(^|,)\s*(fast-open|over-tls|tls-name|ip-mode|tls-cert-sha256|tls-pubkey-sha256)\s*=/i;
+var LOON_ONLY_OPTIONS = /(^|,)\s*(fast-open|over-tls|tls-name|ip-mode|tls-cert-sha256|tls-pubkey-sha256|server-dns)\s*=/i;
 function Surge_Http() {
   const name = "Surge HTTP Parser";
   const test = (line) => {
@@ -8708,7 +8728,13 @@ function Loon_Producer() {
       `Platform ${targetPlatform3} does not support proxy type: ${proxy.type}`
     );
   };
-  return { produce: produce2 };
+  return {
+    produce: (proxy, type, opts = {}) => {
+      const result = produce2(proxy, type, opts);
+      const serverDns = proxy["server-dns"];
+      return Array.isArray(serverDns) && serverDns.length > 0 ? `${result},server-dns="${serverDns.join(",")}"` : result;
+    }
+  };
 }
 function appendTlsProfile(result, proxy) {
   const tlsProfile = getLoonTlsProfile(proxy);
@@ -8759,12 +8785,12 @@ function getLoonAlpn(proxy) {
 }
 function getLoonTlsProfile(proxy) {
   const tlsProfile = `${proxy._loon_tls_profile || ""}`.trim();
-  if (["default", "chrome", "ios18", "ios26"].includes(tlsProfile)) {
+  if (["default", "chrome", "chrome147", "ios18", "ios26"].includes(tlsProfile)) {
     return tlsProfile;
   }
   switch (`${proxy["client-fingerprint"] || ""}`.trim()) {
     case "chrome":
-      return "chrome";
+      return "chrome147";
     case "ios":
       return "ios26";
   }
@@ -9678,17 +9704,17 @@ function mergeUnsupportedXhttpExtraObject(baseObject, unsupportedObject) {
   }
   return mergedExtra;
 }
-function getExplicitExtraOverride(proxy) {
-  if (typeof proxy._extra === "string") {
-    return proxy._extra;
+function serializeUriJsonValue(value) {
+  if (typeof value === "string") {
+    return value;
   }
-  if (isPlainObject(proxy._extra)) {
-    return JSON.stringify(proxy._extra);
+  if (isPlainObject(value)) {
+    return JSON.stringify(value);
   }
   return void 0;
 }
 function buildVlessExtra(proxy) {
-  const explicitExtraOverride = getExplicitExtraOverride(proxy);
+  const explicitExtraOverride = serializeUriJsonValue(proxy._extra);
   if (explicitExtraOverride != null) {
     return explicitExtraOverride;
   }
@@ -9784,6 +9810,11 @@ function vless2(proxy) {
   const extraPayload = buildVlessExtra(proxy);
   if (extraPayload) {
     extra = `&extra=${encodeURIComponent(extraPayload)}`;
+  }
+  let fm = "";
+  const finalmaskPayload = serializeUriJsonValue(proxy._finalmask);
+  if (finalmaskPayload) {
+    fm = `&fm=${encodeURIComponent(finalmaskPayload)}`;
   }
   let mode = "";
   if (["xhttp"].includes(proxy.network) && proxy[`${proxy.network}-opts`]?.mode) {
@@ -9903,7 +9934,7 @@ function vless2(proxy) {
   }
   return `vless://${proxy.uuid}@${proxy.server}:${proxy.port}?security=${encodeURIComponent(
     security
-  )}${vlessTransport}${packetEncoding}${alpn}${allowInsecure}${pcs}${vcn}${ech}${h2}${sni}${fp}${flow}${sid}${spx}${pbk}${mode}${extra}${pqv}${encryption}#${encodeURIComponent(
+  )}${vlessTransport}${packetEncoding}${alpn}${allowInsecure}${pcs}${vcn}${ech}${h2}${sni}${fp}${flow}${sid}${spx}${pbk}${mode}${extra}${fm}${pqv}${encryption}#${encodeURIComponent(
     proxy.name
   )}`;
 }
@@ -10088,10 +10119,10 @@ function URI_Producer() {
         result = "ssr://" + Base644.encode(result);
         break;
       case "vmess":
-        if (proxy["reality-opts"]) {
+        if (proxy["reality-opts"] || proxy._finalmask) {
           if (proxy.aead === false || proxy.aead !== true && Number(proxy.alterId || 0) !== 0) {
             throw new Error(
-              "VMess REALITY URI requires AEAD (alterId=0)"
+              "VMess query URI format cannot represent non-AEAD authentication (alterId must be 0)"
             );
           }
           result = vless2({
