@@ -12699,9 +12699,13 @@ var anytlsParser = (proxy = {}, includeUnsupportedProxy = false) => {
 };
 var tailscaleParser = (proxy = {}) => {
   const useControlHTTPClient = hasControlHTTPClient(proxy);
+  const listenPort = parseSafeIntegerValue(proxy._listen_port);
   const parsedProxy = {
     tag: proxy.name,
     type: "tailscale",
+    listen_port: listenPort != null && listenPort <= 65535 ? listenPort : void 0,
+    taildrop_directory: typeof proxy._taildrop_directory === "string" ? proxy._taildrop_directory : void 0,
+    on_demand: typeof proxy._on_demand === "boolean" ? proxy._on_demand : void 0,
     control_http_client: proxy["control-http-client"],
     udp_timeout: proxy["udp-timeout"],
     state_directory: proxy["state-dir"] || proxy["state-directory"],
@@ -12750,10 +12754,16 @@ var tailscaleParser = (proxy = {}) => {
 };
 var wireguardParser = (proxy = {}) => {
   const address = ["ipv4", "ipv6"].map((family) => getWireGuardAddressWithCIDR(proxy, family)).filter((i) => i);
+  const listenPort = parseSafeIntegerValue(proxy._listen_port);
+  const udpNatMax = parseSafeIntegerValue(proxy._udp_nat_max);
   const parsedProxy = {
     system: !!proxy.system,
+    name: typeof proxy._name === "string" ? proxy._name : void 0,
+    listen_port: listenPort != null && listenPort <= 65535 ? listenPort : void 0,
+    on_demand: typeof proxy._on_demand === "boolean" ? proxy._on_demand : void 0,
     mtu: proxy.mtu ? parseInt(`${proxy.mtu}`, 10) : void 0,
     udp_timeout: proxy["udp-timeout"],
+    udp_nat_max: udpNatMax != null && udpNatMax <= 4294967295 ? udpNatMax : void 0,
     workers: proxy["workers"] ? parseInt(`${proxy["workers"]}`, 10) : void 0,
     tag: proxy.name,
     type: "wireguard",
@@ -12765,6 +12775,15 @@ var wireguardParser = (proxy = {}) => {
     pre_shared_key: proxy["pre-shared-key"],
     reserved: []
   };
+  for (const field of ["udp_mapping", "udp_filtering"]) {
+    if ([
+      "endpoint_independent",
+      "address_dependent",
+      "address_and_port_dependent"
+    ].includes(proxy[`_${field}`])) {
+      parsedProxy[field] = proxy[`_${field}`];
+    }
+  }
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   if (proxy["fast-open"]) parsedProxy.udp_fragment = true;
