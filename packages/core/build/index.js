@@ -4078,7 +4078,9 @@ function URI_SS() {
         }
       }
     }
-    proxy.udp = !!params["udp"];
+    proxy.udp = ![false, 0, "0", "false", "off"].includes(
+      typeof params["udp"] === "string" ? params["udp"].toLowerCase() : params["udp"]
+    );
     const serverAndPort = serverAndPortArray[1];
     const portIdx = serverAndPort.lastIndexOf(":");
     proxy.server = serverAndPort.substring(0, portIdx);
@@ -10010,6 +10012,7 @@ function URI_Producer() {
         if (proxy.tfo) {
           query += "&tfo=1";
         }
+        query += `&udp=${proxy.udp ? 1 : 0}`;
         let ssTransport = "";
         if (proxy.network) {
           let ssType = proxy.network;
@@ -12047,9 +12050,10 @@ var sshParser = (proxy = {}) => {
     throw "invalid port";
   if (proxy.username) parsedProxy.user = proxy.username;
   if (proxy.password) parsedProxy.password = proxy.password;
-  if (proxy["privateKey"]) parsedProxy.private_key_path = proxy["privateKey"];
-  if (proxy["private-key"])
-    parsedProxy.private_key_path = proxy["private-key"];
+  const privateKey = proxy["private-key"] || proxy.privateKey;
+  if (privateKey) {
+    parsedProxy[privateKey.includes("PRIVATE KEY") ? "private_key" : "private_key_path"] = privateKey;
+  }
   if (proxy["private-key-passphrase"])
     parsedProxy.private_key_passphrase = proxy["private-key-passphrase"];
   if (proxy["server-fingerprint"]) {
