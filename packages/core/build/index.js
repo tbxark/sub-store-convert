@@ -12849,16 +12849,20 @@ var wireguardParser = (proxy = {}) => {
         address2 = parsedProxy.server;
         port = parseInt(`${parsedProxy.server_port}`, 10);
       }
+      let allowedIps = p["allowed-ips"] || p.allowed_ips || proxy["allowed-ips"] || proxy.allowed_ips;
+      if (typeof allowedIps === "string") {
+        allowedIps = allowedIps.split(",").map((i) => i.trim()).filter(Boolean);
+      }
+      if (!Array.isArray(allowedIps) || allowedIps.length === 0) {
+        allowedIps = ["0.0.0.0/0", ...proxy.ipv6 ? ["::/0"] : []];
+      }
       const peer = {
         address: address2,
         port,
         persistent_keepalive_interval: p["persistent-keepalive-interval"] ? parseInt(`${p["persistent-keepalive-interval"]}`, 10) : void 0,
         public_key: p["public-key"] || p["public_key"] || parsedProxy.peer_public_key,
         pre_shared_key: p["pre-shared-key"] || p["pre_shared_key"] || parsedProxy.pre_shared_key,
-        allowed_ips: p["allowed-ips"] || p.allowed_ips || [
-          "0.0.0.0/0",
-          ...proxy.ipv6 ? ["::/0"] : []
-        ],
+        allowed_ips: allowedIps,
         reserved: []
       };
       if (typeof p.reserved === "string") {
