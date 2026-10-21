@@ -12,7 +12,7 @@ importers:
     dependencies:
       '@hono/node-server':
         specifier: ^2.0.12
-        version: 2.0.12(hono@4.13.7)
+        version: 2.0.12(hono@4.13.11)
       '@sub-store-convert/core':
         specifier: workspace:*
         version: link:../core
@@ -20,8 +20,8 @@ importers:
         specifier: ^0.28.1
         version: 0.28.1
       hono:
-        specifier: ^4.13.7
-        version: 4.13.7
+        specifier: ^4.13.11
+        version: 4.13.11
       wrangler:
         specifier: ^4.115.0
         version: 4.115.0
@@ -499,8 +499,8 @@ packages:
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
 
-  hono@4.13.7:
-    resolution: {integrity: sha512-c8/gF9ac8Y78/agExVocyLevgR+JlpNB444Py0FSX8pJoPdYUfUzRcXtYEYGwt6l19qIlVZPN5Mfsw9jFShmQQ==}
+  hono@4.13.11:
+    resolution: {integrity: sha512-/SMX/RQNJn7oNmFwH6DtwDqcrzZU2otm1FD6OJe2cWF6cfy/F8hq0XVBv7xW3FTJshRQwuBnXHDq2kNsdZnshg==}
     engines: {node: '>=16.9.0'}
 
   ieee754@1.2.1:
@@ -714,9 +714,9 @@ snapshots:
   '@esbuild/win32-x64@0.28.1':
     optional: true
 
-  '@hono/node-server@2.0.12(hono@4.13.7)':
+  '@hono/node-server@2.0.12(hono@4.13.11)':
     dependencies:
-      hono: 4.13.7
+      hono: 4.13.11
 
   '@img/colour@1.1.0': {}
 
@@ -900,7 +900,7 @@ snapshots:
   fsevents@2.3.3:
     optional: true
 
-  hono@4.13.7: {}
+  hono@4.13.11: {}
 
   ieee754@1.2.1: {}
 
