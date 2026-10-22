@@ -1,6 +1,6 @@
 {
   "name": "sub-store-convert",
-  "version": "2.42.6",
+  "version": "2.43.0",
   "private": true,
   "scripts": {
     "build:core": "pnpm --filter @sub-store-convert/core build",
