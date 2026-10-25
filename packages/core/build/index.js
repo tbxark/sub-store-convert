@@ -5474,7 +5474,6 @@ function URI_AnyTLS() {
     const parsed = URI_VLESS().parse(line.replace("anytls", "vless"));
     line = line.split(/anytls:\/\//)[1];
     let [__, password, server, port, addons = "", name2] = /^(.*?)@(.*?)(?::(\d+))?\/?(?:\?(.*?))?(?:#(.*?))?$/.exec(line);
-    password = decodeURIComponent(password);
     port = parseInt(`${port}`, 10);
     if (isNaN(port)) {
       port = 443;
@@ -5825,12 +5824,14 @@ function URI_Trojan() {
     return /^trojan:\/\//.test(line);
   };
   const parse2 = (line) => {
-    const matched = /^(trojan:\/\/.*?@.*?)(:(\d+))?\/?(\?.*?)?$/.exec(line);
+    let [newLine, name2] = line.split(/#(.+)/, 2);
+    const matched = /^(trojan:\/\/.*?@.*?)(:(\d+))?\/?(\?.*?)?$/.exec(
+      newLine
+    );
     const port = matched?.[2];
     if (!port) {
-      line = line.replace(matched[1], `${matched[1]}:443`);
+      newLine = newLine.replace(matched[1], `${matched[1]}:443`);
     }
-    let [newLine, name2] = line.split(/#(.+)/, 2);
     const parser5 = getParser4();
     const proxy = parser5.parse(newLine);
     if (isNotBlank(name2)) {
@@ -10209,7 +10210,7 @@ function URI_Producer() {
               result.path = vmessTransportPath;
             }
             if (vmessTransportHost) {
-              result.host = Array.isArray(vmessTransportHost) ? vmessTransportHost[0] : vmessTransportHost;
+              result.host = Array.isArray(vmessTransportHost) ? proxy.network === "h2" ? vmessTransportHost.join(",") : vmessTransportHost[0] : vmessTransportHost;
             }
           }
         }
@@ -10325,7 +10326,9 @@ function URI_Producer() {
             trojanMode = `&mode=${encodeURIComponent(proxy._mode)}`;
           }
         }
-        result = `trojan://${proxy.password}@${proxy.server}:${proxy.port}?sni=${encodeURIComponent(proxy.sni || proxy.server)}${proxy["skip-cert-verify"] ? "&allowInsecure=1" : ""}${trojanTransport}${trojanAlpn}${trojanFp}${trojanPcs}${trojanVcn}${trojanSecurity}${trojanSid}${trojanPbk}${trojanSpx}${trojanMode}${trojanExtra}#${encodeURIComponent(
+        result = `trojan://${encodeURIComponent(proxy.password)}@${proxy.server}:${proxy.port}?sni=${encodeURIComponent(
+          proxy.sni || proxy.server
+        )}${proxy["skip-cert-verify"] ? "&allowInsecure=1" : ""}${trojanTransport}${trojanAlpn}${trojanFp}${trojanPcs}${trojanVcn}${trojanSecurity}${trojanSid}${trojanPbk}${trojanSpx}${trojanMode}${trojanExtra}#${encodeURIComponent(
           proxy.name
         )}`;
         break;
@@ -10486,7 +10489,8 @@ function URI_Producer() {
       case "anytls":
         result = vless2({
           ...proxy,
-          uuid: proxy.password,
+          // vless() writes the uuid as is; a password may contain @, :, # etc.
+          uuid: encodeURIComponent(proxy.password),
           network: proxy.network || "tcp"
         }).replace("vless", "anytls");
         let anytlsParams = [];
