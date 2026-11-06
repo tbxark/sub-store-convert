@@ -13561,7 +13561,7 @@ function Egern_Producer() {
             port: proxy.port,
             private_key: proxy["private-key"],
             peer_public_key: proxy["public-key"],
-            preshared_key: proxy["preshared-key"],
+            preshared_key: proxy["preshared-key"] ?? proxy["pre-shared-key"],
             reserved: proxy.reserved ? Array.isArray(proxy.reserved) ? proxy.reserved : proxy.reserved.split(/\s*\/\s*/).map((item) => item.trim()).filter((item) => item.length > 0) : void 0,
             dns_servers: proxy.dns ? Array.isArray(proxy.dns) ? proxy.dns : proxy.dns.split(/\s*,\s*/).map((item) => item.trim()).filter((item) => item.length > 0) : void 0,
             mtu: proxy.mtu,
