@@ -6421,30 +6421,80 @@ import _2 from "lodash";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/preprocessors/index.js
 import { Base64 as Base642 } from "js-base64";
+import { isAlias, isScalar, isSeq, parseDocument, visit } from "yaml";
 function normalizeClashYaml(raw) {
-  if (typeof raw !== "string" || !raw.includes("proxies:") || !raw.includes("short-id:")) {
+  if (typeof raw !== "string" || !raw.includes("short-id")) {
     return raw;
   }
+  let document;
   try {
-    const content = safeLoad(raw);
-    if (!Array.isArray(content.proxies) || content.proxies.length === 0)
+    document = parseDocument(raw, {
+      merge: true,
+      logLevel: "error"
+    });
+    const content = document.errors.length > 0 ? safeLoad(raw) : document.toJS();
+    if (![content.proxies, content.listeners].some(
+      (items) => Array.isArray(items) && items.length > 0
+    ))
       return raw;
   } catch (e) {
     return raw;
   }
-  return raw.replace(/short-id:([ \t]*[^#\n,}]*)/g, (matched, value) => {
-    const afterTrim = value.trim();
-    if (!afterTrim || afterTrim === "") {
-      return 'short-id: ""';
-    }
-    if (/^(['"]).*\1$/.test(afterTrim)) {
-      return `short-id: ${afterTrim}`;
-    } else if (["null"].includes(afterTrim)) {
-      return `short-id: ${afterTrim}`;
-    } else {
-      return `short-id: "${afterTrim}"`;
+  const anchors = /* @__PURE__ */ new Map();
+  const aliases = /* @__PURE__ */ new Map();
+  visit(document, {
+    Node(_3, node) {
+      if (isAlias(node)) {
+        aliases.set(node.range[0], anchors.get(node.source));
+      } else if (node.anchor) {
+        anchors.set(node.anchor, node);
+      }
     }
   });
+  const resolveAlias = (node) => isAlias(node) ? aliases.get(node.range[0]) : node;
+  const needsQuotes = (node) => isScalar(node) && typeof node.value !== "string" && node.value !== null && !node.tag && node.source;
+  const realityConfigs = /* @__PURE__ */ new Set();
+  visit(document, {
+    Pair(_3, { key, value }) {
+      const name = resolveAlias(key)?.value;
+      if (["reality-opts", "reality-config"].includes(name)) {
+        realityConfigs.add(value);
+      }
+    }
+  });
+  for (const config of realityConfigs) {
+    visit(config, {
+      Alias(_3, alias) {
+        realityConfigs.add(resolveAlias(alias));
+      }
+    });
+  }
+  const shortIds = /* @__PURE__ */ new Set();
+  visit(document, {
+    Pair(_3, { key, value }, path) {
+      if (resolveAlias(key)?.value === "short-id" && path.some((node) => realityConfigs.has(node))) {
+        shortIds.add(value);
+      }
+    }
+  });
+  const replacements = /* @__PURE__ */ new Map();
+  for (const value of shortIds) {
+    const node = resolveAlias(value);
+    if (isSeq(node)) {
+      for (const item of node.items) shortIds.add(item);
+    } else if (needsQuotes(node)) {
+      replacements.set(node, JSON.stringify(node.source));
+    }
+  }
+  const chunks = [];
+  let offset = 0;
+  for (const [node, content] of [...replacements].sort(
+    ([left], [right]) => left.range[0] - right.range[0]
+  )) {
+    chunks.push(raw.slice(offset, node.range[0]), content);
+    offset = node.range[1];
+  }
+  return chunks.join("") + raw.slice(offset);
 }
 function HTML() {
   const name = "HTML";
