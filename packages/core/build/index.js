@@ -4070,12 +4070,12 @@ function URI_SS() {
         if (params.mode) {
           proxy._mode = params.mode;
         }
-        if (params.extra) {
-          proxy._extra = params.extra;
-        }
         if (Object.keys(opts).length > 0) {
           _.set(proxy, params.security + "-opts", opts);
         }
+      }
+      if (params.extra && (proxy.network === "xhttp" || params.security === "reality")) {
+        proxy._extra = params.extra;
       }
     }
     proxy.udp = ![false, 0, "0", "false", "off"].includes(
@@ -10174,7 +10174,7 @@ function URI_Producer() {
         let ssSpx = "";
         let ssSecurity = proxy.tls ? "&security=tls" : "";
         let ssMode = "";
-        let ssExtra = "";
+        const ssExtra = proxy._extra && (ssIsReality || proxy.network === "xhttp") ? `&extra=${encodeURIComponent(proxy._extra)}` : "";
         if (ssIsReality) {
           ssSecurity = `&security=reality`;
           const publicKey = proxy["reality-opts"]?.["public-key"];
@@ -10188,9 +10188,6 @@ function URI_Producer() {
           const spiderX = proxy["reality-opts"]?.["_spider-x"];
           if (spiderX) {
             ssSpx = `&spx=${encodeURIComponent(spiderX)}`;
-          }
-          if (proxy._extra) {
-            ssExtra = `&extra=${encodeURIComponent(proxy._extra)}`;
           }
           if (proxy._mode) {
             ssMode = `&mode=${encodeURIComponent(proxy._mode)}`;
