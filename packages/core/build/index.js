@@ -2216,7 +2216,7 @@ var grammars = String.raw`
     }
 }
 
-start = (masque/anytls/shadowsocks/vmess/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
+start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
     return proxy;
 }
 
@@ -2240,6 +2240,13 @@ vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_path/ws_headers/
     } else {
         proxy.alterId = 1;
     }
+    handleWebsocket();
+    handleShadowTLS();
+}
+vless = tag equals "vless" address (vless_username/vless_option/reality_option/ws/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+    proxy.type = "vless";
+    proxy["packet-encoding"] = "xudp";
+    if (proxy["reality-opts"] && proxy["reality-opts"]["public-key"]) proxy.tls = true;
     handleWebsocket();
     handleShadowTLS();
 }
@@ -2306,7 +2313,7 @@ anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_prox
     proxy.type = "anytls";
     proxy.tls = true;
 }
-trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
     proxy.type = "trusttunnel";
     proxy.tls = true;
 }
@@ -2405,6 +2412,11 @@ usernamek = comma "username" equals match:[^,]+ { proxy.username = match.join(""
 passwordk = comma "password" equals match:[^,]+ { proxy.password = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
 vmess_uuid = comma "username" equals match:[^,]+ { proxy.uuid = match.join(""); }
 vmess_aead = comma "vmess-aead" equals flag:bool { proxy.aead = flag; }
+// shortcut: keep text IDs as given, convert them to UUIDv5 when a target requires it.
+vless_username = comma "username" equals value:quoted_value { proxy.uuid = value.trim(); }
+vless_option = comma key:("flow"/"encryption") equals value:quoted_value { proxy[key] = value.trim(); }
+reality_option = comma "reality-" key:("public-key"/"short-id") equals value:quoted_value { $set(proxy, "reality-opts." + key, value.trim()); }
+client_random_auth_key = comma "client-random-auth-key" equals value:$[^,]* { proxy["client-random-auth-key"] = stripQuotes(value); }
 
 method = comma "encrypt-method" equals cipher:cipher {
     proxy.cipher = cipher;
@@ -2414,7 +2426,7 @@ vmess_method = comma "encrypt-method" equals cipher:$[^,]+ {
 }
 cipher = ("aes-128-cfb"/"aes-128-ctr"/"aes-128-gcm"/"aes-192-cfb"/"aes-192-ctr"/"aes-192-gcm"/"aes-256-cfb"/"aes-256-ctr"/"aes-256-gcm"/"bf-cfb"/"camellia-128-cfb"/"camellia-192-cfb"/"camellia-256-cfb"/"cast5-cfb"/"chacha20-ietf-poly1305"/"chacha20-ietf"/"chacha20-poly1305"/"chacha20"/"des-cfb"/"idea-cfb"/"none"/"rc2-cfb"/"rc4-md5"/"rc4"/"salsa20"/"seed-cfb"/"xchacha20-ietf-poly1305"/"2022-blake3-aes-128-gcm"/"2022-blake3-aes-256-gcm");
 
-ws = comma "ws" equals flag:bool { obfs.type = "ws"; }
+ws = comma "ws" equals flag:bool { if (flag) obfs.type = "ws"; }
 ws_headers = comma "ws-headers" equals & {
     const start = peg$currPos;
     const index = readHeadersEnd(input, start, "|");
@@ -2424,6 +2436,10 @@ ws_headers = comma "ws-headers" equals & {
     return $.headers.trim().length > 0;
 } { obfs["ws-headers"] = parseHeaders($.headers, "|"); }
 ws_path = comma "ws-path" equals path:uri { obfs.path = path.trim().replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
+grpc = comma "grpc" equals flag:bool { if (flag) proxy.network = "grpc"; }
+grpc_service_name = comma "grpc-service-name" equals value:quoted_value { $set(proxy, "grpc-opts.grpc-service-name", value.trim()); }
+grpc_mode = comma "grpc-mode" equals value:quoted_value { $set(proxy, "grpc-opts._grpc-type", value.trim()); }
+grpc_authority = comma "grpc-authority" equals value:quoted_value { $set(proxy, "grpc-opts._grpc-authority", value.trim()); }
 headers = comma "headers" equals & {
     const start = peg$currPos;
     const index = readHeadersEnd(input, start, ";");
@@ -5345,9 +5361,6 @@ function URI_VLESS() {
       }
       if (params.serviceName) {
         opts[`${proxy.network}-service-name`] = params.serviceName;
-        if (["grpc"].includes(proxy.network) && params.authority) {
-          opts["_grpc-authority"] = params.authority;
-        }
       } else if (isShadowrocket && params.path) {
         if (!["ws", "http", "h2"].includes(proxy.network)) {
           opts[`${proxy.network}-service-name`] = params.path;
@@ -5370,6 +5383,9 @@ function URI_VLESS() {
       }
       if (["grpc"].includes(proxy.network)) {
         opts["_grpc-type"] = params.mode || "gun";
+        if (params.authority) {
+          opts["_grpc-authority"] = params.authority;
+        }
       }
       if (httpupgrade) {
         opts["v2ray-http-upgrade"] = true;
@@ -6236,6 +6252,12 @@ function Surge_VMess() {
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
+function Surge_VLESS() {
+  const name = "Surge VLESS Parser";
+  const test = (line) => /^.*=\s*vless\s*$/.test(line.split(",")[0]) && /,\s*username\s*=/.test(line);
+  const parse2 = (line) => getParser().parse(line);
+  return { name, test, parse: parse2 };
+}
 function Surge_Trojan() {
   const name = "Surge Trojan Parser";
   const test = (line) => {
@@ -6388,6 +6410,7 @@ var parsers_default = [
   Surge_SSH(),
   Surge_SS(),
   Surge_VMess(),
+  Surge_VLESS(),
   Surge_Trojan(),
   Surge_Http(),
   Surge_Snell(),
@@ -6661,6 +6684,15 @@ function isPresent2(obj, attr) {
   const data = _2.get(obj, attr);
   return typeof data !== "undefined" && data !== null;
 }
+function supportsTrustTunnelClientRandomAuth(proxy, targetPlatform6) {
+  if (proxy.type !== "trusttunnel" || !isPresent2(proxy, "client-random-auth-key") || ["surge", "surgemac", "json"].includes(targetPlatform6.toLowerCase())) {
+    return true;
+  }
+  app_default.error(
+    `Target platform ${targetPlatform6} does not support client-random-auth-key for TrustTunnel proxy ${proxy.name || `${proxy.server}:${proxy.port}`}. Proxy has been filtered.`
+  );
+  return false;
+}
 function isShadowsocksOverTls(proxy) {
   const normalizedNetwork = typeof proxy?.network === "string" ? proxy.network.trim().toLowerCase() : proxy?.network;
   return proxy?.type === "ss" && proxy?.tls === true && !isPresent2(proxy, "plugin") && (!isPresent2(proxy, "network") || normalizedNetwork === "tcp");
@@ -6895,7 +6927,8 @@ function Surge_Producer() {
       case "trojan":
         return trojan(proxy);
       case "vmess":
-        return vmess(proxy, opts["include-unsupported-proxy"]);
+      case "vless":
+        return v2ray(proxy, opts["include-unsupported-proxy"]);
       case "http":
         return http(proxy);
       case "h2-connect":
@@ -7105,6 +7138,15 @@ function trusttunnel(proxy) {
   result.append(`${proxy.name}=trust-tunnel,${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username="${proxy.username}"`, "username");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
+  if (isPresent2(proxy, "client-random-auth-key")) {
+    const key = stripSurgeQuotes(proxy["client-random-auth-key"]);
+    if (typeof key !== "string" || !/^[0-9a-f]+$/i.test(key)) {
+      throw new Error(
+        "TrustTunnel client-random-auth-key must be a hex string"
+      );
+    }
+    result.append(`,client-random-auth-key=${key}`);
+  }
   appendHeaders(result, proxy);
   warnMaxStreamsIfNeeded(proxy);
   result.appendIfPresent(
@@ -7242,13 +7284,16 @@ function h2Connect(proxy) {
   );
   return result.toString();
 }
-function vmess(proxy, includeUnsupportedProxy) {
+function v2ray(proxy, includeUnsupportedProxy) {
+  const isVless = proxy.type === "vless";
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username=${proxy.uuid}`, "uuid");
-  const encryptMethod = formatSurgeVmessEncryptMethod(proxy.cipher);
-  if (encryptMethod) {
-    result.append(`,encrypt-method=${encryptMethod}`);
+  if (!isVless) {
+    const encryptMethod = formatSurgeVmessEncryptMethod(proxy.cipher);
+    if (encryptMethod) {
+      result.append(`,encrypt-method=${encryptMethod}`);
+    }
   }
   const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
@@ -7256,14 +7301,15 @@ function vmess(proxy, includeUnsupportedProxy) {
     `,no-error-alert=${proxy["no-error-alert"]}`,
     "no-error-alert"
   );
-  handleTransport(result, proxy, includeUnsupportedProxy);
-  if (isPresent2(proxy, "aead")) {
-    result.append(`,vmess-aead=${proxy.aead}`);
+  if (isVless) {
+    appendVlessParams(result, proxy);
   } else {
-    result.append(`,vmess-aead=${proxy.alterId === 0}`);
+    handleTransport(result, proxy, includeUnsupportedProxy);
+    const aead = isPresent2(proxy, "aead") ? proxy.aead : proxy.alterId === 0;
+    result.append(`,vmess-aead=${aead}`);
+    result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
+    appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
   }
-  result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
-  appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
   result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
   result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
   result.appendIfPresent(
@@ -7289,6 +7335,48 @@ function vmess(proxy, includeUnsupportedProxy) {
     "underlying-proxy"
   );
   return result.toString();
+}
+function appendVlessParams(result, proxy) {
+  const network = proxy.network ?? "tcp";
+  const reality = proxy["reality-opts"];
+  const tls = proxy.tls || reality;
+  if (!["tcp", "raw", "none", "ws", "grpc"].includes(network)) {
+    throw unsupported(`VLESS network ${network} is unsupported`);
+  }
+  if (proxy.encryption && proxy.encryption !== "none") {
+    throw unsupported("VLESS encryption is unsupported");
+  }
+  if (network === "ws" && reality || network === "grpc" && !tls || proxy.flow && (!tls || network === "ws" || network === "grpc")) {
+    throw unsupported(
+      "Unsupported VLESS transport, TLS or flow combination"
+    );
+  }
+  if (network === "ws") {
+    handleTransport(result, proxy);
+  } else if (network === "grpc") {
+    result.append(",grpc=true");
+    const grpc = proxy["grpc-opts"];
+    for (const [key, value] of [
+      ["grpc-service-name", grpc?.["grpc-service-name"]],
+      ["grpc-mode", grpc?.["_grpc-type"]],
+      ["grpc-authority", grpc?.["_grpc-authority"]]
+    ]) {
+      if (value) result.append(`,${key}=${value}`);
+    }
+  }
+  if (proxy.flow) result.append(`,flow=${proxy.flow}`);
+  if (proxy.encryption) result.append(`,encryption=${proxy.encryption}`);
+  if (reality) {
+    result.append(`,reality-public-key=${reality["public-key"]}`);
+    if (reality["short-id"]) {
+      result.append(`,reality-short-id=${reality["short-id"]}`);
+    }
+    result.appendIfPresent(`,sni="${proxy.sni}"`, "sni");
+    appendAlpn(result, proxy);
+  } else {
+    result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
+    appendTlsProxyParams(result, proxy, Boolean(tls));
+  }
 }
 function ssh(proxy) {
   const result = new Result(proxy);
@@ -7837,6 +7925,9 @@ function ClashMeta_Producer() {
   const type = "ALL";
   const produce2 = (proxies, type2, opts = {}) => {
     const list = proxies.filter((proxy) => {
+      if (!supportsTrustTunnelClientRandomAuth(proxy, "Mihomo")) {
+        return false;
+      }
       if (opts["include-unsupported-proxy"]) return true;
       if (proxy.type === "h2-connect") {
         app_default.error(
@@ -8784,7 +8875,7 @@ function Loon_Producer() {
       case "trojan":
         return trojan2(proxy);
       case "vmess":
-        return vmess2(proxy, opts["include-unsupported-proxy"]);
+        return vmess(proxy, opts["include-unsupported-proxy"]);
       case "vless":
         return vless(proxy, opts["include-unsupported-proxy"]);
       case "http":
@@ -9092,7 +9183,7 @@ function anytls2(proxy) {
   result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
   return result.toString();
 }
-function vmess2(proxy) {
+function vmess(proxy) {
   const isReality = !!proxy["reality-opts"];
   const security = formatLoonVmessSecurity(proxy.cipher);
   const result = new Result(proxy);
@@ -10749,7 +10840,7 @@ function QX_Producer() {
       case "trojan":
         return trojan3(proxy);
       case "vmess":
-        return vmess3(proxy);
+        return vmess2(proxy);
       case "http":
         return http3(proxy);
       case "socks5":
@@ -10986,7 +11077,7 @@ function trojan3(proxy) {
   append(`,tag=${proxy.name}`);
   return result.toString();
 }
-function vmess3(proxy) {
+function vmess2(proxy) {
   const result = new Result(proxy);
   const append = result.append.bind(result);
   const appendIfPresent = result.appendIfPresent.bind(result);
@@ -11499,7 +11590,7 @@ function Surfboard_Producer() {
       case "trojan":
         return trojan4(proxy);
       case "vmess":
-        return vmess4(proxy);
+        return vmess3(proxy);
       case "http":
         return http4(proxy);
       case "snell":
@@ -11683,7 +11774,7 @@ function trojan4(proxy) {
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
   return result.toString();
 }
-function vmess4(proxy) {
+function vmess3(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username=${proxy.uuid}`, "uuid");
