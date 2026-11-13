@@ -1,6 +1,6 @@
 {
   "name": "@sub-store-convert/cli",
-  "version": "2.44.8",
+  "version": "2.44.9",
   "type": "module",
   "main": "./src/index.js",
   "license": "MIT",
