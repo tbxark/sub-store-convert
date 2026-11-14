@@ -1846,6 +1846,177 @@ function isPlainObject(obj) {
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/surge.js
 import peggy from "peggy";
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/surge-xhttp.js
+import _ from "lodash";
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/xhttp-utils.js
+function parseNormalizedXhttpRangeBounds(value, { allowZeroLowerBound = true, allowZeroUpperBound = true } = {}) {
+  if (typeof value !== "string" && typeof value !== "number") {
+    return void 0;
+  }
+  const parseUnsignedIntegerToken = (token) => {
+    const normalizedToken = token.trim();
+    if (!/^\+?\d+$/.test(normalizedToken)) {
+      return void 0;
+    }
+    const parsedInteger = parseInt(normalizedToken, 10);
+    return Number.isSafeInteger(parsedInteger) ? parsedInteger : void 0;
+  };
+  const normalizedValue = `${value}`.trim();
+  const rangeParts = normalizedValue.split("-");
+  const minimumAllowedLowerBound = allowZeroLowerBound ? 0 : 1;
+  const minimumAllowedUpperBound = allowZeroUpperBound ? 0 : 1;
+  if (rangeParts.length === 1) {
+    const normalizedInteger = parseUnsignedIntegerToken(rangeParts[0]);
+    const minimumAllowedValue = Math.max(
+      minimumAllowedLowerBound,
+      minimumAllowedUpperBound
+    );
+    return normalizedInteger >= minimumAllowedValue ? {
+      lowerBound: normalizedInteger,
+      upperBound: normalizedInteger
+    } : void 0;
+  }
+  if (rangeParts.length !== 2) {
+    return void 0;
+  }
+  const lowerBound = parseUnsignedIntegerToken(rangeParts[0]);
+  const upperBound = parseUnsignedIntegerToken(rangeParts[1]);
+  if (lowerBound == null || upperBound == null) {
+    return void 0;
+  }
+  return lowerBound >= minimumAllowedLowerBound && upperBound >= minimumAllowedUpperBound && upperBound >= lowerBound ? {
+    lowerBound,
+    upperBound
+  } : void 0;
+}
+function parseNormalizedXhttpPositiveRangeBounds(value) {
+  return parseNormalizedXhttpRangeBounds(value, {
+    allowZeroUpperBound: false
+  });
+}
+function parseNormalizedXhttpStrictPositiveRangeBounds(value) {
+  return parseNormalizedXhttpRangeBounds(value, {
+    allowZeroLowerBound: false,
+    allowZeroUpperBound: false
+  });
+}
+function normalizeXhttpPositiveRange(value) {
+  const normalizedBounds = parseNormalizedXhttpPositiveRangeBounds(value);
+  if (!normalizedBounds) {
+    return void 0;
+  }
+  const { lowerBound, upperBound } = normalizedBounds;
+  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
+}
+function normalizeXhttpStrictPositiveRangeString(value) {
+  const normalizedBounds = parseNormalizedXhttpStrictPositiveRangeBounds(value);
+  if (!normalizedBounds) {
+    return void 0;
+  }
+  const { lowerBound, upperBound } = normalizedBounds;
+  return lowerBound === upperBound ? `${upperBound}` : `${lowerBound}-${upperBound}`;
+}
+function normalizeXhttpStrictPositiveRangeValue(value) {
+  const normalizedBounds = parseNormalizedXhttpStrictPositiveRangeBounds(value);
+  if (!normalizedBounds) {
+    return void 0;
+  }
+  const { lowerBound, upperBound } = normalizedBounds;
+  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
+}
+function normalizeXhttpNonNegativeRange(value) {
+  const normalizedBounds = parseNormalizedXhttpRangeBounds(value);
+  if (!normalizedBounds) {
+    return void 0;
+  }
+  const { lowerBound, upperBound } = normalizedBounds;
+  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
+}
+function normalizeXhttpIntegerValue(value, { allowNegative = true } = {}) {
+  if (typeof value === "number" && Number.isFinite(value) && Number.isSafeInteger(value)) {
+    if (!allowNegative && value < 0) {
+      return void 0;
+    }
+    return value;
+  }
+  if (typeof value !== "string") {
+    return void 0;
+  }
+  const normalizedValue = value.trim();
+  const integerPattern = allowNegative ? /^[+-]?\d+$/ : /^\+?\d+$/;
+  if (!integerPattern.test(normalizedValue)) {
+    return void 0;
+  }
+  const parsedInteger = parseInt(normalizedValue, 10);
+  if (!Number.isSafeInteger(parsedInteger)) {
+    return void 0;
+  }
+  if (!allowNegative && parsedInteger < 0) {
+    return void 0;
+  }
+  return parsedInteger;
+}
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/surge-xhttp.js
+var SURGE_XHTTP_FIELDS = {
+  path: "path",
+  host: "host",
+  mode: "mode",
+  "padding-bytes": "x-padding-bytes",
+  "padding-obfs": "x-padding-obfs-mode",
+  "padding-key": "x-padding-key",
+  "padding-header": "x-padding-header",
+  "padding-placement": "x-padding-placement",
+  "padding-method": "x-padding-method",
+  "uplink-method": "uplink-http-method",
+  "session-placement": "session-placement",
+  "session-key": "session-key",
+  "session-table": "session-table",
+  "session-length": "session-length",
+  "seq-placement": "seq-placement",
+  "seq-key": "seq-key",
+  "uplink-data-placement": "uplink-data-placement",
+  "uplink-data-key": "uplink-data-key",
+  "uplink-chunk-size": "uplink-chunk-size",
+  "no-grpc-header": "no-grpc-header",
+  "max-each-post-bytes": "sc-max-each-post-bytes",
+  "min-posts-interval": "sc-min-posts-interval-ms",
+  "xmux-max-concurrency": "reuse-settings.max-concurrency",
+  "xmux-max-connections": "reuse-settings.max-connections",
+  "xmux-max-reuse-times": "reuse-settings.c-max-reuse-times",
+  "xmux-max-request-times": "reuse-settings.h-max-request-times",
+  "xmux-max-reusable-secs": "reuse-settings.h-max-reusable-secs",
+  "xmux-keep-alive": "reuse-settings.h-keep-alive-period"
+};
+function setSurgeXhttpOption(opts, key, rawValue) {
+  if (!Object.prototype.hasOwnProperty.call(SURGE_XHTTP_FIELDS, key)) return;
+  const field = SURGE_XHTTP_FIELDS[key];
+  let value = rawValue;
+  switch (key) {
+    case "padding-obfs":
+    case "no-grpc-header":
+      if (rawValue !== "true" && rawValue !== "false") return;
+      value = rawValue === "true";
+      break;
+    case "uplink-chunk-size":
+      value = normalizeXhttpNonNegativeRange(rawValue) ?? rawValue;
+      break;
+    case "max-each-post-bytes":
+      value = normalizeXhttpStrictPositiveRangeValue(rawValue) ?? rawValue;
+      break;
+    case "min-posts-interval":
+      value = normalizeXhttpPositiveRange(rawValue) ?? rawValue;
+      break;
+    case "xmux-keep-alive":
+      value = normalizeXhttpIntegerValue(rawValue) ?? rawValue;
+      break;
+  }
+  _.set(opts, field, value);
+}
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/surge.js
 var grammars = String.raw`
 // global initializer
 {{
@@ -1866,6 +2037,8 @@ var grammars = String.raw`
     const proxy = {};
     const obfs = {};
     const shadowTLS = {};
+    const xhttpOpts = { mode: "auto" };
+    let xhttpEnabled = false;
     const $ = {};
 
     function handleWebsocket() {
@@ -2243,11 +2416,16 @@ vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_path/ws_headers/
     handleWebsocket();
     handleShadowTLS();
 }
-vless = tag equals "vless" address (vless_username/vless_option/reality_option/ws/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+vless = tag equals "vless" address (vless_username/vless_option/reality_option/ws/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "vless";
     proxy["packet-encoding"] = "xudp";
     if (proxy["reality-opts"] && proxy["reality-opts"]["public-key"]) proxy.tls = true;
-    handleWebsocket();
+    if (xhttpEnabled) {
+        proxy.network = "xhttp";
+        proxy["xhttp-opts"] = xhttpOpts;
+    } else {
+        handleWebsocket();
+    }
     handleShadowTLS();
 }
 trojan = tag equals "trojan" address (passwordk/ws/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
@@ -2427,19 +2605,30 @@ vmess_method = comma "encrypt-method" equals cipher:$[^,]+ {
 cipher = ("aes-128-cfb"/"aes-128-ctr"/"aes-128-gcm"/"aes-192-cfb"/"aes-192-ctr"/"aes-192-gcm"/"aes-256-cfb"/"aes-256-ctr"/"aes-256-gcm"/"bf-cfb"/"camellia-128-cfb"/"camellia-192-cfb"/"camellia-256-cfb"/"cast5-cfb"/"chacha20-ietf-poly1305"/"chacha20-ietf"/"chacha20-poly1305"/"chacha20"/"des-cfb"/"idea-cfb"/"none"/"rc2-cfb"/"rc4-md5"/"rc4"/"salsa20"/"seed-cfb"/"xchacha20-ietf-poly1305"/"2022-blake3-aes-128-gcm"/"2022-blake3-aes-256-gcm");
 
 ws = comma "ws" equals flag:bool { if (flag) obfs.type = "ws"; }
-ws_headers = comma "ws-headers" equals & {
+ws_headers = comma "ws-headers" equals value:pipe_headers { obfs["ws-headers"] = value; }
+pipe_headers = & {
     const start = peg$currPos;
     const index = readHeadersEnd(input, start, "|");
 
     $.headers = input.substring(start, index);
     peg$currPos = index;
     return $.headers.trim().length > 0;
-} { obfs["ws-headers"] = parseHeaders($.headers, "|"); }
+} { return parseHeaders($.headers, "|"); }
 ws_path = comma "ws-path" equals path:uri { obfs.path = path.trim().replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
 grpc = comma "grpc" equals flag:bool { if (flag) proxy.network = "grpc"; }
 grpc_service_name = comma "grpc-service-name" equals value:quoted_value { $set(proxy, "grpc-opts.grpc-service-name", value.trim()); }
 grpc_mode = comma "grpc-mode" equals value:quoted_value { $set(proxy, "grpc-opts._grpc-type", value.trim()); }
 grpc_authority = comma "grpc-authority" equals value:quoted_value { $set(proxy, "grpc-opts._grpc-authority", value.trim()); }
+xhttp = comma "xhttp" equals flag:bool { xhttpEnabled = flag; }
+xhttp_headers = comma "xhttp-headers" equals value:pipe_headers {
+    for (const key of Object.keys(value)) {
+        if (/^host$/i.test(key)) delete value[key];
+    }
+    xhttpOpts.headers = value;
+}
+xhttp_option = comma "xhttp-" key:$[a-z0-9-]+ equals value:quoted_value {
+    options.setSurgeXhttpOption(xhttpOpts, key, value.trim());
+}
 headers = comma "headers" equals & {
     const start = peg$currPos;
     const index = readHeadersEnd(input, start, ";");
@@ -2502,7 +2691,10 @@ others = comma [^=,]+ equals [^=,]+
 var parser;
 function getParser() {
   if (!parser) {
-    parser = peggy.generate(grammars);
+    const generated = peggy.generate(grammars);
+    parser = {
+      parse: (input) => generated.parse(input, { setSurgeXhttpOption })
+    };
   }
   return parser;
 }
@@ -2582,7 +2774,7 @@ var grammars2 = String.raw`
     }
 }
 
-start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls) {
+start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls/tailscale) {
     return proxy;
 }
 
@@ -2634,6 +2826,22 @@ http = tag equals "http"i address (username password)? (fast_open/udp_relay/ip_m
 socks5 = tag equals "socks5"i address (username password)? (over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/block_quic/others)* {
     proxy.type = "socks5";
 }
+tailscale = tag equals "tailscale"i (tailscale_string/tailscale_bool/tailscale_mtu/idle_session_timeout/udp_relay/block_quic/others)* {
+    proxy.type = "tailscale";
+    if (proxy["exit-node"] === "auto") proxy["exit-node"] = "auto:any";
+    if (proxy["exit-node"] === "none") proxy["exit-node"] = "";
+}
+
+tailscale_string = comma key:("auth-key"/"control-url"/"hostname"/"exit-node"/"path-mode"/"ip-mode") equals value:(
+    '"' match:$[^"]* '"' { return match; }
+    / match:$[^,"]* { return match.trim(); }
+) {
+    if (value !== "" || key === "exit-node") {
+        proxy[key === "ip-mode" ? "ip-version" : key] = value;
+    }
+}
+tailscale_bool = comma key:("accept-routes"/"accept-dns"/"magic-dns") equals flag:bool { proxy[key] = flag; }
+tailscale_mtu = comma "mtu" equals match:$[0-9]+ { proxy.mtu = Number(match); }
 
 address = comma server:server comma port:port {
     proxy.server = server;
@@ -3497,117 +3705,8 @@ var yaml_default = {
 };
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/index.js
-import _ from "lodash";
+import _2 from "lodash";
 import { Base64 } from "js-base64";
-
-// src/vendors/Sub-Store/backend/src/core/proxy-utils/xhttp-utils.js
-function parseNormalizedXhttpRangeBounds(value, { allowZeroLowerBound = true, allowZeroUpperBound = true } = {}) {
-  if (typeof value !== "string" && typeof value !== "number") {
-    return void 0;
-  }
-  const parseUnsignedIntegerToken = (token) => {
-    const normalizedToken = token.trim();
-    if (!/^\+?\d+$/.test(normalizedToken)) {
-      return void 0;
-    }
-    const parsedInteger = parseInt(normalizedToken, 10);
-    return Number.isSafeInteger(parsedInteger) ? parsedInteger : void 0;
-  };
-  const normalizedValue = `${value}`.trim();
-  const rangeParts = normalizedValue.split("-");
-  const minimumAllowedLowerBound = allowZeroLowerBound ? 0 : 1;
-  const minimumAllowedUpperBound = allowZeroUpperBound ? 0 : 1;
-  if (rangeParts.length === 1) {
-    const normalizedInteger = parseUnsignedIntegerToken(rangeParts[0]);
-    const minimumAllowedValue = Math.max(
-      minimumAllowedLowerBound,
-      minimumAllowedUpperBound
-    );
-    return normalizedInteger >= minimumAllowedValue ? {
-      lowerBound: normalizedInteger,
-      upperBound: normalizedInteger
-    } : void 0;
-  }
-  if (rangeParts.length !== 2) {
-    return void 0;
-  }
-  const lowerBound = parseUnsignedIntegerToken(rangeParts[0]);
-  const upperBound = parseUnsignedIntegerToken(rangeParts[1]);
-  if (lowerBound == null || upperBound == null) {
-    return void 0;
-  }
-  return lowerBound >= minimumAllowedLowerBound && upperBound >= minimumAllowedUpperBound && upperBound >= lowerBound ? {
-    lowerBound,
-    upperBound
-  } : void 0;
-}
-function parseNormalizedXhttpPositiveRangeBounds(value) {
-  return parseNormalizedXhttpRangeBounds(value, {
-    allowZeroUpperBound: false
-  });
-}
-function parseNormalizedXhttpStrictPositiveRangeBounds(value) {
-  return parseNormalizedXhttpRangeBounds(value, {
-    allowZeroLowerBound: false,
-    allowZeroUpperBound: false
-  });
-}
-function normalizeXhttpPositiveRange(value) {
-  const normalizedBounds = parseNormalizedXhttpPositiveRangeBounds(value);
-  if (!normalizedBounds) {
-    return void 0;
-  }
-  const { lowerBound, upperBound } = normalizedBounds;
-  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
-}
-function normalizeXhttpStrictPositiveRangeString(value) {
-  const normalizedBounds = parseNormalizedXhttpStrictPositiveRangeBounds(value);
-  if (!normalizedBounds) {
-    return void 0;
-  }
-  const { lowerBound, upperBound } = normalizedBounds;
-  return lowerBound === upperBound ? `${upperBound}` : `${lowerBound}-${upperBound}`;
-}
-function normalizeXhttpStrictPositiveRangeValue(value) {
-  const normalizedBounds = parseNormalizedXhttpStrictPositiveRangeBounds(value);
-  if (!normalizedBounds) {
-    return void 0;
-  }
-  const { lowerBound, upperBound } = normalizedBounds;
-  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
-}
-function normalizeXhttpNonNegativeRange(value) {
-  const normalizedBounds = parseNormalizedXhttpRangeBounds(value);
-  if (!normalizedBounds) {
-    return void 0;
-  }
-  const { lowerBound, upperBound } = normalizedBounds;
-  return lowerBound === upperBound ? upperBound : `${lowerBound}-${upperBound}`;
-}
-function normalizeXhttpIntegerValue(value, { allowNegative = true } = {}) {
-  if (typeof value === "number" && Number.isFinite(value) && Number.isSafeInteger(value)) {
-    if (!allowNegative && value < 0) {
-      return void 0;
-    }
-    return value;
-  }
-  if (typeof value !== "string") {
-    return void 0;
-  }
-  const normalizedValue = value.trim();
-  const integerPattern = allowNegative ? /^[+-]?\d+$/ : /^\+?\d+$/;
-  if (!integerPattern.test(normalizedValue)) {
-    return void 0;
-  }
-  const parsedInteger = parseInt(normalizedValue, 10);
-  if (!Number.isSafeInteger(parsedInteger)) {
-    return void 0;
-  }
-  if (!allowNegative && parsedInteger < 0) {
-    return void 0;
-  }
-  return parsedInteger;
-}
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/ech-utils.js
 var ECH_DNS_FIELD = "_dns";
@@ -4002,7 +4101,7 @@ function URI_SS() {
     proxy.alpn = params.alpn ? decodeURIComponent(params.alpn).split(",") : void 0;
     if (params["ws"]) {
       proxy.network = "ws";
-      _.set(proxy, "ws-opts.path", params["wspath"]);
+      _2.set(proxy, "ws-opts.path", params["wspath"]);
     }
     if (params["type"]) {
       let httpupgrade;
@@ -4031,10 +4130,10 @@ function URI_SS() {
               pathEarlyData = extracted.ed;
             }
           }
-          _.set(proxy, proxy.network + "-opts.path", transportPath);
+          _2.set(proxy, proxy.network + "-opts.path", transportPath);
         }
         if (params["host"]) {
-          _.set(
+          _2.set(
             proxy,
             proxy.network + "-opts.headers.Host",
             decodeURIComponent(params["host"])
@@ -4042,30 +4141,30 @@ function URI_SS() {
         }
         if (httpupgrade) {
           httpUpgradeEd = httpUpgradeEd || (isNumericEarlyData2(params.ed) ? `${params.ed}` : "");
-          _.set(
+          _2.set(
             proxy,
             proxy.network + "-opts.v2ray-http-upgrade",
             true
           );
           if (httpUpgradeEd !== "") {
-            _.set(
+            _2.set(
               proxy,
               proxy.network + "-opts.v2ray-http-upgrade-fast-open",
               true
             );
-            _.set(
+            _2.set(
               proxy,
               proxy.network + "-opts._v2ray-http-upgrade-ed",
               httpUpgradeEd
             );
           }
         } else if (proxy.network === "ws" && pathEarlyData !== "") {
-          _.set(
+          _2.set(
             proxy,
             proxy.network + "-opts.max-early-data",
             parseEarlyDataSize(pathEarlyData)
           );
-          _.set(
+          _2.set(
             proxy,
             proxy.network + "-opts.early-data-header-name",
             "Sec-WebSocket-Protocol"
@@ -4087,7 +4186,7 @@ function URI_SS() {
           proxy._mode = params.mode;
         }
         if (Object.keys(opts).length > 0) {
-          _.set(proxy, params.security + "-opts", opts);
+          _2.set(proxy, params.security + "-opts", opts);
         }
       }
       if (params.extra && (proxy.network === "xhttp" || params.security === "reality")) {
@@ -5218,7 +5317,7 @@ function URI_VLESS() {
     let isShadowrocket;
     let parsed = /^(.*?)@(.*?):(\d+)\/?(\?(.*?))?(?:#(.*?))?$/.exec(line);
     if (!parsed) {
-      let [_3, base64, other] = /^(.*?)(\?.*?$)/.exec(line);
+      let [_5, base64, other] = /^(.*?)(\?.*?$)/.exec(line);
       line = `${Base64.decode(base64)}${other}`;
       parsed = /^(.*?)@(.*?):(\d+)\/?(\?(.*?))?(?:#(.*?))?$/.exec(line);
       isShadowrocket = true;
@@ -5266,7 +5365,7 @@ function URI_VLESS() {
     }
     proxy["client-fingerprint"] = params.fp;
     proxy.alpn = params.alpn ? params.alpn.split(",") : void 0;
-    proxy["skip-cert-verify"] = /(TRUE)|1/i.test(params.allowInsecure);
+    proxy["skip-cert-verify"] = /(TRUE)|1/i.test(params.allowInsecure) || protocol === "vless" && params.allowInsecure == null && params.insecure === "1";
     proxy._echConfigList = getIfPresent(params.ech);
     const echOpts = buildMihomoEchOptsFromXrayFields({
       echConfigList: params.ech
@@ -5326,6 +5425,8 @@ function URI_VLESS() {
     }
     if (["websocket"].includes(proxy.network)) {
       proxy.network = "ws";
+    } else if (protocol === "vless" && proxy.network === "splithttp") {
+      proxy.network = "xhttp";
     }
     if (proxy.network && !["tcp", "none"].includes(proxy.network)) {
       const opts = {};
@@ -5362,7 +5463,7 @@ function URI_VLESS() {
       if (params.serviceName) {
         opts[`${proxy.network}-service-name`] = params.serviceName;
       } else if (isShadowrocket && params.path) {
-        if (!["ws", "http", "h2"].includes(proxy.network)) {
+        if (!["ws", "http", "h2", "xhttp"].includes(proxy.network)) {
           opts[`${proxy.network}-service-name`] = params.path;
           delete params.path;
         }
@@ -6079,6 +6180,12 @@ function Loon_Socks5() {
   const parse2 = (line) => getParser2().parse(line);
   return { name, test, parse: parse2 };
 }
+function Loon_Tailscale() {
+  const name = "Loon Tailscale Parser";
+  const test = (line) => /^[^=,]*=\s*tailscale\s*(?:,|$)/i.test(line);
+  const parse2 = (line) => getParser2().parse(line);
+  return { name, test, parse: parse2 };
+}
 function Loon_WireGuard() {
   const name = "Loon WireGuard Parser";
   const test = (line) => {
@@ -6290,7 +6397,7 @@ function Surge_External() {
   };
   const parse2 = (line) => {
     let parsed = /^\s*(.*?)\s*?=\s*?external\s*?,\s*(.*?)\s*$/.exec(line);
-    let [_3, name2, other] = parsed;
+    let [_5, name2, other] = parsed;
     line = other;
     let exec = /(,|^)\s*?exec\s*?=\s*"(.*?)"\s*?(,|$)/.exec(line)?.[2];
     if (!exec) {
@@ -6429,6 +6536,7 @@ var parsers_default = [
   Loon_Http(),
   Loon_Socks5(),
   Loon_WireGuard(),
+  Loon_Tailscale(),
   QX_SS(),
   QX_SSR(),
   QX_VMess(),
@@ -6439,8 +6547,11 @@ var parsers_default = [
   QX_Socks5()
 ];
 
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/surge.js
+import _4 from "lodash";
+
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/utils.js
-import _2 from "lodash";
+import _3 from "lodash";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/preprocessors/index.js
 import { Base64 as Base642 } from "js-base64";
@@ -6466,7 +6577,7 @@ function normalizeClashYaml(raw) {
   const anchors = /* @__PURE__ */ new Map();
   const aliases = /* @__PURE__ */ new Map();
   visit(document, {
-    Node(_3, node) {
+    Node(_5, node) {
       if (isAlias(node)) {
         aliases.set(node.range[0], anchors.get(node.source));
       } else if (node.anchor) {
@@ -6478,7 +6589,7 @@ function normalizeClashYaml(raw) {
   const needsQuotes = (node) => isScalar(node) && typeof node.value !== "string" && node.value !== null && !node.tag && node.source;
   const realityConfigs = /* @__PURE__ */ new Set();
   visit(document, {
-    Pair(_3, { key, value }) {
+    Pair(_5, { key, value }) {
       const name = resolveAlias(key)?.value;
       if (["reality-opts", "reality-config"].includes(name)) {
         realityConfigs.add(value);
@@ -6487,14 +6598,14 @@ function normalizeClashYaml(raw) {
   });
   for (const config of realityConfigs) {
     visit(config, {
-      Alias(_3, alias) {
+      Alias(_5, alias) {
         realityConfigs.add(resolveAlias(alias));
       }
     });
   }
   const shortIds = /* @__PURE__ */ new Set();
   visit(document, {
-    Pair(_3, { key, value }, path) {
+    Pair(_5, { key, value }, path) {
       if (resolveAlias(key)?.value === "short-id" && path.some((node) => realityConfigs.has(node))) {
         shortIds.add(value);
       }
@@ -6681,7 +6792,7 @@ var Result = class {
   }
 };
 function isPresent2(obj, attr) {
-  const data = _2.get(obj, attr);
+  const data = _3.get(obj, attr);
   return typeof data !== "undefined" && data !== null;
 }
 function supportsTrustTunnelClientRandomAuth(proxy, targetPlatform6) {
@@ -7340,13 +7451,15 @@ function appendVlessParams(result, proxy) {
   const network = proxy.network ?? "tcp";
   const reality = proxy["reality-opts"];
   const tls = proxy.tls || reality;
-  if (!["tcp", "raw", "none", "ws", "grpc"].includes(network)) {
+  const encrypted = isNotBlank(proxy.encryption) && proxy.encryption.trim() !== "none";
+  if (!["tcp", "raw", "none", "ws", "grpc", "xhttp"].includes(network)) {
     throw unsupported(`VLESS network ${network} is unsupported`);
   }
-  if (proxy.encryption && proxy.encryption !== "none") {
-    throw unsupported("VLESS encryption is unsupported");
+  if (proxy.encryption && /[,\r\n"']/.test(proxy.encryption)) {
+    throw unsupported("VLESS encryption contains unsupported characters");
   }
-  if (network === "ws" && reality || network === "grpc" && !tls || proxy.flow && (!tls || network === "ws" || network === "grpc")) {
+  const supportsVision = network !== "grpc" && (encrypted || tls && network !== "ws" && network !== "xhttp");
+  if (network === "ws" && reality || network === "grpc" && !tls || proxy.flow && !supportsVision) {
     throw unsupported(
       "Unsupported VLESS transport, TLS or flow combination"
     );
@@ -7363,6 +7476,8 @@ function appendVlessParams(result, proxy) {
     ]) {
       if (value) result.append(`,${key}=${value}`);
     }
+  } else if (network === "xhttp") {
+    appendXhttpParams(result, proxy);
   }
   if (proxy.flow) result.append(`,flow=${proxy.flow}`);
   if (proxy.encryption) result.append(`,encryption=${proxy.encryption}`);
@@ -7377,6 +7492,37 @@ function appendVlessParams(result, proxy) {
     result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
     appendTlsProxyParams(result, proxy, Boolean(tls));
   }
+}
+function appendXhttpParams(result, proxy) {
+  const xhttp = proxy["xhttp-opts"];
+  if (xhttp?.["download-settings"]) {
+    throw unsupported("VLESS XHTTP download-settings are unsupported");
+  }
+  result.append(",xhttp=true");
+  const headers = isPlainObject(xhttp?.headers) ? Object.entries(xhttp.headers) : [];
+  const host = xhttp?.host ?? headers.find(([key]) => /^host$/i.test(key))?.[1];
+  for (const [key, field] of Object.entries(SURGE_XHTTP_FIELDS)) {
+    const rawValue = key === "host" ? host : _4.get(xhttp, field);
+    if (rawValue == null) continue;
+    const rawText = String(rawValue);
+    const value2 = stripSurgeQuotes(rawText);
+    if (!value2 && key !== "session-table") continue;
+    if (/[\r\n]/.test(rawText) || value2.includes('"')) {
+      throw unsupported(
+        `VLESS xhttp-${key} contains unsupported characters`
+      );
+    }
+    const parameter = !value2 || /[,'\s]/.test(value2) ? quoteSurgeValue(value2) : value2;
+    result.append(`,xhttp-${key}=${parameter}`);
+  }
+  const extraHeaders = headers.filter(([key]) => !/^host$/i.test(key));
+  if (extraHeaders.some(
+    ([key, value2]) => /[,="':|\r\n]/.test(key) || /[\r\n]/.test(String(value2))
+  )) {
+    throw unsupported("VLESS xhttp-headers contain unsupported characters");
+  }
+  const value = formatHeaderMap(Object.fromEntries(extraHeaders), "|");
+  if (value) result.append(`,xhttp-headers=${quoteSurgeValue(value)}`);
 }
 function ssh(proxy) {
   const result = new Result(proxy);
@@ -8884,6 +9030,8 @@ function Loon_Producer() {
         return socks52(proxy);
       case "wireguard":
         return wireguard2(proxy);
+      case "tailscale":
+        return tailscale(proxy);
       case "hysteria2":
         return hysteria22(proxy);
     }
@@ -9399,6 +9547,42 @@ function socks52(proxy) {
   }
   const ip_version = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
+  return result.toString();
+}
+function tailscale(proxy) {
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=tailscale`);
+  let exitNode = proxy["exit-node"];
+  if (exitNode === "auto:any") exitNode = "auto";
+  if (exitNode === "") exitNode = "none";
+  const stringOptions = {
+    "control-url": proxy["control-url"],
+    "auth-key": proxy["auth-key"],
+    hostname: proxy.hostname,
+    "exit-node": exitNode
+  };
+  for (const [key, value] of Object.entries(stringOptions)) {
+    if (!value) continue;
+    const quoted = key === "control-url" || key === "auth-key" || /[,\s]/.test(value);
+    result.append(`,${key}=${quoted ? `"${value}"` : value}`);
+  }
+  for (const key of [
+    "accept-routes",
+    "accept-dns",
+    "magic-dns",
+    "path-mode",
+    "mtu",
+    "idle-session-timeout",
+    "udp"
+  ]) {
+    result.appendIfPresent(`,${key}=${proxy[key]}`, key);
+  }
+  const ipVersion = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-mode=${ipVersion}`, "ip-version");
+  const blockQuic = proxy["block-quic"];
+  if (blockQuic === "on" || blockQuic === "off") {
+    result.append(`,block-quic=${blockQuic === "on"}`);
+  }
   return result.toString();
 }
 function wireguard2(proxy) {
@@ -12547,7 +12731,8 @@ var snellParser = (proxy = {}, includeUnsupportedProxy = false) => {
   if (parsedProxy.server_port < 0 || parsedProxy.server_port > 65535)
     throw "invalid port";
   if (outputVersion != null) parsedProxy.version = outputVersion;
-  if (proxy._userkey) parsedProxy.userkey = proxy._userkey;
+  if (proxy.userkey || proxy._userkey)
+    parsedProxy.userkey = proxy.userkey || proxy._userkey;
   if (outputVersion === 6) {
     if (proxy.mode) parsedProxy.mode = proxy.mode;
     if (includeUnsupportedProxy && proxy["quic-proxy-mode"])
