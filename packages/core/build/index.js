@@ -7030,7 +7030,6 @@ function Surge_Producer() {
         `Platform ${targetPlatform} does not support network ${proxy.network} with http upgrade`
       );
     }
-    proxy.name = proxy.name.replace(/=|,/g, "");
     if (proxy.ports) {
       proxy.ports = String(proxy.ports);
     }
@@ -11772,7 +11771,6 @@ function Surfboard_Producer() {
         `Platform ${targetPlatform5} does not support network ${proxy.network} with http upgrade`
       );
     }
-    proxy.name = proxy.name.replace(/=|,/g, "");
     switch (proxy.type) {
       case "ss":
         return shadowsocks4(proxy);
