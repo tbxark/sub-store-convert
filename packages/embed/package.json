@@ -1,0 +1,16 @@
+{
+  "name": "@sub-store-convert/embed",
+  "version": "2.44.9",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "build": "pnpm --filter @sub-store-convert/core build && node esbuild.config.js"
+  },
+  "dependencies": {
+    "@sub-store-convert/core": "workspace:*"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

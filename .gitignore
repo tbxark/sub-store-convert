@@ -145,3 +145,5 @@ dist
 
 build
 .wrangler
+!packages/embed/build
+/.commandcode/taste

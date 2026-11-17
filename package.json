@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "build:core": "pnpm --filter @sub-store-convert/core build",
+    "build:embed": "pnpm --filter @sub-store-convert/embed build",
+    "build:lib": "pnpm --filter @sub-store-convert/core --filter @sub-store-convert/embed build",
     "build:app": "pnpm --filter @sub-store-convert/app build:worker",
     "build:docker": "docker build -t ghcr.io/tbxark/sub-store-convert:latest .",
     "start": "pnpm --filter @sub-store-convert/app start",

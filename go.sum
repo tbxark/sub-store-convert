@@ -1,0 +1,4 @@
+github.com/liustack/slowjs v0.31.4 h1:bRpc0uCGOniYWX/b5agZOWPeuNU9jHMpnpXF1ymPO3c=
+github.com/liustack/slowjs v0.31.4/go.mod h1:06sZhwh1lxYPVmI7bK4oKFX1MBegSuQAOJO5M/Gzuzc=
+golang.org/x/sys v0.48.0 h1:bbX/i/6MgT9BVLM9RT1thmxL04yeTAhbEz4SyadbXoo=
+golang.org/x/sys v0.48.0/go.mod h1:hNLxWAXmnKAxqDtdwIYC4bM9oQPEecfsnNMuSxOs3og=
