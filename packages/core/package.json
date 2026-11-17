@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TBXark/sub-store-convert.git",
+    "url": "git+https://github.com/tbxark/sub-store-convert.git",
     "directory": "packages/core"
   },
   "exports": {
