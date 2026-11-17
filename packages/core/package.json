@@ -5,6 +5,11 @@
   "type": "module",
   "module": "./build/index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TBXark/sub-store-convert.git",
+    "directory": "packages/core"
+  },
   "exports": {
     ".": {
       "import": "./build/index.js"

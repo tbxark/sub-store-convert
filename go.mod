@@ -1,4 +1,4 @@
-module github.com/tbxark/sub-store-convert
+module github.com/tbxark/sub-store-convert/v2
 
 go 1.26.6
 
