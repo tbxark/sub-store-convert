@@ -25,15 +25,15 @@
     "update:vendor": "bash scripts/update.sh"
   },
   "dependencies": {
-    "js-base64": "^3.7.2",
+    "js-base64": "^3.9.6",
     "json5": "^2.2.3",
-    "lodash": "^4.17.21",
+    "lodash": "^4.18.1",
     "peggy": "^2.0.1",
-    "yaml": "^2.9.0"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "buffer": "^6.0.3",
-    "esbuild": "^0.28.1",
+    "esbuild": "^0.28.2",
     "esbuild-plugin-alias": "^0.2.1"
   }
 }
