@@ -1847,6 +1847,126 @@ function isPlainObject(obj) {
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/surge.js
 import peggy from "peggy";
 
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/ech-utils.js
+var ECH_DNS_FIELD = "_dns";
+var ECH_FORCE_QUERY_FIELD = "_force-query";
+var ECH_SOCKOPT_FIELD = "_sockopt";
+var DEFAULT_XRAY_ECH_DNS = "https://dns.alidns.com/dns-query";
+function normalizeInlineEchConfigList(value) {
+  if (typeof value !== "string") return void 0;
+  const match = /^([A-Za-z0-9+/]+|[A-Za-z0-9_-]+)(={0,2})$/.exec(
+    value.trim()
+  );
+  if (!match) return void 0;
+  const [, config, padding] = match;
+  const paddingLength = (4 - config.length % 4) % 4;
+  if (paddingLength === 3 || padding && padding.length !== paddingLength) {
+    return void 0;
+  }
+  return config.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat(paddingLength);
+}
+function parseXrayEchConfigList(echConfigList) {
+  if (!isNotBlank(echConfigList)) {
+    return void 0;
+  }
+  if (!echConfigList.includes("://")) {
+    return {
+      type: "config",
+      config: echConfigList
+    };
+  }
+  const parts = echConfigList.split("+");
+  if (parts.length === 1 && isNotBlank(parts[0])) {
+    return {
+      type: "dns",
+      dns: parts[0]
+    };
+  }
+  if (parts.length === 2 && isNotBlank(parts[0]) && isNotBlank(parts[1])) {
+    return {
+      type: "dns",
+      queryServerName: parts[0],
+      dns: parts[1]
+    };
+  }
+  return void 0;
+}
+function isSupportedXrayEchConfigList(echConfigList) {
+  return parseXrayEchConfigList(echConfigList) != null;
+}
+function isSupportedXrayEchForceQuery(forceQuery) {
+  return ["none", "half", "full"].includes(forceQuery);
+}
+function isMihomoEchEnabled(value) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return typeof value === "number" && Number.isInteger(value) && value !== 0;
+}
+function buildMihomoEchOptsFromXrayFields({
+  echConfigList,
+  echForceQuery,
+  echSockopt
+} = {}) {
+  const parsedEchConfigList = parseXrayEchConfigList(echConfigList);
+  if (!parsedEchConfigList) {
+    return void 0;
+  }
+  const echOpts = {
+    enable: true
+  };
+  if (parsedEchConfigList.type === "config") {
+    echOpts.config = parsedEchConfigList.config;
+  } else {
+    echOpts[ECH_DNS_FIELD] = parsedEchConfigList.dns;
+    if (parsedEchConfigList.queryServerName) {
+      echOpts["query-server-name"] = parsedEchConfigList.queryServerName;
+    }
+  }
+  if (isSupportedXrayEchForceQuery(echForceQuery)) {
+    echOpts[ECH_FORCE_QUERY_FIELD] = echForceQuery;
+  }
+  if (isPlainObject(echSockopt)) {
+    echOpts[ECH_SOCKOPT_FIELD] = echSockopt;
+  }
+  return echOpts;
+}
+function buildXrayEchFieldsFromMihomo(echOpts, fallbackEchConfigList, { dnsFieldPath = "ech-opts._dns", warnDefaultDns } = {}) {
+  const fields = {};
+  if (isPlainObject(echOpts)) {
+    if (!isMihomoEchEnabled(echOpts.enable)) {
+      return fields;
+    }
+    const queryServerName = echOpts["query-server-name"];
+    if (isNotBlank(echOpts.config)) {
+      fields.echConfigList = echOpts.config;
+    } else if (isNotBlank(echOpts[ECH_DNS_FIELD])) {
+      fields.echConfigList = isNotBlank(queryServerName) ? `${queryServerName}+${echOpts[ECH_DNS_FIELD]}` : echOpts[ECH_DNS_FIELD];
+    } else if (isNotBlank(queryServerName)) {
+      fields.echConfigList = `${queryServerName}+${DEFAULT_XRAY_ECH_DNS}`;
+      warnDefaultDns?.({
+        defaultDns: DEFAULT_XRAY_ECH_DNS,
+        dnsFieldPath,
+        queryServerName
+      });
+    }
+    if (fields.echConfigList && isSupportedXrayEchForceQuery(echOpts[ECH_FORCE_QUERY_FIELD])) {
+      fields.echForceQuery = echOpts[ECH_FORCE_QUERY_FIELD];
+    }
+    if (fields.echConfigList && isPlainObject(echOpts[ECH_SOCKOPT_FIELD])) {
+      fields.echSockopt = echOpts[ECH_SOCKOPT_FIELD];
+    }
+    return fields;
+  }
+  if (isNotBlank(fallbackEchConfigList)) {
+    fields.echConfigList = fallbackEchConfigList;
+  }
+  return fields;
+}
+function buildXrayEchConfigListFromMihomo(echOpts, fallbackEchConfigList, options) {
+  return buildXrayEchFieldsFromMihomo(echOpts, fallbackEchConfigList, options).echConfigList;
+}
+
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/surge-xhttp.js
 import _ from "lodash";
 
@@ -2039,6 +2159,8 @@ var grammars = String.raw`
     const shadowTLS = {};
     const xhttpOpts = { mode: "auto" };
     let xhttpEnabled = false;
+    let clientFingerprint;
+    let echConfig;
     const $ = {};
 
     function handleWebsocket() {
@@ -2391,6 +2513,24 @@ var grammars = String.raw`
 }
 
 start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
+    if (
+        ["auto", "none", "apple-26", "chromium-155"].includes(clientFingerprint) &&
+        proxy.network !== "h3" &&
+        (proxy.tls || proxy.type === "trojan")
+    ) {
+        proxy._surge_client_fingerprint = clientFingerprint;
+        if (clientFingerprint === "apple-26") proxy["client-fingerprint"] = "ios";
+        if (clientFingerprint === "chromium-155") proxy["client-fingerprint"] = "chrome";
+    }
+    if (
+        echConfig !== undefined &&
+        (proxy.tls || ["trojan", "tuic", "hysteria2"].includes(proxy.type))
+    ) {
+        if (proxy["reality-opts"]) error("ECH cannot be combined with REALITY");
+        // Preserve malformed ECH for export validation so another parser cannot discard it.
+        const config = options.normalizeInlineEchConfigList(echConfig) ?? echConfig;
+        proxy["ech-opts"] = { enable: true, config };
+    }
     return proxy;
 }
 
@@ -2405,7 +2545,7 @@ shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/
     }
     handleShadowTLS();
 }
-vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "vmess";
     proxy.cipher = proxy.cipher || "auto";
     // Surfboard 与 Surge 默认不一致, 不管 Surfboard https://getsurfboard.com/docs/profile-format/proxy/external-proxy/vmess
@@ -2417,7 +2557,7 @@ vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_
     handleWebsocket();
     handleShadowTLS();
 }
-vless = tag equals "vless" address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+vless = tag equals "vless" address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "vless";
     proxy["packet-encoding"] = "xudp";
     if (proxy["reality-opts"] && proxy["reality-opts"]["public-key"]) proxy.tls = true;
@@ -2429,17 +2569,17 @@ vless = tag equals "vless" address (vless_username/vless_option/reality_option/w
     }
     handleShadowTLS();
 }
-trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "trojan";
     handleWebsocket();
     handleShadowTLS();
 }
-https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "http";
     proxy.tls = true;
     handleShadowTLS();
 }
-h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "h2-connect";
     proxy.tls = true;
     handleShadowTLS();
@@ -2452,7 +2592,7 @@ ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (serv
     proxy.type = "ssh";
     handleShadowTLS();
 }
-snell = tag equals "snell" address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "snell";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -2462,11 +2602,11 @@ snell = tag equals "snell" address (snell_version/snell_mode/snell_psk/obfs/obfs
     }
     handleShadowTLS();
 }
-tuic = tag equals "tuic" address (alpn/token/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
+tuic = tag equals "tuic" address (alpn/token/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
     proxy.type = "tuic";
     handleShadowTLS();
 }
-tuic_v5 = tag equals "tuic-v5" address (alpn/passwordk/uuidk/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
+tuic_v5 = tag equals "tuic-v5" address (alpn/passwordk/uuidk/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
     proxy.type = "tuic";
     proxy.version = 5;
     handleShadowTLS();
@@ -2475,7 +2615,7 @@ wireguard = tag equals "wireguard" (section_name/no_error_alert/ip_version/under
     proxy.type = "wireguard-surge";
     handleShadowTLS();
 }
-hysteria2 = tag equals "hysteria2" address (no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_verification/client_cert/passwordk/tls_fingerprint/download_bandwidth/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/salamander_password/gecko_password/others)* {
+hysteria2 = tag equals "hysteria2" address (no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_verification/client_cert/ech_config/passwordk/tls_fingerprint/download_bandwidth/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/salamander_password/gecko_password/others)* {
     proxy.type = "hysteria2";
     handleShadowTLS();
 }
@@ -2483,20 +2623,20 @@ socks5 = tag equals "socks5" address (username password)? (usernamek passwordk)?
     proxy.type = "socks5";
     handleShadowTLS();
 }
-socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_fingerprint/tls_verification/client_cert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
     proxy.type = "socks5";
     proxy.tls = true;
     handleShadowTLS();
 }
-anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/others)* {
+anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/others)* {
     proxy.type = "anytls";
     proxy.tls = true;
 }
-trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
     proxy.type = "trusttunnel";
     proxy.tls = true;
 }
-masque = tag equals "masque" address (usernamek/passwordk/port_hopping_interval/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/sni/cert_verify_name/alpn/fast_open/tfo/udp_relay/ecn/block_quic/others)* {
+masque = tag equals "masque" address (usernamek/passwordk/port_hopping_interval/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/udp_relay/ecn/block_quic/others)* {
     proxy.type = "masque-surge";
     proxy.tls = true;
 }
@@ -2576,9 +2716,11 @@ sni = comma "sni" equals match:[^,]+ {
 cert_verify_name = comma "server-cert-verify-name" equals match:[^,]+ { proxy["name-cert-verify"] = stripQuotes(match.join("")); }
 tls_verification = comma "skip-cert-verify" equals flag:bool { proxy["skip-cert-verify"] = flag; }
 tls_fingerprint = comma "server-cert-fingerprint-sha256" equals tls_fingerprint:$[^,]+ { proxy["tls-fingerprint"] = tls_fingerprint.trim(); }
+client_fingerprint = comma "client-fingerprint" equals value:quoted_value { clientFingerprint = value.trim().toLowerCase(); }
 client_cert = comma "client-cert" equals match:[^,]+ { proxy["keystore-client-cert"] = stripQuotes(match.join("")); }
+ech_config = comma "ech-config" equals value:quoted_value { echConfig = value; }
 
-snell_psk = comma "psk" equals match:[^,]+ { proxy.psk = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); }
+snell_psk = comma "psk" equals value:quoted_value { proxy.psk = value; }
 snell_version = comma "version" equals match:$[0-9]+ { proxy.version = parseInt(match.trim()); }
 snell_mode = comma "mode" equals match:[^,]+ {
     const mode = stripQuotes(match.join("")).trim();
@@ -2695,7 +2837,10 @@ function getParser() {
   if (!parser) {
     const generated = peggy.generate(grammars);
     parser = {
-      parse: (input) => generated.parse(input, { setSurgeXhttpOption })
+      parse: (input) => generated.parse(input, {
+        normalizeInlineEchConfigList,
+        setSurgeXhttpOption
+      })
     };
   }
   return parser;
@@ -2703,6 +2848,48 @@ function getParser() {
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/loon.js
 import peggy2 from "peggy";
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/loon-xhttp.js
+var LOON_XHTTP_FIELDS = {
+  mode: "mode",
+  "uplink-method": "uplink-http-method",
+  "min-post-interval-ms": "sc-min-posts-interval-ms",
+  "max-post-bytes": "sc-max-each-post-bytes",
+  "uplink-data-placement": "uplink-data-placement",
+  "uplink-data-key": "uplink-data-key",
+  "uplink-chunk-size": "uplink-chunk-size",
+  "padding-bytes": "x-padding-bytes",
+  "padding-obfs-mode": "x-padding-obfs-mode",
+  "padding-placement": "x-padding-placement",
+  "padding-key": "x-padding-key",
+  "padding-header": "x-padding-header",
+  "padding-method": "x-padding-method",
+  "no-grpc-header": "no-grpc-header",
+  "session-id-placement": "session-placement",
+  "session-id-key": "session-key",
+  "session-id-table": "session-table",
+  "session-id-length": "session-length",
+  "seq-placement": "seq-placement",
+  "seq-key": "seq-key"
+};
+function setLoonXhttpOption(opts, key, value) {
+  if (!Object.prototype.hasOwnProperty.call(LOON_XHTTP_FIELDS, key)) return;
+  switch (key) {
+    case "padding-obfs-mode":
+    case "no-grpc-header":
+      if (value !== "true" && value !== "false") return;
+      value = value === "true";
+      break;
+    case "min-post-interval-ms":
+    case "max-post-bytes":
+    case "uplink-chunk-size":
+      value = normalizeXhttpNonNegativeRange(value) ?? value;
+      break;
+  }
+  opts[LOON_XHTTP_FIELDS[key]] = value;
+}
+
+// src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/loon.js
 var grammars2 = String.raw`
 // global initializer
 {{
@@ -2723,6 +2910,8 @@ var grammars2 = String.raw`
     const proxy = {};
     const obfs = {};
     const transport = {};
+    const xhttpOpts = {};
+    const xhttpHeaders = [];
     const shadowTLS = {};
     const $ = {};
 
@@ -2736,6 +2925,16 @@ var grammars2 = String.raw`
             proxy.network = "http";
             $set(proxy, "http-opts.path", transport.path);
             $set(proxy, "http-opts.headers.Host", transport.host);
+        } else if (transport.type === "xhttp") {
+            if (proxy.type === "vmess" && proxy.alterId !== 0) {
+                throw new Error("VMess XHTTP requires AEAD");
+            }
+            proxy.network = "xhttp";
+            proxy.udp ??= false;
+            if (transport.path != null) xhttpOpts.path = transport.path;
+            if (transport.host != null) xhttpOpts.host = transport.host;
+            if (xhttpHeaders.length) xhttpOpts.headers = Object.fromEntries(xhttpHeaders);
+            proxy["xhttp-opts"] = xhttpOpts;
         }
     }
 
@@ -2776,7 +2975,7 @@ var grammars2 = String.raw`
     }
 }
 
-start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls/tailscale) {
+start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls/tailscale/snell) {
     return proxy;
 }
 
@@ -2797,17 +2996,17 @@ shadowsocks = tag equals "shadowsocks"i address method password (obfs_typev obfs
     }
     handleShadowTLS();
 }
-vmess = tag equals "vmess"i address vmess_method uuid (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/vmess_alterId/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
+vmess = tag equals "vmess"i address vmess_method uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/vmess_alterId/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
     proxy.type = "vmess";
     proxy.cipher = proxy.cipher || "auto";
     proxy.alterId = proxy.alterId || 0;
     handleTransport();
 }
-vless = tag equals "vless"i address uuid (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/flow/public_key/short_id/block_quic/others)* {
+vless = tag equals "vless"i address uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/flow/public_key/short_id/block_quic/others)* {
     proxy.type = "vless";
     handleTransport();
 }
-trojan = tag equals "trojan"i address password (transport/transport_host/transport_path/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
+trojan = tag equals "trojan"i address password (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
     proxy.type = "trojan";
     handleTransport();
 }
@@ -2832,6 +3031,15 @@ tailscale = tag equals "tailscale"i (tailscale_string/tailscale_bool/tailscale_m
     proxy.type = "tailscale";
     if (proxy["exit-node"] === "auto") proxy["exit-node"] = "auto:any";
     if (proxy["exit-node"] === "none") proxy["exit-node"] = "";
+}
+snell = tag equals ("snell"i/"opensnell"i) address snell_positional_psk? (snell_psk/snell_version/snell_obfs/obfs_host/obfs_uri/udp_relay/ip_mode/block_quic/others)* {
+    if (!proxy.psk) throw new Error("Missing Snell PSK");
+    proxy.type = "snell";
+    proxy.version ??= 4;
+    proxy.udp ??= false;
+    if (obfs.type === "http") {
+        proxy["obfs-opts"] = { mode: obfs.type, host: obfs.host, path: obfs.path };
+    }
 }
 
 tailscale_string = comma key:("auth-key"/"control-url"/"hostname"/"exit-node"/"path-mode"/"ip-mode") equals value:(
@@ -2922,13 +3130,29 @@ obfs_ss = comma "obfs-name" equals type:("http"/"tls") { obfs.type = type; }
 obfs_ssr = comma "obfs" equals type:("plain"/"http_simple"/"http_post"/"random_head"/"tls1.2_ticket_auth"/"tls1.2_ticket_fastauth") { obfs.type = type; }
 obfs_ssr_param = comma "obfs-param" equals match:$[^,]+ { proxy["obfs-param"] = match; }
 
-obfs_host = comma "obfs-host" equals match:[^,]+ { obfs.host = match.join("").replace(/^"(.*)"$/, '$1'); }
-obfs_uri = comma "obfs-uri" equals uri:uri { obfs.path = uri; }
-uri = $[^,]+
+obfs_host = comma "obfs-host" equals value:option_value { obfs.host = value; }
+obfs_uri = comma "obfs-uri" equals value:option_value { obfs.path = value; }
+
+snell_positional_psk = comma psk:quoted_value { proxy.psk = psk; }
+snell_psk = comma "psk" equals psk:option_value { proxy.psk = psk; }
+snell_version = comma "version" equals version:$[0-9]+ { proxy.version = Number(version); }
+snell_obfs = comma ("obfs-name"/"obfs") equals type:("none"/"http") { obfs.type = type; }
 
 transport = comma "transport" equals type:("tcp"/"ws"/"http") { transport.type = type; }
-transport_host = comma "host" equals match:[^,]+ { transport.host = match.join("").replace(/^"(.*)"$/, '$1'); }
-transport_path = comma "path" equals path:uri { transport.path = path; }
+transport_host = comma "host" equals value:option_value { transport.host = value; }
+transport_path = comma "path" equals value:option_value { transport.path = value; }
+
+xhttp_transport = comma "transport" equals "xhttp" { transport.type = "xhttp"; }
+xhttp_header = comma "xhttp-header" equals value:option_value {
+    const colon = value.indexOf(":");
+    const name = value.slice(0, colon).trim();
+    if (colon > 0 && name && !/^host$/i.test(name)) {
+        xhttpHeaders.push([name, value.slice(colon + 1).trim()]);
+    }
+}
+xhttp_option = comma "xhttp-" key:$[a-z0-9-]+ equals value:option_value {
+    options.setLoonXhttpOption(xhttpOpts, key, value);
+}
 
 ssr_protocol = comma "protocol" equals protocol:("origin"/"auth_sha1_v4"/"auth_aes128_md5"/"auth_aes128_sha1"/"auth_chain_a"/"auth_chain_b") { proxy.protocol = protocol; }
 ssr_protocol_param = comma "protocol-param" equals param:$[^=,]+ { proxy["protocol-param"] = param; }
@@ -2952,7 +3176,7 @@ tls_profile = comma "tls-profile" equals match:[^,]+ {
     const clientFingerprint = loonClientFingerprint(tlsProfile);
     if (clientFingerprint) proxy["client-fingerprint"] = clientFingerprint;
 }
-alpn = comma "alpn" equals '"' match:$[^"]* '"' {
+alpn = comma "alpn" equals match:option_value {
     const values = match
         .split(",")
         .map((item) => item.trim())
@@ -2962,7 +3186,7 @@ alpn = comma "alpn" equals '"' match:$[^"]* '"' {
 
 flow = comma "flow" equals match:[^,]+ { proxy["flow"] = match.join("").replace(/^"(.*)"$/, '$1'); }
 public_key = comma "public-key" equals match:[^,]+ { proxy["reality-opts"] = proxy["reality-opts"] || {}; proxy["reality-opts"]["public-key"] = match.join("").replace(/^"(.*)"$/, '$1'); }
-short_id = comma "short-id" equals match:[^,]+ { proxy["reality-opts"] = proxy["reality-opts"] || {}; proxy["reality-opts"]["short-id"] = match.join("").replace(/^"(.*)"$/, '$1'); }
+short_id = comma "short-id" equals value:option_value { proxy["reality-opts"] = proxy["reality-opts"] || {}; proxy["reality-opts"]["short-id"] = value; }
 
 fast_open = comma "fast-open" equals flag:bool { proxy.tfo = flag; }
 udp_relay = comma "udp" equals flag:bool { proxy.udp = flag; }
@@ -2991,6 +3215,8 @@ server_dns = comma "server-dns" equals value:(
 }
 
 tag = match:[^=,]* { proxy.name = match.join("").trim(); }
+quoted_value = '"' match:$[^"]* '"' { return match; }
+option_value = quoted_value / match:$[^,"]* { return match.trim(); }
 comma = _ "," _
 equals = _ "=" _
 _ = [ \r\t]*
@@ -3000,7 +3226,10 @@ others = server_dns / (comma [^=,]+ equals [^=,]+)
 var parser2;
 function getParser2() {
   if (!parser2) {
-    parser2 = peggy2.generate(grammars2);
+    const generated = peggy2.generate(grammars2);
+    parser2 = {
+      parse: (input) => generated.parse(input, { setLoonXhttpOption })
+    };
   }
   return parser2;
 }
@@ -3076,7 +3305,7 @@ var grammars3 = String.raw`
     }
 }
 
-start = (trojan/shadowsocks/vmess/vless/anytls/http/socks5) {
+start = (trojan/shadowsocks/vmess/vless/anytls/hysteria2/http/socks5) {
     return proxy
 }
 
@@ -3148,6 +3377,12 @@ anytls = "anytls" equals address
     proxy.tls = true;
 }
 
+hysteria2 = "hysteria2" equals address
+    (password/tls_host/tls_pubkey_sha256/tls_alpn/tls_no_session_ticket/tls_no_session_reuse/tls_fingerprint/tls_verification/udp_relay/download_bandwidth/salamander_password/port_hopping/port_hopping_interval/server_check_url/tag/others)* {
+    proxy.type = "hysteria2";
+    proxy.tls = true;
+}
+
 http = "http" equals address 
     (username/password/over_tls/tls_host/tls_pubkey_sha256/tls_alpn/tls_no_session_ticket/tls_no_session_reuse/tls_fingerprint/tls_verification/tag/fast_open/udp_relay/udp_over_tcp/server_check_url/reality_base64_pubkey/reality_hex_shortid/others)*{
     proxy.type = "http";
@@ -3206,6 +3441,22 @@ aead = comma "aead" equals flag:bool { proxy.aead = flag; }
 udp_relay = comma "udp-relay" equals flag:bool { proxy.udp = flag; }
 udp_over_tcp = comma "udp-over-tcp" equals flag:bool { throw new Error("UDP over TCP is not supported"); }
 udp_over_tcp_new = comma "udp-over-tcp" equals param:$[^=,]+ { if (param === "sp.v1") { proxy["udp-over-tcp"] = true; proxy["udp-over-tcp-version"] = 1; } else if (param === "sp.v2") { proxy["udp-over-tcp"] = true; proxy["udp-over-tcp-version"] = 2; } else if (param === "true") { proxy["_ssr_python_uot"] = true; } else { throw new Error("Invalid value for udp-over-tcp"); } }
+
+download_bandwidth = comma "download-bandwidth" equals value:$[^,]+ { proxy.down = value.trim(); }
+salamander_password = comma "salamander-password" equals value:$((!next_parameter .)+) {
+    proxy.obfs = "salamander";
+    proxy["obfs-password"] = value.trim();
+}
+port_hopping = comma "port-hopping" equals ports:$(hopping_port (comma hopping_port)*) {
+    proxy.ports = ports.replace(/\s/g, "");
+}
+hopping_port = [0-9]+ (_ "-" _ [0-9]+)?
+port_hopping_interval = comma "port-hopping-interval" equals interval:$[0-9]+ {
+    const seconds = Number(interval);
+    if (seconds >= 5 && seconds <= 3600) {
+        proxy["hop-interval"] = seconds;
+    }
+}
 
 fast_open = comma "fast-open" equals flag:bool { proxy.tfo = flag; }
 
@@ -3270,7 +3521,7 @@ reality_hex_shortid = comma "reality-hex-shortid" equals param:$[^=,]+ {
 }
 
 vless_flow = comma "vless-flow" equals param:$[^=,]+ { proxy["flow"] = param; }
-server_check_url = comma "server_check_url" equals param:$[^=,]+ { proxy["test-url"] = param; }
+server_check_url = comma "server_check_url" equals param:$[^,]+ { proxy["test-url"] = param.trim(); }
 
 uri = $[^,]+
 
@@ -3488,7 +3739,7 @@ function parseTrojan(url) {
   }
   proxy["skip-cert-verify"] = toBool(params.allowInsecure);
   proxy.sni = params.sni || params.peer;
-  proxy["client-fingerprint"] = params.fp;
+  proxy["client-fingerprint"] = params.fp ?? params["client-fingerprint"];
   proxy["tls-fingerprint"] = params.pcs;
   proxy._vcn = params.vcn?.split(",").map((name2) => name2.trim()).filter(Boolean);
   proxy["name-cert-verify"] = proxy._vcn?.[0];
@@ -3710,113 +3961,6 @@ var yaml_default = {
 import _2 from "lodash";
 import { Base64 } from "js-base64";
 
-// src/vendors/Sub-Store/backend/src/core/proxy-utils/ech-utils.js
-var ECH_DNS_FIELD = "_dns";
-var ECH_FORCE_QUERY_FIELD = "_force-query";
-var ECH_SOCKOPT_FIELD = "_sockopt";
-var DEFAULT_XRAY_ECH_DNS = "https://dns.alidns.com/dns-query";
-function parseXrayEchConfigList(echConfigList) {
-  if (!isNotBlank(echConfigList)) {
-    return void 0;
-  }
-  if (!echConfigList.includes("://")) {
-    return {
-      type: "config",
-      config: echConfigList
-    };
-  }
-  const parts = echConfigList.split("+");
-  if (parts.length === 1 && isNotBlank(parts[0])) {
-    return {
-      type: "dns",
-      dns: parts[0]
-    };
-  }
-  if (parts.length === 2 && isNotBlank(parts[0]) && isNotBlank(parts[1])) {
-    return {
-      type: "dns",
-      queryServerName: parts[0],
-      dns: parts[1]
-    };
-  }
-  return void 0;
-}
-function isSupportedXrayEchConfigList(echConfigList) {
-  return parseXrayEchConfigList(echConfigList) != null;
-}
-function isSupportedXrayEchForceQuery(forceQuery) {
-  return ["none", "half", "full"].includes(forceQuery);
-}
-function isMihomoEchEnabled(value) {
-  if (typeof value === "boolean") {
-    return value;
-  }
-  return typeof value === "number" && Number.isInteger(value) && value !== 0;
-}
-function buildMihomoEchOptsFromXrayFields({
-  echConfigList,
-  echForceQuery,
-  echSockopt
-} = {}) {
-  const parsedEchConfigList = parseXrayEchConfigList(echConfigList);
-  if (!parsedEchConfigList) {
-    return void 0;
-  }
-  const echOpts = {
-    enable: true
-  };
-  if (parsedEchConfigList.type === "config") {
-    echOpts.config = parsedEchConfigList.config;
-  } else {
-    echOpts[ECH_DNS_FIELD] = parsedEchConfigList.dns;
-    if (parsedEchConfigList.queryServerName) {
-      echOpts["query-server-name"] = parsedEchConfigList.queryServerName;
-    }
-  }
-  if (isSupportedXrayEchForceQuery(echForceQuery)) {
-    echOpts[ECH_FORCE_QUERY_FIELD] = echForceQuery;
-  }
-  if (isPlainObject(echSockopt)) {
-    echOpts[ECH_SOCKOPT_FIELD] = echSockopt;
-  }
-  return echOpts;
-}
-function buildXrayEchFieldsFromMihomo(echOpts, fallbackEchConfigList, { dnsFieldPath = "ech-opts._dns", warnDefaultDns } = {}) {
-  const fields = {};
-  if (isPlainObject(echOpts)) {
-    if (!isMihomoEchEnabled(echOpts.enable)) {
-      return fields;
-    }
-    const queryServerName = echOpts["query-server-name"];
-    if (isNotBlank(echOpts.config)) {
-      fields.echConfigList = echOpts.config;
-    } else if (isNotBlank(echOpts[ECH_DNS_FIELD])) {
-      fields.echConfigList = isNotBlank(queryServerName) ? `${queryServerName}+${echOpts[ECH_DNS_FIELD]}` : echOpts[ECH_DNS_FIELD];
-    } else if (isNotBlank(queryServerName)) {
-      fields.echConfigList = `${queryServerName}+${DEFAULT_XRAY_ECH_DNS}`;
-      warnDefaultDns?.({
-        defaultDns: DEFAULT_XRAY_ECH_DNS,
-        dnsFieldPath,
-        queryServerName
-      });
-    }
-    if (fields.echConfigList && isSupportedXrayEchForceQuery(echOpts[ECH_FORCE_QUERY_FIELD])) {
-      fields.echForceQuery = echOpts[ECH_FORCE_QUERY_FIELD];
-    }
-    if (fields.echConfigList && isPlainObject(echOpts[ECH_SOCKOPT_FIELD])) {
-      fields.echSockopt = echOpts[ECH_SOCKOPT_FIELD];
-    }
-    return fields;
-  }
-  if (isNotBlank(fallbackEchConfigList)) {
-    fields.echConfigList = fallbackEchConfigList;
-  }
-  return fields;
-}
-function buildXrayEchConfigListFromMihomo(echOpts, fallbackEchConfigList, options) {
-  return buildXrayEchFieldsFromMihomo(echOpts, fallbackEchConfigList, options).echConfigList;
-}
-
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/vmess-security.js
 var VMESS_SECURITY_AUTO = "auto";
 var VMESS_SECURITY_COMMON_VALUES = [
@@ -4009,6 +4153,10 @@ function URI_PROXY() {
       username: username != null ? decodeURIComponent(username) : void 0,
       password: password != null ? decodeURIComponent(password) : void 0
     };
+    if (tls && query) {
+      const fingerprint = getPathQueryParam(query, "fp") || getPathQueryParam(query, "client-fingerprint");
+      if (fingerprint) proxy["client-fingerprint"] = fingerprint;
+    }
     return proxy;
   };
   return { name, test, parse: parse2 };
@@ -4590,7 +4738,7 @@ function URI_VMess() {
           delete proxy.network;
         }
       }
-      proxy["client-fingerprint"] = params.fp;
+      proxy["client-fingerprint"] = params.fp ?? params["client-fingerprint"];
       proxy.alpn = params.alpn ? params.alpn.split(",") : void 0;
       if (isNotBlank(fragmentName)) {
         proxy.name = fragmentName;
@@ -5365,7 +5513,7 @@ function URI_VLESS() {
         proxy.flow = flow;
       }
     }
-    proxy["client-fingerprint"] = params.fp;
+    proxy["client-fingerprint"] = params.fp ?? params["client-fingerprint"];
     proxy.alpn = params.alpn ? params.alpn.split(",") : void 0;
     proxy["skip-cert-verify"] = /(TRUE)|1/i.test(params.allowInsecure) || protocol === "vless" && params.allowInsecure == null && params.insecure === "1";
     proxy._echConfigList = getIfPresent(params.ech);
@@ -6086,6 +6234,12 @@ function QX_AnyTLS() {
   const parse2 = (line) => getParser3().parse(line);
   return { name, test, parse: parse2 };
 }
+function QX_Hysteria2() {
+  const name = "QX Hysteria2 Parser";
+  const test = (line) => /^hysteria2\s*=/.test(line);
+  const parse2 = (line) => getParser3().parse(line);
+  return { name, test, parse: parse2 };
+}
 function QX_Trojan() {
   const name = "QX Trojan Parser";
   const test = (line) => {
@@ -6126,11 +6280,10 @@ function Loon_SSR() {
   const parse2 = (line) => getParser2().parse(line);
   return { name, test, parse: parse2 };
 }
+var LOON_VMESS = /^[^=,]*=\s*vmess\s*,[^,]*,[^,]*,[^,]*,\s*"/i;
 function Loon_VMess() {
   const name = "Loon VMess Parser";
-  const test = (line) => {
-    return /^.*=\s*vmess/i.test(line.split(",")[0]) && line.indexOf("username") === -1;
-  };
+  const test = (line) => LOON_VMESS.test(line);
   const parse2 = (line) => getParser2().parse(line);
   return { name, test, parse: parse2 };
 }
@@ -6356,7 +6509,7 @@ function Surge_SS() {
 function Surge_VMess() {
   const name = "Surge VMess Parser";
   const test = (line) => {
-    return /^.*=\s*vmess/.test(line.split(",")[0]) && line.indexOf("username") !== -1;
+    return /^.*=\s*vmess/.test(line.split(",")[0]) && line.indexOf("username") !== -1 && !LOON_VMESS.test(line);
   };
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
@@ -6370,7 +6523,7 @@ function Surge_VLESS() {
 function Surge_Trojan() {
   const name = "Surge Trojan Parser";
   const test = (line) => {
-    return /^.*=\s*trojan/.test(line.split(",")[0]);
+    return /^.*=\s*trojan/.test(line.split(",")[0]) && !/^[^=,]*=\s*trojan\s*,[^,]*,[^,]*,\s*"/.test(line);
   };
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
@@ -6452,12 +6605,15 @@ function Surge_External() {
   };
   return { name, test, parse: parse2 };
 }
-function Surge_Snell() {
-  const name = "Surge Snell Parser";
-  const test = (line) => {
-    return /^.*=\s*snell/.test(line.split(",")[0]);
+function Snell() {
+  const name = "Snell Parser";
+  const test = (line) => /^[^=,]*=\s*(?:snell|opensnell)\s*,/i.test(line);
+  const parse2 = (line) => {
+    const fields = line.match(/(?:[^",]+|"[^"]*")+/g).slice(3);
+    const loonOption = /^(?:(?:udp|obfs-name|ip-mode|server-dns)\s*=|block-quic\s*=\s*(?:true|false)$)/;
+    const isLoon = fields[0]?.trim().startsWith('"') || fields.some((field) => loonOption.test(field.trim()));
+    return (isLoon ? getParser2() : getParser()).parse(line);
   };
-  const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
 function Surge_Tuic() {
@@ -6522,7 +6678,7 @@ var parsers_default = [
   Surge_VLESS(),
   Surge_Trojan(),
   Surge_Http(),
-  Surge_Snell(),
+  Snell(),
   Surge_Tuic(),
   Surge_WireGuard(),
   Surge_Hysteria2(),
@@ -6544,6 +6700,7 @@ var parsers_default = [
   QX_VMess(),
   QX_VLESS(),
   QX_AnyTLS(),
+  QX_Hysteria2(),
   QX_Trojan(),
   QX_Http(),
   QX_Socks5()
@@ -6953,6 +7110,34 @@ function appendAlpn(result, proxy) {
   const alpn = formatSurgeAlpn(proxy.alpn);
   if (alpn) result.append(`,alpn="${alpn}"`);
 }
+function appendClientFingerprint(result, proxy) {
+  if (proxy.network === "h3" || ["tuic", "hysteria2", "masque-surge"].includes(proxy.type)) {
+    return;
+  }
+  const value = proxy._surge_client_fingerprint ?? proxy["client-fingerprint"];
+  if (typeof value !== "string") return;
+  let fingerprint = value.trim().toLowerCase();
+  if (!["auto", "none", "apple-26", "chromium-155"].includes(fingerprint)) {
+    const family = fingerprint.replace(/^hello/, "").split(/[-_]/, 1)[0].replace(/([a-z])\d+$/, "$1");
+    if (["chrome", "edge", "android", "360", "qq"].includes(family)) {
+      fingerprint = "chromium-155";
+    } else if (["safari", "ios"].includes(family)) {
+      fingerprint = "apple-26";
+    } else if ([
+      "firefox",
+      "golang",
+      "random",
+      "randomized",
+      "randomizedalpn",
+      "randomizednoalpn"
+    ].includes(family)) {
+      fingerprint = "auto";
+    } else {
+      return;
+    }
+  }
+  result.append(`,client-fingerprint=${fingerprint}`);
+}
 function getShadowTLSAlpn(proxy) {
   return formatSurgeAlpn(proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn);
 }
@@ -7001,6 +7186,20 @@ function appendTlsProxyParams(result, proxy, enabled = true) {
   const clientCert = isPresent2(proxy, "keystore-client-cert") ? proxy["keystore-client-cert"] : proxy["client-cert"];
   if (isPresent2(proxy, "keystore-client-cert") || isPresent2(proxy, "client-cert")) {
     result.append(`,client-cert=${quoteSurgeValue(clientCert)}`);
+  }
+  appendClientFingerprint(result, proxy);
+  const echOpts = isPlainObject(proxy["ech-opts"]) ? proxy["ech-opts"] : void 0;
+  const echEnabled = echOpts ? isMihomoEchEnabled(echOpts.enable) : isNotBlank(proxy._echConfigList);
+  if (echEnabled && !proxy["reality-opts"]) {
+    const config = normalizeInlineEchConfigList(
+      echOpts ? echOpts.config : proxy._echConfigList
+    );
+    if (!config) {
+      throw unsupported(
+        "Surge ECH requires an inline ECHConfigList in base64 or base64url"
+      );
+    }
+    result.append(`,ech-config=${config}`);
   }
 }
 function appendSshPrivateKey(result, proxy) {
@@ -7489,6 +7688,7 @@ function appendVlessParams(result, proxy) {
     }
     result.appendIfPresent(`,sni="${proxy.sni}"`, "sni");
     appendAlpn(result, proxy);
+    appendClientFingerprint(result, proxy);
   } else {
     result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
     appendTlsProxyParams(result, proxy, Boolean(tls));
@@ -9022,6 +9222,8 @@ function Loon_Producer() {
         return shadowsocks2(proxy);
       case "ssr":
         return shadowsocksr(proxy);
+      case "snell":
+        return snell2(proxy);
       case "trojan":
         return trojan2(proxy);
       case "vmess":
@@ -9066,6 +9268,40 @@ function appendTlsProfile(result, proxy) {
 function appendAlpn2(result, proxy) {
   const alpn = getLoonAlpn(proxy);
   if (alpn) result.append(`,alpn="${alpn}"`);
+}
+function formatLoonValue(value, quoted = false) {
+  const text = String(value);
+  if (/["\r\n]/.test(text)) {
+    throw new Error("Unsupported characters in Loon option");
+  }
+  return quoted || !text || /[,\s]/.test(text) ? `"${text}"` : text;
+}
+function appendXhttp(result, proxy) {
+  const xhttp = proxy["xhttp-opts"];
+  if (xhttp?.["download-settings"]) {
+    throw new Error("Loon XHTTP does not support download-settings");
+  }
+  const headers = isPlainObject(xhttp?.headers) ? Object.entries(xhttp.headers) : [];
+  const host = xhttp?.host ?? headers.find(([key]) => /^host$/i.test(key))?.[1];
+  result.append(",transport=xhttp");
+  for (const [key, value] of [
+    ["path", xhttp?.path],
+    ["host", host]
+  ]) {
+    if (value != null) result.append(`,${key}=${formatLoonValue(value)}`);
+  }
+  for (const [key, field] of Object.entries(LOON_XHTTP_FIELDS)) {
+    const value = xhttp?.[field];
+    if (value != null)
+      result.append(`,xhttp-${key}=${formatLoonValue(value)}`);
+  }
+  for (const [key, value] of headers) {
+    if (!/^host$/i.test(key) && value != null) {
+      result.append(
+        `,xhttp-header=${formatLoonValue(`${key}: ${value}`, true)}`
+      );
+    }
+  }
 }
 function getLoonShadowTLSAlpn(proxy) {
   const values = proxy?.["plugin-opts"]?.alpn ?? proxy?.alpn;
@@ -9231,8 +9467,46 @@ function shadowsocksr(proxy) {
   result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
   return result.toString();
 }
+function snell2(proxy) {
+  const version = Number(proxy.version);
+  if (![4, 5].includes(version)) {
+    throw new Error(
+      `Loon does not support Snell version ${proxy.version ?? 1}`
+    );
+  }
+  if (proxy.psk == null || proxy.psk === "") {
+    throw new Error("Missing Snell PSK");
+  }
+  const obfs = proxy["obfs-opts"];
+  if (proxy.plugin || obfs?.mode && !["none", "http"].includes(obfs.mode)) {
+    throw new Error("Loon Snell only supports HTTP obfs");
+  }
+  const result = new Result(proxy);
+  result.append(
+    `${proxy.name}=snell,${proxy.server},${proxy.port},${formatLoonValue(
+      proxy.psk,
+      true
+    )},version=${version}`
+  );
+  if (obfs?.mode === "http") {
+    result.append(",obfs=http");
+    if (obfs.host != null)
+      result.append(`,obfs-host=${formatLoonValue(obfs.host)}`);
+    if (obfs.path != null)
+      result.append(`,obfs-uri=${formatLoonValue(obfs.path)}`);
+  }
+  result.appendIfPresent(`,udp=${proxy.udp}`, "udp");
+  const blockQuic = proxy["block-quic"];
+  if (blockQuic === "on" || blockQuic === "off") {
+    result.append(`,block-quic=${blockQuic === "on"}`);
+  }
+  const ipVersion = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-mode=${ipVersion}`, "ip-version");
+  return result.toString();
+}
 function trojan2(proxy) {
   const isReality = !!proxy["reality-opts"];
+  const isXhttp = proxy.network === "xhttp";
   const result = new Result(proxy);
   result.append(
     `${proxy.name}=trojan,${proxy.server},${proxy.port},"${proxy.password}"`
@@ -9251,6 +9525,8 @@ function trojan2(proxy) {
         `,host=${proxy["ws-opts"]?.headers?.Host}`,
         "ws-opts.headers.Host"
       );
+    } else if (isXhttp) {
+      appendXhttp(result, proxy);
     } else {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9264,7 +9540,10 @@ function trojan2(proxy) {
   if (isReality) {
     appendReality(result, proxy);
   } else {
-    result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+    result.appendIfPresent(
+      `,${isXhttp ? "sni" : "tls-name"}=${proxy.sni}`,
+      "sni"
+    );
     result.appendIfPresent(
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
@@ -9337,6 +9616,7 @@ function anytls2(proxy) {
 }
 function vmess(proxy) {
   const isReality = !!proxy["reality-opts"];
+  const isXhttp = proxy.network === "xhttp";
   const security = formatLoonVmessSecurity(proxy.cipher);
   const result = new Result(proxy);
   result.append(
@@ -9368,6 +9648,8 @@ function vmess(proxy) {
         `,host=${Array.isArray(httpHost) ? httpHost[0] : httpHost}`,
         "http-opts.headers.Host"
       );
+    } else if (isXhttp) {
+      appendXhttp(result, proxy);
     } else {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9379,14 +9661,15 @@ function vmess(proxy) {
     `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
     "skip-cert-verify"
   );
-  if (proxy.tls || isReality) {
-    appendTlsProfile(result, proxy);
-    appendAlpn2(result, proxy);
-  }
+  if (proxy.tls || isReality) appendTlsProfile(result, proxy);
+  if (proxy.tls || isReality || isXhttp) appendAlpn2(result, proxy);
   if (isReality) {
     appendReality(result, proxy);
   } else {
-    result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+    result.appendIfPresent(
+      `,${isXhttp ? "sni" : "tls-name"}=${proxy.sni}`,
+      "sni"
+    );
     result.appendIfPresent(
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
@@ -9396,11 +9679,13 @@ function vmess(proxy) {
       "tls-pubkey-sha256"
     );
   }
-  if (isPresent2(proxy, "aead")) {
-    result.append(`,alterId=${proxy.aead ? 0 : 1}`);
-  } else {
-    result.append(`,alterId=${proxy.alterId}`);
+  let alterId = proxy.alterId;
+  if (isPresent2(proxy, "aead")) alterId = proxy.aead ? 0 : 1;
+  if (isXhttp) {
+    alterId ??= 0;
+    if (Number(alterId) !== 0) throw new Error("VMess XHTTP requires AEAD");
   }
+  result.append(`,alterId=${alterId}`);
   result.appendIfPresent(`,fast-open=${proxy.tfo}`, "tfo");
   if (proxy["block-quic"] === "on") {
     result.append(",block-quic=true");
@@ -9419,7 +9704,10 @@ function vless(proxy) {
     throw new Error(`VLESS encryption is not supported`);
   let isXtls = false;
   const isReality = !!proxy["reality-opts"];
-  if (typeof proxy.flow !== "undefined") {
+  const isXhttp = proxy.network === "xhttp";
+  if (isXhttp && proxy.flow)
+    throw new Error("VLESS XHTTP does not support flow");
+  if (!isXhttp && typeof proxy.flow !== "undefined") {
     if (["xtls-rprx-vision"].includes(proxy.flow)) {
       isXtls = true;
     } else {
@@ -9456,6 +9744,8 @@ function vless(proxy) {
         `,host=${Array.isArray(httpHost) ? httpHost[0] : httpHost}`,
         "http-opts.headers.Host"
       );
+    } else if (isXhttp) {
+      appendXhttp(result, proxy);
     } else {
       throw new Error(`network ${proxy.network} is unsupported`);
     }
@@ -9467,17 +9757,18 @@ function vless(proxy) {
     `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
     "skip-cert-verify"
   );
-  if (proxy.tls || isReality || isXtls) {
-    appendTlsProfile(result, proxy);
-    appendAlpn2(result, proxy);
-  }
+  if (proxy.tls || isReality || isXtls) appendTlsProfile(result, proxy);
+  if (proxy.tls || isReality || isXtls || isXhttp) appendAlpn2(result, proxy);
   if (isXtls) {
     result.appendIfPresent(`,flow=${proxy.flow}`, "flow");
   }
   if (isReality) {
     appendReality(result, proxy);
   } else {
-    result.appendIfPresent(`,tls-name=${proxy.sni}`, "sni");
+    result.appendIfPresent(
+      `,${isXhttp ? "sni" : "tls-name"}=${proxy.sni}`,
+      "sni"
+    );
     result.appendIfPresent(
       `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
       "tls-fingerprint"
@@ -11037,6 +11328,8 @@ function QX_Producer() {
         return vless3(proxy);
       case "anytls":
         return anytls3(proxy);
+      case "hysteria2":
+        return hysteria23(proxy);
     }
     throw new Error(
       `Platform ${targetPlatform4} does not support proxy type: ${proxy.type}`
@@ -11146,7 +11439,7 @@ function shadowsocks3(proxy) {
       "plugin-opts.path"
     );
   }
-  if (needTls(proxy)) {
+  if (needTls(proxy) || proxy.plugin === "v2ray-plugin" && proxy["plugin-opts"]?.tls) {
     appendIfPresent(
       `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
       "tls-pubkey-sha256"
@@ -11443,6 +11736,52 @@ function anytls3(proxy) {
     "test-url"
   );
   append(`,tag=${proxy.name}`);
+  return result.toString();
+}
+function hysteria23(proxy) {
+  if (proxy.obfs && proxy.obfs !== "salamander") {
+    throw new Error("QX Hysteria 2 only supports Salamander obfuscation");
+  }
+  const result = new Result(proxy);
+  result.append(`hysteria2=${proxy.server}:${proxy.port}`);
+  result.appendIfPresent(`,password=${proxy.password}`, "password");
+  const ports = String(proxy.ports || "").trim();
+  if (ports) result.append(`,port-hopping=${ports.replace(/;/g, ",")}`);
+  const interval = Number(proxy["hop-interval"]);
+  if (Number.isInteger(interval) && interval >= 5 && interval <= 3600) {
+    result.append(`,port-hopping-interval=${interval}`);
+  }
+  result.appendIfPresent(
+    `,salamander-password=${proxy["obfs-password"]}`,
+    "obfs-password"
+  );
+  result.appendIfPresent(`,tls-host=${proxy.sni}`, "sni");
+  result.appendIfPresent(
+    `,tls-pubkey-sha256=${proxy["tls-pubkey-sha256"]}`,
+    "tls-pubkey-sha256"
+  );
+  appendTlsAlpn(result, proxy);
+  result.appendIfPresent(
+    `,tls-no-session-ticket=${proxy["tls-no-session-ticket"]}`,
+    "tls-no-session-ticket"
+  );
+  result.appendIfPresent(
+    `,tls-no-session-reuse=${proxy["tls-no-session-reuse"]}`,
+    "tls-no-session-reuse"
+  );
+  result.appendIfPresent(
+    `,tls-cert-sha256=${proxy["tls-fingerprint"]}`,
+    "tls-fingerprint"
+  );
+  appendTlsVerification(result, proxy);
+  const bandwidth = String(proxy.down).match(/^\s*(\d+)/)?.[1];
+  if (bandwidth) result.append(`,download-bandwidth=${bandwidth}`);
+  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  result.appendIfPresent(
+    `,server_check_url=${proxy["test-url"]}`,
+    "test-url"
+  );
+  result.append(`,tag=${proxy.name}`);
   return result.toString();
 }
 function http3(proxy) {
@@ -11781,13 +12120,13 @@ function Surfboard_Producer() {
       case "http":
         return http4(proxy);
       case "snell":
-        return snell2(proxy);
+        return snell3(proxy);
       case "tuic":
         return tuic2(proxy);
       case "socks5":
         return socks54(proxy);
       case "hysteria2":
-        return hysteria23(proxy);
+        return hysteria24(proxy);
       case "wireguard-surge":
         return wireguard3(proxy);
     }
@@ -11832,7 +12171,7 @@ function tuic2(proxy) {
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   return result.toString();
 }
-function hysteria23(proxy) {
+function hysteria24(proxy) {
   if (proxy.obfs && proxy.obfs !== "salamander" || proxy["obfs-password"] && proxy.obfs !== "salamander") {
     throw new Error(`Surfboard Hysteria2 only supports salamander obfs`);
   }
@@ -11870,7 +12209,7 @@ function anytls4(proxy) {
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
   return result.toString();
 }
-function snell2(proxy) {
+function snell3(proxy) {
   if (isPresent2(proxy, "version") && ![1, 2, 3, 4, 5].includes(Number(proxy.version))) {
     throw new Error(
       `Platform ${targetPlatform5} does not support snell version ${proxy.version}`
