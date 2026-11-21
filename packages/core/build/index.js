@@ -6715,24 +6715,20 @@ import _3 from "lodash";
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/preprocessors/index.js
 import { Base64 as Base642 } from "js-base64";
 import { isAlias, isScalar, isSeq, parseDocument, visit } from "yaml";
+var CLASH_YAML_PARSE_OPTIONS = { merge: true, logLevel: "error" };
+function mayContainShortIds(raw) {
+  return typeof raw === "string" && raw.includes("short-id");
+}
 function normalizeClashYaml(raw) {
-  if (typeof raw !== "string" || !raw.includes("short-id")) {
-    return raw;
-  }
-  let document;
+  if (!mayContainShortIds(raw)) return raw;
   try {
-    document = parseDocument(raw, {
-      merge: true,
-      logLevel: "error"
-    });
-    const content = document.errors.length > 0 ? safeLoad(raw) : document.toJS();
-    if (![content.proxies, content.listeners].some(
-      (items) => Array.isArray(items) && items.length > 0
-    ))
-      return raw;
+    const document = parseDocument(raw, CLASH_YAML_PARSE_OPTIONS);
+    return normalizeClashYamlDocument(raw, document);
   } catch (e) {
     return raw;
   }
+}
+function normalizeClashYamlDocument(raw, document, content) {
   const anchors = /* @__PURE__ */ new Map();
   const aliases = /* @__PURE__ */ new Map();
   visit(document, {
@@ -6755,21 +6751,19 @@ function normalizeClashYaml(raw) {
       }
     }
   });
+  const shortIds = /* @__PURE__ */ new Set();
   for (const config of realityConfigs) {
     visit(config, {
       Alias(_5, alias) {
         realityConfigs.add(resolveAlias(alias));
+      },
+      Pair(_5, { key, value }) {
+        if (resolveAlias(key)?.value === "short-id") {
+          shortIds.add(value);
+        }
       }
     });
   }
-  const shortIds = /* @__PURE__ */ new Set();
-  visit(document, {
-    Pair(_5, { key, value }, path) {
-      if (resolveAlias(key)?.value === "short-id" && path.some((node) => realityConfigs.has(node))) {
-        shortIds.add(value);
-      }
-    }
-  });
   const replacements = /* @__PURE__ */ new Map();
   for (const value of shortIds) {
     const node = resolveAlias(value);
@@ -6779,12 +6773,20 @@ function normalizeClashYaml(raw) {
       replacements.set(node, JSON.stringify(node.source));
     }
   }
+  if (replacements.size === 0) return raw;
+  if (content === void 0) {
+    content = document.errors.length > 0 ? safeLoad(raw) : document.toJS();
+  }
+  if (![content?.proxies, content?.listeners].some(
+    (items) => Array.isArray(items) && items.length > 0
+  ))
+    return raw;
   const chunks = [];
   let offset = 0;
-  for (const [node, content] of [...replacements].sort(
+  for (const [node, content2] of [...replacements].sort(
     ([left], [right]) => left.range[0] - right.range[0]
   )) {
-    chunks.push(raw.slice(offset, node.range[0]), content);
+    chunks.push(raw.slice(offset, node.range[0]), content2);
     offset = node.range[1];
   }
   return chunks.join("") + raw.slice(offset);
@@ -6861,14 +6863,34 @@ function fallbackBase64Encoded() {
 }
 function Clash() {
   const name = "Clash Pre-processor";
-  const test = function(raw) {
-    if (!/proxies/.test(raw)) return false;
-    const content = safeLoad(raw);
-    return Array.isArray(content.proxies) || Array.isArray(content["proxy-groups"]);
+  const prepare = function(raw, detect) {
+    if (detect && !/proxies/.test(raw)) return false;
+    let document;
+    let content;
+    if (mayContainShortIds(raw)) {
+      try {
+        document = parseDocument(raw, CLASH_YAML_PARSE_OPTIONS);
+        if (document.errors.length === 0) content = document.toJS();
+      } catch (e) {
+        document = void 0;
+      }
+    }
+    if (content === void 0) content = safeLoad(raw);
+    if (detect && !Array.isArray(content.proxies) && !Array.isArray(content["proxy-groups"]))
+      return false;
+    if (document) {
+      const normalized = normalizeClashYamlDocument(
+        raw,
+        document,
+        content
+      );
+      if (normalized !== raw) return { normalized };
+    }
+    return { content };
   };
-  const parse2 = function(raw, includeProxies) {
-    const afterReplace = normalizeClashYaml(raw);
-    const { proxies } = safeLoad(afterReplace);
+  const test = (raw) => prepare(raw, true);
+  const parse2 = function(raw, includeProxies, match = prepare(raw)) {
+    const { proxies } = match.normalized === void 0 ? match.content : safeLoad(match.normalized);
     return (includeProxies ? "proxies:\n" : "") + (Array.isArray(proxies) ? proxies : []).map((p) => {
       return `${includeProxies ? "  - " : ""}${JSON.stringify(
         p
