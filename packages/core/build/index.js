@@ -5855,7 +5855,7 @@ function URI_Mieru() {
       params.get(key).push(value);
     }
     const ports = params.get("port") || [];
-    const protocols = params.get("protocol") || [];
+    const protocols = params.get("protocol") ?? params.get("transport") ?? [];
     if (ports.length === 0 || ports.length !== protocols.length) {
       throw new Error("Mieru URI requires matching ports and protocols");
     }
@@ -5875,7 +5875,7 @@ function URI_Mieru() {
       if (value) proxy[key] = value;
     }
     return ports.map((port, index) => {
-      const transport = protocols[index];
+      const transport = protocols[index].toUpperCase();
       const [, first, last = first] = /^(\d+)(?:-(\d+))?$/.exec(port) || [];
       const start = Number(first);
       const end = Number(last);
