@@ -219,13 +219,13 @@ var require_buffer = __commonJS({
     var base64 = require_base64_js();
     var ieee754 = require_ieee754();
     var customInspectSymbol = typeof Symbol === "function" && typeof Symbol["for"] === "function" ? Symbol["for"]("nodejs.util.inspect.custom") : null;
-    exports.Buffer = Buffer6;
+    exports.Buffer = Buffer7;
     exports.SlowBuffer = SlowBuffer;
     exports.INSPECT_MAX_BYTES = 50;
     var K_MAX_LENGTH = 2147483647;
     exports.kMaxLength = K_MAX_LENGTH;
-    Buffer6.TYPED_ARRAY_SUPPORT = typedArraySupport();
-    if (!Buffer6.TYPED_ARRAY_SUPPORT && typeof console !== "undefined" && typeof console.error === "function") {
+    Buffer7.TYPED_ARRAY_SUPPORT = typedArraySupport();
+    if (!Buffer7.TYPED_ARRAY_SUPPORT && typeof console !== "undefined" && typeof console.error === "function") {
       console.error(
         "This browser lacks typed array (Uint8Array) support which is required by `buffer` v5.x. Use `buffer` v4.x if you require old browser support."
       );
@@ -243,17 +243,17 @@ var require_buffer = __commonJS({
         return false;
       }
     }
-    Object.defineProperty(Buffer6.prototype, "parent", {
+    Object.defineProperty(Buffer7.prototype, "parent", {
       enumerable: true,
       get: function() {
-        if (!Buffer6.isBuffer(this)) return void 0;
+        if (!Buffer7.isBuffer(this)) return void 0;
         return this.buffer;
       }
     });
-    Object.defineProperty(Buffer6.prototype, "offset", {
+    Object.defineProperty(Buffer7.prototype, "offset", {
       enumerable: true,
       get: function() {
-        if (!Buffer6.isBuffer(this)) return void 0;
+        if (!Buffer7.isBuffer(this)) return void 0;
         return this.byteOffset;
       }
     });
@@ -262,10 +262,10 @@ var require_buffer = __commonJS({
         throw new RangeError('The value "' + length + '" is invalid for option "size"');
       }
       const buf = new Uint8Array(length);
-      Object.setPrototypeOf(buf, Buffer6.prototype);
+      Object.setPrototypeOf(buf, Buffer7.prototype);
       return buf;
     }
-    function Buffer6(arg, encodingOrOffset, length) {
+    function Buffer7(arg, encodingOrOffset, length) {
       if (typeof arg === "number") {
         if (typeof encodingOrOffset === "string") {
           throw new TypeError(
@@ -276,7 +276,7 @@ var require_buffer = __commonJS({
       }
       return from(arg, encodingOrOffset, length);
     }
-    Buffer6.poolSize = 8192;
+    Buffer7.poolSize = 8192;
     function from(value, encodingOrOffset, length) {
       if (typeof value === "string") {
         return fromString(value, encodingOrOffset);
@@ -302,22 +302,22 @@ var require_buffer = __commonJS({
       }
       const valueOf = value.valueOf && value.valueOf();
       if (valueOf != null && valueOf !== value) {
-        return Buffer6.from(valueOf, encodingOrOffset, length);
+        return Buffer7.from(valueOf, encodingOrOffset, length);
       }
       const b = fromObject(value);
       if (b) return b;
       if (typeof Symbol !== "undefined" && Symbol.toPrimitive != null && typeof value[Symbol.toPrimitive] === "function") {
-        return Buffer6.from(value[Symbol.toPrimitive]("string"), encodingOrOffset, length);
+        return Buffer7.from(value[Symbol.toPrimitive]("string"), encodingOrOffset, length);
       }
       throw new TypeError(
         "The first argument must be one of type string, Buffer, ArrayBuffer, Array, or Array-like Object. Received type " + typeof value
       );
     }
-    Buffer6.from = function(value, encodingOrOffset, length) {
+    Buffer7.from = function(value, encodingOrOffset, length) {
       return from(value, encodingOrOffset, length);
     };
-    Object.setPrototypeOf(Buffer6.prototype, Uint8Array.prototype);
-    Object.setPrototypeOf(Buffer6, Uint8Array);
+    Object.setPrototypeOf(Buffer7.prototype, Uint8Array.prototype);
+    Object.setPrototypeOf(Buffer7, Uint8Array);
     function assertSize(size) {
       if (typeof size !== "number") {
         throw new TypeError('"size" argument must be of type number');
@@ -335,24 +335,24 @@ var require_buffer = __commonJS({
       }
       return createBuffer(size);
     }
-    Buffer6.alloc = function(size, fill, encoding) {
+    Buffer7.alloc = function(size, fill, encoding) {
       return alloc(size, fill, encoding);
     };
     function allocUnsafe(size) {
       assertSize(size);
       return createBuffer(size < 0 ? 0 : checked(size) | 0);
     }
-    Buffer6.allocUnsafe = function(size) {
+    Buffer7.allocUnsafe = function(size) {
       return allocUnsafe(size);
     };
-    Buffer6.allocUnsafeSlow = function(size) {
+    Buffer7.allocUnsafeSlow = function(size) {
       return allocUnsafe(size);
     };
     function fromString(string, encoding) {
       if (typeof encoding !== "string" || encoding === "") {
         encoding = "utf8";
       }
-      if (!Buffer6.isEncoding(encoding)) {
+      if (!Buffer7.isEncoding(encoding)) {
         throw new TypeError("Unknown encoding: " + encoding);
       }
       const length = byteLength(string, encoding) | 0;
@@ -393,11 +393,11 @@ var require_buffer = __commonJS({
       } else {
         buf = new Uint8Array(array, byteOffset, length);
       }
-      Object.setPrototypeOf(buf, Buffer6.prototype);
+      Object.setPrototypeOf(buf, Buffer7.prototype);
       return buf;
     }
     function fromObject(obj) {
-      if (Buffer6.isBuffer(obj)) {
+      if (Buffer7.isBuffer(obj)) {
         const len = checked(obj.length) | 0;
         const buf = createBuffer(len);
         if (buf.length === 0) {
@@ -426,15 +426,15 @@ var require_buffer = __commonJS({
       if (+length != length) {
         length = 0;
       }
-      return Buffer6.alloc(+length);
+      return Buffer7.alloc(+length);
     }
-    Buffer6.isBuffer = function isBuffer(b) {
-      return b != null && b._isBuffer === true && b !== Buffer6.prototype;
+    Buffer7.isBuffer = function isBuffer(b) {
+      return b != null && b._isBuffer === true && b !== Buffer7.prototype;
     };
-    Buffer6.compare = function compare(a, b) {
-      if (isInstance(a, Uint8Array)) a = Buffer6.from(a, a.offset, a.byteLength);
-      if (isInstance(b, Uint8Array)) b = Buffer6.from(b, b.offset, b.byteLength);
-      if (!Buffer6.isBuffer(a) || !Buffer6.isBuffer(b)) {
+    Buffer7.compare = function compare(a, b) {
+      if (isInstance(a, Uint8Array)) a = Buffer7.from(a, a.offset, a.byteLength);
+      if (isInstance(b, Uint8Array)) b = Buffer7.from(b, b.offset, b.byteLength);
+      if (!Buffer7.isBuffer(a) || !Buffer7.isBuffer(b)) {
         throw new TypeError(
           'The "buf1", "buf2" arguments must be one of type Buffer or Uint8Array'
         );
@@ -453,7 +453,7 @@ var require_buffer = __commonJS({
       if (y < x) return 1;
       return 0;
     };
-    Buffer6.isEncoding = function isEncoding(encoding) {
+    Buffer7.isEncoding = function isEncoding(encoding) {
       switch (String(encoding).toLowerCase()) {
         case "hex":
         case "utf8":
@@ -471,12 +471,12 @@ var require_buffer = __commonJS({
           return false;
       }
     };
-    Buffer6.concat = function concat(list, length) {
+    Buffer7.concat = function concat(list, length) {
       if (!Array.isArray(list)) {
         throw new TypeError('"list" argument must be an Array of Buffers');
       }
       if (list.length === 0) {
-        return Buffer6.alloc(0);
+        return Buffer7.alloc(0);
       }
       let i;
       if (length === void 0) {
@@ -485,13 +485,13 @@ var require_buffer = __commonJS({
           length += list[i].length;
         }
       }
-      const buffer = Buffer6.allocUnsafe(length);
+      const buffer = Buffer7.allocUnsafe(length);
       let pos = 0;
       for (i = 0; i < list.length; ++i) {
         let buf = list[i];
         if (isInstance(buf, Uint8Array)) {
           if (pos + buf.length > buffer.length) {
-            if (!Buffer6.isBuffer(buf)) buf = Buffer6.from(buf);
+            if (!Buffer7.isBuffer(buf)) buf = Buffer7.from(buf);
             buf.copy(buffer, pos);
           } else {
             Uint8Array.prototype.set.call(
@@ -500,7 +500,7 @@ var require_buffer = __commonJS({
               pos
             );
           }
-        } else if (!Buffer6.isBuffer(buf)) {
+        } else if (!Buffer7.isBuffer(buf)) {
           throw new TypeError('"list" argument must be an Array of Buffers');
         } else {
           buf.copy(buffer, pos);
@@ -510,7 +510,7 @@ var require_buffer = __commonJS({
       return buffer;
     };
     function byteLength(string, encoding) {
-      if (Buffer6.isBuffer(string)) {
+      if (Buffer7.isBuffer(string)) {
         return string.length;
       }
       if (ArrayBuffer.isView(string) || isInstance(string, ArrayBuffer)) {
@@ -552,7 +552,7 @@ var require_buffer = __commonJS({
         }
       }
     }
-    Buffer6.byteLength = byteLength;
+    Buffer7.byteLength = byteLength;
     function slowToString(encoding, start, end) {
       let loweredCase = false;
       if (start === void 0 || start < 0) {
@@ -599,13 +599,13 @@ var require_buffer = __commonJS({
         }
       }
     }
-    Buffer6.prototype._isBuffer = true;
+    Buffer7.prototype._isBuffer = true;
     function swap(b, n, m) {
       const i = b[n];
       b[n] = b[m];
       b[m] = i;
     }
-    Buffer6.prototype.swap16 = function swap16() {
+    Buffer7.prototype.swap16 = function swap16() {
       const len = this.length;
       if (len % 2 !== 0) {
         throw new RangeError("Buffer size must be a multiple of 16-bits");
@@ -615,7 +615,7 @@ var require_buffer = __commonJS({
       }
       return this;
     };
-    Buffer6.prototype.swap32 = function swap32() {
+    Buffer7.prototype.swap32 = function swap32() {
       const len = this.length;
       if (len % 4 !== 0) {
         throw new RangeError("Buffer size must be a multiple of 32-bits");
@@ -626,7 +626,7 @@ var require_buffer = __commonJS({
       }
       return this;
     };
-    Buffer6.prototype.swap64 = function swap64() {
+    Buffer7.prototype.swap64 = function swap64() {
       const len = this.length;
       if (len % 8 !== 0) {
         throw new RangeError("Buffer size must be a multiple of 64-bits");
@@ -639,19 +639,19 @@ var require_buffer = __commonJS({
       }
       return this;
     };
-    Buffer6.prototype.toString = function toString() {
+    Buffer7.prototype.toString = function toString() {
       const length = this.length;
       if (length === 0) return "";
       if (arguments.length === 0) return utf8Slice(this, 0, length);
       return slowToString.apply(this, arguments);
     };
-    Buffer6.prototype.toLocaleString = Buffer6.prototype.toString;
-    Buffer6.prototype.equals = function equals(b) {
-      if (!Buffer6.isBuffer(b)) throw new TypeError("Argument must be a Buffer");
+    Buffer7.prototype.toLocaleString = Buffer7.prototype.toString;
+    Buffer7.prototype.equals = function equals(b) {
+      if (!Buffer7.isBuffer(b)) throw new TypeError("Argument must be a Buffer");
       if (this === b) return true;
-      return Buffer6.compare(this, b) === 0;
+      return Buffer7.compare(this, b) === 0;
     };
-    Buffer6.prototype.inspect = function inspect() {
+    Buffer7.prototype.inspect = function inspect() {
       let str = "";
       const max = exports.INSPECT_MAX_BYTES;
       str = this.toString("hex", 0, max).replace(/(.{2})/g, "$1 ").trim();
@@ -659,13 +659,13 @@ var require_buffer = __commonJS({
       return "<Buffer " + str + ">";
     };
     if (customInspectSymbol) {
-      Buffer6.prototype[customInspectSymbol] = Buffer6.prototype.inspect;
+      Buffer7.prototype[customInspectSymbol] = Buffer7.prototype.inspect;
     }
-    Buffer6.prototype.compare = function compare(target, start, end, thisStart, thisEnd) {
+    Buffer7.prototype.compare = function compare(target, start, end, thisStart, thisEnd) {
       if (isInstance(target, Uint8Array)) {
-        target = Buffer6.from(target, target.offset, target.byteLength);
+        target = Buffer7.from(target, target.offset, target.byteLength);
       }
-      if (!Buffer6.isBuffer(target)) {
+      if (!Buffer7.isBuffer(target)) {
         throw new TypeError(
           'The "target" argument must be one of type Buffer or Uint8Array. Received type ' + typeof target
         );
@@ -738,9 +738,9 @@ var require_buffer = __commonJS({
         else return -1;
       }
       if (typeof val === "string") {
-        val = Buffer6.from(val, encoding);
+        val = Buffer7.from(val, encoding);
       }
-      if (Buffer6.isBuffer(val)) {
+      if (Buffer7.isBuffer(val)) {
         if (val.length === 0) {
           return -1;
         }
@@ -808,13 +808,13 @@ var require_buffer = __commonJS({
       }
       return -1;
     }
-    Buffer6.prototype.includes = function includes(val, byteOffset, encoding) {
+    Buffer7.prototype.includes = function includes(val, byteOffset, encoding) {
       return this.indexOf(val, byteOffset, encoding) !== -1;
     };
-    Buffer6.prototype.indexOf = function indexOf(val, byteOffset, encoding) {
+    Buffer7.prototype.indexOf = function indexOf(val, byteOffset, encoding) {
       return bidirectionalIndexOf(this, val, byteOffset, encoding, true);
     };
-    Buffer6.prototype.lastIndexOf = function lastIndexOf(val, byteOffset, encoding) {
+    Buffer7.prototype.lastIndexOf = function lastIndexOf(val, byteOffset, encoding) {
       return bidirectionalIndexOf(this, val, byteOffset, encoding, false);
     };
     function hexWrite(buf, string, offset, length) {
@@ -852,7 +852,7 @@ var require_buffer = __commonJS({
     function ucs2Write(buf, string, offset, length) {
       return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length);
     }
-    Buffer6.prototype.write = function write(string, offset, length, encoding) {
+    Buffer7.prototype.write = function write(string, offset, length, encoding) {
       if (offset === void 0) {
         encoding = "utf8";
         length = this.length;
@@ -907,7 +907,7 @@ var require_buffer = __commonJS({
         }
       }
     };
-    Buffer6.prototype.toJSON = function toJSON() {
+    Buffer7.prototype.toJSON = function toJSON() {
       return {
         type: "Buffer",
         data: Array.prototype.slice.call(this._arr || this, 0)
@@ -1030,7 +1030,7 @@ var require_buffer = __commonJS({
       }
       return res;
     }
-    Buffer6.prototype.slice = function slice(start, end) {
+    Buffer7.prototype.slice = function slice(start, end) {
       const len = this.length;
       start = ~~start;
       end = end === void 0 ? len : ~~end;
@@ -1048,14 +1048,14 @@ var require_buffer = __commonJS({
       }
       if (end < start) end = start;
       const newBuf = this.subarray(start, end);
-      Object.setPrototypeOf(newBuf, Buffer6.prototype);
+      Object.setPrototypeOf(newBuf, Buffer7.prototype);
       return newBuf;
     };
     function checkOffset(offset, ext, length) {
       if (offset % 1 !== 0 || offset < 0) throw new RangeError("offset is not uint");
       if (offset + ext > length) throw new RangeError("Trying to access beyond buffer length");
     }
-    Buffer6.prototype.readUintLE = Buffer6.prototype.readUIntLE = function readUIntLE(offset, byteLength2, noAssert) {
+    Buffer7.prototype.readUintLE = Buffer7.prototype.readUIntLE = function readUIntLE(offset, byteLength2, noAssert) {
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
       if (!noAssert) checkOffset(offset, byteLength2, this.length);
@@ -1067,7 +1067,7 @@ var require_buffer = __commonJS({
       }
       return val;
     };
-    Buffer6.prototype.readUintBE = Buffer6.prototype.readUIntBE = function readUIntBE(offset, byteLength2, noAssert) {
+    Buffer7.prototype.readUintBE = Buffer7.prototype.readUIntBE = function readUIntBE(offset, byteLength2, noAssert) {
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
       if (!noAssert) {
@@ -1080,32 +1080,32 @@ var require_buffer = __commonJS({
       }
       return val;
     };
-    Buffer6.prototype.readUint8 = Buffer6.prototype.readUInt8 = function readUInt8(offset, noAssert) {
+    Buffer7.prototype.readUint8 = Buffer7.prototype.readUInt8 = function readUInt8(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 1, this.length);
       return this[offset];
     };
-    Buffer6.prototype.readUint16LE = Buffer6.prototype.readUInt16LE = function readUInt16LE(offset, noAssert) {
+    Buffer7.prototype.readUint16LE = Buffer7.prototype.readUInt16LE = function readUInt16LE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 2, this.length);
       return this[offset] | this[offset + 1] << 8;
     };
-    Buffer6.prototype.readUint16BE = Buffer6.prototype.readUInt16BE = function readUInt16BE(offset, noAssert) {
+    Buffer7.prototype.readUint16BE = Buffer7.prototype.readUInt16BE = function readUInt16BE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 2, this.length);
       return this[offset] << 8 | this[offset + 1];
     };
-    Buffer6.prototype.readUint32LE = Buffer6.prototype.readUInt32LE = function readUInt32LE(offset, noAssert) {
+    Buffer7.prototype.readUint32LE = Buffer7.prototype.readUInt32LE = function readUInt32LE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return (this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16) + this[offset + 3] * 16777216;
     };
-    Buffer6.prototype.readUint32BE = Buffer6.prototype.readUInt32BE = function readUInt32BE(offset, noAssert) {
+    Buffer7.prototype.readUint32BE = Buffer7.prototype.readUInt32BE = function readUInt32BE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return this[offset] * 16777216 + (this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3]);
     };
-    Buffer6.prototype.readBigUInt64LE = defineBigIntMethod(function readBigUInt64LE(offset) {
+    Buffer7.prototype.readBigUInt64LE = defineBigIntMethod(function readBigUInt64LE(offset) {
       offset = offset >>> 0;
       validateNumber(offset, "offset");
       const first = this[offset];
@@ -1117,7 +1117,7 @@ var require_buffer = __commonJS({
       const hi = this[++offset] + this[++offset] * 2 ** 8 + this[++offset] * 2 ** 16 + last * 2 ** 24;
       return BigInt(lo) + (BigInt(hi) << BigInt(32));
     });
-    Buffer6.prototype.readBigUInt64BE = defineBigIntMethod(function readBigUInt64BE(offset) {
+    Buffer7.prototype.readBigUInt64BE = defineBigIntMethod(function readBigUInt64BE(offset) {
       offset = offset >>> 0;
       validateNumber(offset, "offset");
       const first = this[offset];
@@ -1129,7 +1129,7 @@ var require_buffer = __commonJS({
       const lo = this[++offset] * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + last;
       return (BigInt(hi) << BigInt(32)) + BigInt(lo);
     });
-    Buffer6.prototype.readIntLE = function readIntLE(offset, byteLength2, noAssert) {
+    Buffer7.prototype.readIntLE = function readIntLE(offset, byteLength2, noAssert) {
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
       if (!noAssert) checkOffset(offset, byteLength2, this.length);
@@ -1143,7 +1143,7 @@ var require_buffer = __commonJS({
       if (val >= mul) val -= Math.pow(2, 8 * byteLength2);
       return val;
     };
-    Buffer6.prototype.readIntBE = function readIntBE(offset, byteLength2, noAssert) {
+    Buffer7.prototype.readIntBE = function readIntBE(offset, byteLength2, noAssert) {
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
       if (!noAssert) checkOffset(offset, byteLength2, this.length);
@@ -1157,35 +1157,35 @@ var require_buffer = __commonJS({
       if (val >= mul) val -= Math.pow(2, 8 * byteLength2);
       return val;
     };
-    Buffer6.prototype.readInt8 = function readInt8(offset, noAssert) {
+    Buffer7.prototype.readInt8 = function readInt8(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 1, this.length);
       if (!(this[offset] & 128)) return this[offset];
       return (255 - this[offset] + 1) * -1;
     };
-    Buffer6.prototype.readInt16LE = function readInt16LE(offset, noAssert) {
+    Buffer7.prototype.readInt16LE = function readInt16LE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 2, this.length);
       const val = this[offset] | this[offset + 1] << 8;
       return val & 32768 ? val | 4294901760 : val;
     };
-    Buffer6.prototype.readInt16BE = function readInt16BE(offset, noAssert) {
+    Buffer7.prototype.readInt16BE = function readInt16BE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 2, this.length);
       const val = this[offset + 1] | this[offset] << 8;
       return val & 32768 ? val | 4294901760 : val;
     };
-    Buffer6.prototype.readInt32LE = function readInt32LE(offset, noAssert) {
+    Buffer7.prototype.readInt32LE = function readInt32LE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return this[offset] | this[offset + 1] << 8 | this[offset + 2] << 16 | this[offset + 3] << 24;
     };
-    Buffer6.prototype.readInt32BE = function readInt32BE(offset, noAssert) {
+    Buffer7.prototype.readInt32BE = function readInt32BE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return this[offset] << 24 | this[offset + 1] << 16 | this[offset + 2] << 8 | this[offset + 3];
     };
-    Buffer6.prototype.readBigInt64LE = defineBigIntMethod(function readBigInt64LE(offset) {
+    Buffer7.prototype.readBigInt64LE = defineBigIntMethod(function readBigInt64LE(offset) {
       offset = offset >>> 0;
       validateNumber(offset, "offset");
       const first = this[offset];
@@ -1196,7 +1196,7 @@ var require_buffer = __commonJS({
       const val = this[offset + 4] + this[offset + 5] * 2 ** 8 + this[offset + 6] * 2 ** 16 + (last << 24);
       return (BigInt(val) << BigInt(32)) + BigInt(first + this[++offset] * 2 ** 8 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 24);
     });
-    Buffer6.prototype.readBigInt64BE = defineBigIntMethod(function readBigInt64BE(offset) {
+    Buffer7.prototype.readBigInt64BE = defineBigIntMethod(function readBigInt64BE(offset) {
       offset = offset >>> 0;
       validateNumber(offset, "offset");
       const first = this[offset];
@@ -1208,32 +1208,32 @@ var require_buffer = __commonJS({
       this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + this[++offset];
       return (BigInt(val) << BigInt(32)) + BigInt(this[++offset] * 2 ** 24 + this[++offset] * 2 ** 16 + this[++offset] * 2 ** 8 + last);
     });
-    Buffer6.prototype.readFloatLE = function readFloatLE(offset, noAssert) {
+    Buffer7.prototype.readFloatLE = function readFloatLE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return ieee754.read(this, offset, true, 23, 4);
     };
-    Buffer6.prototype.readFloatBE = function readFloatBE(offset, noAssert) {
+    Buffer7.prototype.readFloatBE = function readFloatBE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 4, this.length);
       return ieee754.read(this, offset, false, 23, 4);
     };
-    Buffer6.prototype.readDoubleLE = function readDoubleLE(offset, noAssert) {
+    Buffer7.prototype.readDoubleLE = function readDoubleLE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 8, this.length);
       return ieee754.read(this, offset, true, 52, 8);
     };
-    Buffer6.prototype.readDoubleBE = function readDoubleBE(offset, noAssert) {
+    Buffer7.prototype.readDoubleBE = function readDoubleBE(offset, noAssert) {
       offset = offset >>> 0;
       if (!noAssert) checkOffset(offset, 8, this.length);
       return ieee754.read(this, offset, false, 52, 8);
     };
     function checkInt(buf, value, offset, ext, max, min) {
-      if (!Buffer6.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance');
+      if (!Buffer7.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance');
       if (value > max || value < min) throw new RangeError('"value" argument is out of bounds');
       if (offset + ext > buf.length) throw new RangeError("Index out of range");
     }
-    Buffer6.prototype.writeUintLE = Buffer6.prototype.writeUIntLE = function writeUIntLE(value, offset, byteLength2, noAssert) {
+    Buffer7.prototype.writeUintLE = Buffer7.prototype.writeUIntLE = function writeUIntLE(value, offset, byteLength2, noAssert) {
       value = +value;
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
@@ -1249,7 +1249,7 @@ var require_buffer = __commonJS({
       }
       return offset + byteLength2;
     };
-    Buffer6.prototype.writeUintBE = Buffer6.prototype.writeUIntBE = function writeUIntBE(value, offset, byteLength2, noAssert) {
+    Buffer7.prototype.writeUintBE = Buffer7.prototype.writeUIntBE = function writeUIntBE(value, offset, byteLength2, noAssert) {
       value = +value;
       offset = offset >>> 0;
       byteLength2 = byteLength2 >>> 0;
@@ -1265,14 +1265,14 @@ var require_buffer = __commonJS({
       }
       return offset + byteLength2;
     };
-    Buffer6.prototype.writeUint8 = Buffer6.prototype.writeUInt8 = function writeUInt8(value, offset, noAssert) {
+    Buffer7.prototype.writeUint8 = Buffer7.prototype.writeUInt8 = function writeUInt8(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 1, 255, 0);
       this[offset] = value & 255;
       return offset + 1;
     };
-    Buffer6.prototype.writeUint16LE = Buffer6.prototype.writeUInt16LE = function writeUInt16LE(value, offset, noAssert) {
+    Buffer7.prototype.writeUint16LE = Buffer7.prototype.writeUInt16LE = function writeUInt16LE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 2, 65535, 0);
@@ -1280,7 +1280,7 @@ var require_buffer = __commonJS({
       this[offset + 1] = value >>> 8;
       return offset + 2;
     };
-    Buffer6.prototype.writeUint16BE = Buffer6.prototype.writeUInt16BE = function writeUInt16BE(value, offset, noAssert) {
+    Buffer7.prototype.writeUint16BE = Buffer7.prototype.writeUInt16BE = function writeUInt16BE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 2, 65535, 0);
@@ -1288,7 +1288,7 @@ var require_buffer = __commonJS({
       this[offset + 1] = value & 255;
       return offset + 2;
     };
-    Buffer6.prototype.writeUint32LE = Buffer6.prototype.writeUInt32LE = function writeUInt32LE(value, offset, noAssert) {
+    Buffer7.prototype.writeUint32LE = Buffer7.prototype.writeUInt32LE = function writeUInt32LE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 4, 4294967295, 0);
@@ -1298,7 +1298,7 @@ var require_buffer = __commonJS({
       this[offset] = value & 255;
       return offset + 4;
     };
-    Buffer6.prototype.writeUint32BE = Buffer6.prototype.writeUInt32BE = function writeUInt32BE(value, offset, noAssert) {
+    Buffer7.prototype.writeUint32BE = Buffer7.prototype.writeUInt32BE = function writeUInt32BE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 4, 4294967295, 0);
@@ -1348,13 +1348,13 @@ var require_buffer = __commonJS({
       buf[offset] = hi;
       return offset + 8;
     }
-    Buffer6.prototype.writeBigUInt64LE = defineBigIntMethod(function writeBigUInt64LE(value, offset = 0) {
+    Buffer7.prototype.writeBigUInt64LE = defineBigIntMethod(function writeBigUInt64LE(value, offset = 0) {
       return wrtBigUInt64LE(this, value, offset, BigInt(0), BigInt("0xffffffffffffffff"));
     });
-    Buffer6.prototype.writeBigUInt64BE = defineBigIntMethod(function writeBigUInt64BE(value, offset = 0) {
+    Buffer7.prototype.writeBigUInt64BE = defineBigIntMethod(function writeBigUInt64BE(value, offset = 0) {
       return wrtBigUInt64BE(this, value, offset, BigInt(0), BigInt("0xffffffffffffffff"));
     });
-    Buffer6.prototype.writeIntLE = function writeIntLE(value, offset, byteLength2, noAssert) {
+    Buffer7.prototype.writeIntLE = function writeIntLE(value, offset, byteLength2, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) {
@@ -1373,7 +1373,7 @@ var require_buffer = __commonJS({
       }
       return offset + byteLength2;
     };
-    Buffer6.prototype.writeIntBE = function writeIntBE(value, offset, byteLength2, noAssert) {
+    Buffer7.prototype.writeIntBE = function writeIntBE(value, offset, byteLength2, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) {
@@ -1392,7 +1392,7 @@ var require_buffer = __commonJS({
       }
       return offset + byteLength2;
     };
-    Buffer6.prototype.writeInt8 = function writeInt8(value, offset, noAssert) {
+    Buffer7.prototype.writeInt8 = function writeInt8(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 1, 127, -128);
@@ -1400,7 +1400,7 @@ var require_buffer = __commonJS({
       this[offset] = value & 255;
       return offset + 1;
     };
-    Buffer6.prototype.writeInt16LE = function writeInt16LE(value, offset, noAssert) {
+    Buffer7.prototype.writeInt16LE = function writeInt16LE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 2, 32767, -32768);
@@ -1408,7 +1408,7 @@ var require_buffer = __commonJS({
       this[offset + 1] = value >>> 8;
       return offset + 2;
     };
-    Buffer6.prototype.writeInt16BE = function writeInt16BE(value, offset, noAssert) {
+    Buffer7.prototype.writeInt16BE = function writeInt16BE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 2, 32767, -32768);
@@ -1416,7 +1416,7 @@ var require_buffer = __commonJS({
       this[offset + 1] = value & 255;
       return offset + 2;
     };
-    Buffer6.prototype.writeInt32LE = function writeInt32LE(value, offset, noAssert) {
+    Buffer7.prototype.writeInt32LE = function writeInt32LE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 4, 2147483647, -2147483648);
@@ -1426,7 +1426,7 @@ var require_buffer = __commonJS({
       this[offset + 3] = value >>> 24;
       return offset + 4;
     };
-    Buffer6.prototype.writeInt32BE = function writeInt32BE(value, offset, noAssert) {
+    Buffer7.prototype.writeInt32BE = function writeInt32BE(value, offset, noAssert) {
       value = +value;
       offset = offset >>> 0;
       if (!noAssert) checkInt(this, value, offset, 4, 2147483647, -2147483648);
@@ -1437,10 +1437,10 @@ var require_buffer = __commonJS({
       this[offset + 3] = value & 255;
       return offset + 4;
     };
-    Buffer6.prototype.writeBigInt64LE = defineBigIntMethod(function writeBigInt64LE(value, offset = 0) {
+    Buffer7.prototype.writeBigInt64LE = defineBigIntMethod(function writeBigInt64LE(value, offset = 0) {
       return wrtBigUInt64LE(this, value, offset, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
     });
-    Buffer6.prototype.writeBigInt64BE = defineBigIntMethod(function writeBigInt64BE(value, offset = 0) {
+    Buffer7.prototype.writeBigInt64BE = defineBigIntMethod(function writeBigInt64BE(value, offset = 0) {
       return wrtBigUInt64BE(this, value, offset, -BigInt("0x8000000000000000"), BigInt("0x7fffffffffffffff"));
     });
     function checkIEEE754(buf, value, offset, ext, max, min) {
@@ -1456,10 +1456,10 @@ var require_buffer = __commonJS({
       ieee754.write(buf, value, offset, littleEndian, 23, 4);
       return offset + 4;
     }
-    Buffer6.prototype.writeFloatLE = function writeFloatLE(value, offset, noAssert) {
+    Buffer7.prototype.writeFloatLE = function writeFloatLE(value, offset, noAssert) {
       return writeFloat(this, value, offset, true, noAssert);
     };
-    Buffer6.prototype.writeFloatBE = function writeFloatBE(value, offset, noAssert) {
+    Buffer7.prototype.writeFloatBE = function writeFloatBE(value, offset, noAssert) {
       return writeFloat(this, value, offset, false, noAssert);
     };
     function writeDouble(buf, value, offset, littleEndian, noAssert) {
@@ -1471,14 +1471,14 @@ var require_buffer = __commonJS({
       ieee754.write(buf, value, offset, littleEndian, 52, 8);
       return offset + 8;
     }
-    Buffer6.prototype.writeDoubleLE = function writeDoubleLE(value, offset, noAssert) {
+    Buffer7.prototype.writeDoubleLE = function writeDoubleLE(value, offset, noAssert) {
       return writeDouble(this, value, offset, true, noAssert);
     };
-    Buffer6.prototype.writeDoubleBE = function writeDoubleBE(value, offset, noAssert) {
+    Buffer7.prototype.writeDoubleBE = function writeDoubleBE(value, offset, noAssert) {
       return writeDouble(this, value, offset, false, noAssert);
     };
-    Buffer6.prototype.copy = function copy(target, targetStart, start, end) {
-      if (!Buffer6.isBuffer(target)) throw new TypeError("argument should be a Buffer");
+    Buffer7.prototype.copy = function copy(target, targetStart, start, end) {
+      if (!Buffer7.isBuffer(target)) throw new TypeError("argument should be a Buffer");
       if (!start) start = 0;
       if (!end && end !== 0) end = this.length;
       if (targetStart >= target.length) targetStart = target.length;
@@ -1507,7 +1507,7 @@ var require_buffer = __commonJS({
       }
       return len;
     };
-    Buffer6.prototype.fill = function fill(val, start, end, encoding) {
+    Buffer7.prototype.fill = function fill(val, start, end, encoding) {
       if (typeof val === "string") {
         if (typeof start === "string") {
           encoding = start;
@@ -1520,7 +1520,7 @@ var require_buffer = __commonJS({
         if (encoding !== void 0 && typeof encoding !== "string") {
           throw new TypeError("encoding must be a string");
         }
-        if (typeof encoding === "string" && !Buffer6.isEncoding(encoding)) {
+        if (typeof encoding === "string" && !Buffer7.isEncoding(encoding)) {
           throw new TypeError("Unknown encoding: " + encoding);
         }
         if (val.length === 1) {
@@ -1549,7 +1549,7 @@ var require_buffer = __commonJS({
           this[i] = val;
         }
       } else {
-        const bytes = Buffer6.isBuffer(val) ? val : Buffer6.from(val, encoding);
+        const bytes = Buffer7.isBuffer(val) ? val : Buffer7.from(val, encoding);
         const len = bytes.length;
         if (len === 0) {
           throw new TypeError('The value "' + val + '" is invalid for argument "value"');
@@ -2559,7 +2559,7 @@ start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snel
     return proxy;
 }
 
-shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/udp_port/others)* {
+shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/udp_port/others)* {
     proxy.type = "ss";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -2570,7 +2570,7 @@ shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/
     }
     handleShadowTLS();
 }
-vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "vmess";
     proxy.cipher = proxy.cipher || "auto";
     // Surfboard 与 Surge 默认不一致, 不管 Surfboard https://getsurfboard.com/docs/profile-format/proxy/external-proxy/vmess
@@ -2582,7 +2582,7 @@ vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_
     handleWebsocket();
     handleShadowTLS();
 }
-vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy["packet-encoding"] = "xudp";
     if (proxy["reality-opts"] && proxy["reality-opts"]["public-key"]) proxy.tls = true;
     if (xhttpEnabled) {
@@ -2594,30 +2594,30 @@ vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/
     handleShadowTLS();
 }
 vless_address = "vless" address { proxy.type = "vless"; }
-trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "trojan";
     handleWebsocket();
     handleShadowTLS();
 }
-https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "http";
     proxy.tls = true;
     handleShadowTLS();
 }
-h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "h2-connect";
     proxy.tls = true;
     handleShadowTLS();
 }
-http = tag equals "http" address (username password)? (usernamek passwordk)? (headers/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+http = tag equals "http" address (username password)? (usernamek passwordk)? (headers/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "http";
     handleShadowTLS();
 }
-ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (server_fingerprint/idle_timeout/private_key/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (server_fingerprint/idle_timeout/private_key/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "ssh";
     handleShadowTLS();
 }
-snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "snell";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -2636,7 +2636,7 @@ tuic_v5 = tag equals "tuic-v5" address (alpn/passwordk/uuidk/ip_version/underlyi
     proxy.version = 5;
     handleShadowTLS();
 }
-wireguard = tag equals "wireguard" (section_name/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+wireguard = tag equals "wireguard" (section_name/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "wireguard-surge";
     handleShadowTLS();
 }
@@ -2644,20 +2644,20 @@ hysteria2 = tag equals "hysteria2" address (no_error_alert/ip_version/underlying
     proxy.type = "hysteria2";
     handleShadowTLS();
 }
-socks5 = tag equals "socks5" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+socks5 = tag equals "socks5" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "socks5";
     handleShadowTLS();
 }
-socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/others)* {
+socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
     proxy.type = "socks5";
     proxy.tls = true;
     handleShadowTLS();
 }
-anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/others)* {
+anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/ecn/others)* {
     proxy.type = "anytls";
     proxy.tls = true;
 }
-trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/others)* {
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/ecn/others)* {
     proxy.type = "trusttunnel";
     proxy.tls = true;
 }
@@ -2815,7 +2815,7 @@ uri = $[^,]+
 udp_relay = comma "udp-relay" equals flag:bool { proxy.udp = flag; }
 fast_open = comma "fast-open" equals flag:bool { proxy.tfo = flag; }
 reuse = comma "reuse" equals flag:bool { proxy.reuse = flag; }
-ecn = comma "ecn" equals flag:bool { proxy.ecn = flag; }
+ecn = comma "ecn" equals mode:("auto" / "on" / "off" / bool) &(_ ("," / !.)) { proxy.ecn = mode; }
 tfo = comma "tfo" equals flag:bool { proxy.tfo = flag; }
 ip_version = comma "ip-version" equals match:[^,]+ { proxy["ip-version"] = match.join(""); }
 section_name = comma "section-name" equals match:[^,]+ { proxy["section-name"] = match.join(""); }
@@ -2881,6 +2881,45 @@ function getParser() {
 import peggy2 from "peggy";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/loon-xhttp.js
+import _2 from "lodash";
+var PADDING_FIELDS = {
+  "padding-bytes": "x-padding-bytes",
+  "padding-obfs-mode": "x-padding-obfs-mode",
+  "padding-placement": "x-padding-placement",
+  "padding-key": "x-padding-key",
+  "padding-header": "x-padding-header",
+  "padding-method": "x-padding-method"
+};
+var SESSION_FIELDS = {
+  "session-id-placement": "session-placement",
+  "session-id-key": "session-key"
+};
+var XMUX_FIELDS = {
+  "xmux-max-concurrency": "reuse-settings.max-concurrency",
+  "xmux-max-connections": "reuse-settings.max-connections",
+  "xmux-max-reuse-times": "reuse-settings.c-max-reuse-times",
+  "xmux-http-max-requests": "reuse-settings.h-max-request-times",
+  "xmux-http-max-reusable-secs": "reuse-settings.h-max-reusable-secs",
+  "xmux-http-keepalive-secs": "reuse-settings.h-keep-alive-period"
+};
+var DOWNLOAD_FIELDS = {
+  server: "server",
+  port: "port",
+  host: "host",
+  path: "path",
+  alpn: "alpn",
+  "over-tls": "tls",
+  sni: "servername",
+  "skip-cert-verify": "skip-cert-verify",
+  "tls-profile": "_loon_tls_profile",
+  "tls-cert-sha256": "fingerprint",
+  "tls-pubkey-sha256": "tls-pubkey-sha256",
+  "public-key": "reality-opts.public-key",
+  "short-id": "reality-opts.short-id",
+  ...XMUX_FIELDS,
+  ...PADDING_FIELDS,
+  ...SESSION_FIELDS
+};
 var LOON_XHTTP_FIELDS = {
   mode: "mode",
   "uplink-method": "uplink-http-method",
@@ -2889,25 +2928,66 @@ var LOON_XHTTP_FIELDS = {
   "uplink-data-placement": "uplink-data-placement",
   "uplink-data-key": "uplink-data-key",
   "uplink-chunk-size": "uplink-chunk-size",
-  "padding-bytes": "x-padding-bytes",
-  "padding-obfs-mode": "x-padding-obfs-mode",
-  "padding-placement": "x-padding-placement",
-  "padding-key": "x-padding-key",
-  "padding-header": "x-padding-header",
-  "padding-method": "x-padding-method",
+  ...PADDING_FIELDS,
   "no-grpc-header": "no-grpc-header",
-  "session-id-placement": "session-placement",
-  "session-id-key": "session-key",
+  ...SESSION_FIELDS,
   "session-id-table": "session-table",
   "session-id-length": "session-length",
   "seq-placement": "seq-placement",
-  "seq-key": "seq-key"
+  "seq-key": "seq-key",
+  ...XMUX_FIELDS,
+  ...Object.fromEntries(
+    Object.entries(DOWNLOAD_FIELDS).map(([key, path]) => [
+      `download-${key}`,
+      `download-settings.${path}`
+    ])
+  )
 };
+function validateLoonXhttpXmux(opts) {
+  if (!opts) return;
+  for (const prefix of ["", "download-"]) {
+    const getOption = (key) => _2.get(opts, LOON_XHTTP_FIELDS[`${prefix}${key}`]);
+    for (const key of Object.keys(XMUX_FIELDS)) {
+      const value = getOption(key);
+      if (value == null) continue;
+      const isKeepalive = key === "xmux-http-keepalive-secs";
+      const normalized = isKeepalive ? normalizeXhttpIntegerValue(value) : normalizeXhttpNonNegativeRange(value);
+      if (normalized == null || isKeepalive && normalized < -1) {
+        const expected = isKeepalive ? "an integer of at least -1" : "a non-negative integer or a valid non-negative integer range";
+        throw new Error(
+          `Loon xhttp-${prefix}${key} must be ${expected}`
+        );
+      }
+    }
+    const maxConcurrency = getOption("xmux-max-concurrency");
+    const maxConnections = getOption("xmux-max-connections");
+    if (normalizeXhttpPositiveRange(maxConcurrency) != null && normalizeXhttpPositiveRange(maxConnections) != null) {
+      const optionPrefix = `xhttp-${prefix}xmux`;
+      throw new Error(
+        `Loon ${optionPrefix}-max-concurrency and ${optionPrefix}-max-connections cannot both be positive`
+      );
+    }
+  }
+}
 function setLoonXhttpOption(opts, key, value) {
+  if (key === "header" || key === "download-header") {
+    const colon = value.indexOf(":");
+    if (colon <= 0) return;
+    const name = value.slice(0, colon).trim();
+    if (!name || /^host$/i.test(name)) return;
+    const target = key === "header" ? opts : opts["download-settings"] ??= {};
+    target.headers = {
+      ...target.headers,
+      [name]: value.slice(colon + 1).trim()
+    };
+    return;
+  }
   if (!Object.prototype.hasOwnProperty.call(LOON_XHTTP_FIELDS, key)) return;
-  switch (key) {
+  switch (key.replace(/^download-/, "")) {
     case "padding-obfs-mode":
     case "no-grpc-header":
+    case "over-tls":
+    case "skip-cert-verify":
       if (value !== "true" && value !== "false") return;
       value = value === "true";
       break;
@@ -2916,8 +2996,15 @@ function setLoonXhttpOption(opts, key, value) {
     case "uplink-chunk-size":
       value = normalizeXhttpNonNegativeRange(value) ?? value;
       break;
+    case "port":
+    case "xmux-http-keepalive-secs":
+      value = normalizeXhttpIntegerValue(value) ?? value;
+      break;
+    case "alpn":
+      value = [value];
+      break;
   }
-  opts[LOON_XHTTP_FIELDS[key]] = value;
+  _2.set(opts, LOON_XHTTP_FIELDS[key], value);
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/peggy/loon.js
@@ -2942,7 +3029,7 @@ var grammars2 = String.raw`
     const obfs = {};
     const transport = {};
     const xhttpOpts = {};
-    const xhttpHeaders = [];
+    const vlessEncryption = {};
     const shadowTLS = {};
     const $ = {};
 
@@ -2964,7 +3051,12 @@ var grammars2 = String.raw`
             proxy.udp ??= false;
             if (transport.path != null) xhttpOpts.path = transport.path;
             if (transport.host != null) xhttpOpts.host = transport.host;
-            if (xhttpHeaders.length) xhttpOpts.headers = Object.fromEntries(xhttpHeaders);
+            const download = xhttpOpts["download-settings"];
+            if (download) {
+                download.tls ??= Boolean(download["reality-opts"]?.["public-key"]);
+                const fingerprint = loonClientFingerprint(download._loon_tls_profile);
+                if (fingerprint) download["client-fingerprint"] = fingerprint;
+            }
             proxy["xhttp-opts"] = xhttpOpts;
         }
     }
@@ -3006,7 +3098,7 @@ var grammars2 = String.raw`
     }
 }
 
-start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls/tailscale/snell) {
+start = (shadowsocksr/shadowsocks/vmess/vless/trojan/https/http/socks5/hysteria2/anytls/tailscale/snell/mieru) {
     return proxy;
 }
 
@@ -3027,17 +3119,22 @@ shadowsocks = tag equals "shadowsocks"i address method password (obfs_typev obfs
     }
     handleShadowTLS();
 }
-vmess = tag equals "vmess"i address vmess_method uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/vmess_alterId/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
+vmess = tag equals "vmess"i address vmess_method uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/vmess_alterId/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
     proxy.type = "vmess";
     proxy.cipher = proxy.cipher || "auto";
     proxy.alterId = proxy.alterId || 0;
     handleTransport();
 }
-vless = tag equals "vless"i address uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/flow/public_key/short_id/block_quic/others)* {
+vless = tag equals "vless"i address uuid (xhttp_transport/transport/transport_host/transport_path/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/flow/vless_encryption/public_key/short_id/block_quic/others)* {
     proxy.type = "vless";
+    const { mode, rtt, padding, "public-keys": publicKeys } = vlessEncryption;
+    if (mode && mode !== "none") {
+        if (!publicKeys) throw new Error("VLESS encryption requires public keys");
+        proxy.encryption = ["mlkem768x25519plus", mode, rtt || "0rtt", padding, publicKeys].filter(Boolean).join(".");
+    }
     handleTransport();
 }
-trojan = tag equals "trojan"i address password (xhttp_transport/transport/transport_host/transport_path/xhttp_header/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
+trojan = tag equals "trojan"i address password (xhttp_transport/transport/transport_host/transport_path/xhttp_option/over_tls/tls_name/sni/tls_verification/tls_cert_sha256/tls_pubkey_sha256/tls_profile/alpn/fast_open/udp_relay/ip_mode/public_key/short_id/block_quic/others)* {
     proxy.type = "trojan";
     handleTransport();
 }
@@ -3071,6 +3168,13 @@ snell = tag equals ("snell"i/"opensnell"i) address snell_positional_psk? (snell_
     if (obfs.type === "http") {
         proxy["obfs-opts"] = { mode: obfs.type, host: obfs.host, path: obfs.path };
     }
+}
+mieru = tag equals "mieru"i address comma user:option_value comma pass:option_value (udp_relay/ip_mode/block_quic/others)* {
+    proxy.type = "mieru";
+    proxy.transport = "TCP";
+    proxy.username = user;
+    proxy.password = pass;
+    proxy.udp ??= false;
 }
 
 tailscale_string = comma key:("auth-key"/"control-url"/"hostname"/"exit-node"/"path-mode"/"ip-mode") equals value:(
@@ -3174,13 +3278,6 @@ transport_host = comma "host" equals value:option_value { transport.host = value
 transport_path = comma "path" equals value:option_value { transport.path = value; }
 
 xhttp_transport = comma "transport" equals "xhttp" { transport.type = "xhttp"; }
-xhttp_header = comma "xhttp-header" equals value:option_value {
-    const colon = value.indexOf(":");
-    const name = value.slice(0, colon).trim();
-    if (colon > 0 && name && !/^host$/i.test(name)) {
-        xhttpHeaders.push([name, value.slice(colon + 1).trim()]);
-    }
-}
 xhttp_option = comma "xhttp-" key:$[a-z0-9-]+ equals value:option_value {
     options.setLoonXhttpOption(xhttpOpts, key, value);
 }
@@ -3216,6 +3313,9 @@ alpn = comma "alpn" equals match:option_value {
 }
 
 flow = comma "flow" equals match:[^,]+ { proxy["flow"] = match.join("").replace(/^"(.*)"$/, '$1'); }
+vless_encryption = comma "encryption-" key:("mode"/"rtt"/"public-keys"/"padding") equals value:option_value {
+    vlessEncryption[key] = value;
+}
 public_key = comma "public-key" equals match:[^,]+ { proxy["reality-opts"] = proxy["reality-opts"] || {}; proxy["reality-opts"]["public-key"] = match.join("").replace(/^"(.*)"$/, '$1'); }
 short_id = comma "short-id" equals value:option_value { proxy["reality-opts"] = proxy["reality-opts"] || {}; proxy["reality-opts"]["short-id"] = value; }
 
@@ -4013,7 +4113,7 @@ var yaml_default = {
 };
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/index.js
-import _2 from "lodash";
+import _3 from "lodash";
 import { Base64 } from "js-base64";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/vmess-security.js
@@ -4306,7 +4406,7 @@ function URI_SS() {
     proxy.alpn = params.alpn ? decodeURIComponent(params.alpn).split(",") : void 0;
     if (params["ws"]) {
       proxy.network = "ws";
-      _2.set(proxy, "ws-opts.path", params["wspath"]);
+      _3.set(proxy, "ws-opts.path", params["wspath"]);
     }
     if (params["type"]) {
       let httpupgrade;
@@ -4335,10 +4435,10 @@ function URI_SS() {
               pathEarlyData = extracted.ed;
             }
           }
-          _2.set(proxy, proxy.network + "-opts.path", transportPath);
+          _3.set(proxy, proxy.network + "-opts.path", transportPath);
         }
         if (params["host"]) {
-          _2.set(
+          _3.set(
             proxy,
             proxy.network + "-opts.headers.Host",
             decodeURIComponent(params["host"])
@@ -4346,30 +4446,30 @@ function URI_SS() {
         }
         if (httpupgrade) {
           httpUpgradeEd = httpUpgradeEd || (isNumericEarlyData2(params.ed) ? `${params.ed}` : "");
-          _2.set(
+          _3.set(
             proxy,
             proxy.network + "-opts.v2ray-http-upgrade",
             true
           );
           if (httpUpgradeEd !== "") {
-            _2.set(
+            _3.set(
               proxy,
               proxy.network + "-opts.v2ray-http-upgrade-fast-open",
               true
             );
-            _2.set(
+            _3.set(
               proxy,
               proxy.network + "-opts._v2ray-http-upgrade-ed",
               httpUpgradeEd
             );
           }
         } else if (proxy.network === "ws" && pathEarlyData !== "") {
-          _2.set(
+          _3.set(
             proxy,
             proxy.network + "-opts.max-early-data",
             parseEarlyDataSize(pathEarlyData)
           );
-          _2.set(
+          _3.set(
             proxy,
             proxy.network + "-opts.early-data-header-name",
             "Sec-WebSocket-Protocol"
@@ -4391,7 +4491,7 @@ function URI_SS() {
           proxy._mode = params.mode;
         }
         if (Object.keys(opts).length > 0) {
-          _2.set(proxy, params.security + "-opts", opts);
+          _3.set(proxy, params.security + "-opts", opts);
         }
       }
       if (params.extra && (proxy.network === "xhttp" || params.security === "reality")) {
@@ -5522,7 +5622,7 @@ function URI_VLESS() {
     let isShadowrocket;
     let parsed = /^(.*?)@(.*?):(\d+)\/?(\?(.*?))?(?:#(.*?))?$/.exec(line);
     if (!parsed) {
-      let [_6, base64, other] = /^(.*?)(\?.*?$)/.exec(line);
+      let [_8, base64, other] = /^(.*?)(\?.*?$)/.exec(line);
       line = `${Base64.decode(base64)}${other}`;
       parsed = /^(.*?)@(.*?):(\d+)\/?(\?(.*?))?(?:#(.*?))?$/.exec(line);
       isShadowrocket = true;
@@ -6458,6 +6558,12 @@ function Loon_Tailscale() {
   const parse2 = (line) => getParser2().parse(line);
   return { name, test, parse: parse2 };
 }
+function Loon_Mieru() {
+  const name = "Loon Mieru Parser";
+  const test = (line) => /^[^=,]*=\s*mieru\s*,/i.test(line);
+  const parse2 = (line) => getParser2().parse(line);
+  return { name, test, parse: parse2 };
+}
 function Loon_WireGuard() {
   const name = "Loon WireGuard Parser";
   const test = (line) => {
@@ -6669,7 +6775,7 @@ function Surge_External() {
   };
   const parse2 = (line) => {
     let parsed = /^\s*(.*?)\s*?=\s*?external\s*?,\s*(.*?)\s*$/.exec(line);
-    let [_6, name2, other] = parsed;
+    let [_8, name2, other] = parsed;
     line = other;
     let exec = /(,|^)\s*?exec\s*?=\s*"(.*?)"\s*?(,|$)/.exec(line)?.[2];
     if (!exec) {
@@ -6813,6 +6919,7 @@ var parsers_default = [
   Loon_Socks5(),
   Loon_WireGuard(),
   Loon_Tailscale(),
+  Loon_Mieru(),
   QX_SS(),
   QX_SSR(),
   QX_VMess(),
@@ -6826,10 +6933,10 @@ var parsers_default = [
 ];
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/surge.js
-import _4 from "lodash";
+import _5 from "lodash";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/utils.js
-import _3 from "lodash";
+import _4 from "lodash";
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/preprocessors/index.js
 import { Base64 as Base642 } from "js-base64";
@@ -6851,7 +6958,7 @@ function normalizeClashYamlDocument(raw, document, content) {
   const anchors = /* @__PURE__ */ new Map();
   const aliases = /* @__PURE__ */ new Map();
   visit(document, {
-    Node(_6, node) {
+    Node(_8, node) {
       if (isAlias(node)) {
         aliases.set(node.range[0], anchors.get(node.source));
       } else if (node.anchor) {
@@ -6863,7 +6970,7 @@ function normalizeClashYamlDocument(raw, document, content) {
   const needsQuotes = (node) => isScalar(node) && typeof node.value !== "string" && node.value !== null && !node.tag && node.source;
   const realityConfigs = /* @__PURE__ */ new Set();
   visit(document, {
-    Pair(_6, { key, value }) {
+    Pair(_8, { key, value }) {
       const name = resolveAlias(key)?.value;
       if (["reality-opts", "reality-config"].includes(name)) {
         realityConfigs.add(value);
@@ -6873,10 +6980,10 @@ function normalizeClashYamlDocument(raw, document, content) {
   const shortIds = /* @__PURE__ */ new Set();
   for (const config of realityConfigs) {
     visit(config, {
-      Alias(_6, alias) {
+      Alias(_8, alias) {
         realityConfigs.add(resolveAlias(alias));
       },
-      Pair(_6, { key, value }) {
+      Pair(_8, { key, value }) {
         if (resolveAlias(key)?.value === "short-id") {
           shortIds.add(value);
         }
@@ -7092,7 +7199,7 @@ var Result = class {
   }
 };
 function isPresent2(obj, attr) {
-  const data = _3.get(obj, attr);
+  const data = _4.get(obj, attr);
   return typeof data !== "undefined" && data !== null;
 }
 function supportsVlessTransportSecurity(proxy) {
@@ -7203,6 +7310,12 @@ function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
   return `${parsed.address}/${normalizedCIDR ?? parsed.cidr ?? config.defaultCIDR}`;
 }
 function produceProxyListOutput(list, type, opts = {}) {
+  list = list.map((proxy) => {
+    if (!Object.hasOwn(proxy, "ecn")) return proxy;
+    const config = { ...proxy };
+    delete config.ecn;
+    return config;
+  });
   if (type === "internal") return list;
   if (opts.prettyYaml || opts["pretty-yaml"]) {
     return normalizeClashYaml(
@@ -7513,6 +7626,7 @@ function shadowsocks(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy, true);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7552,6 +7666,7 @@ function trojan(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7588,6 +7703,7 @@ function anytls(proxy) {
   );
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7642,6 +7758,7 @@ function trusttunnel(proxy) {
   );
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7740,6 +7857,7 @@ function h2Connect(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7792,6 +7910,7 @@ function v2ray(proxy, includeUnsupportedProxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7852,7 +7971,7 @@ function appendXhttpParams(result, proxy) {
   const headers = isPlainObject(xhttp?.headers) ? Object.entries(xhttp.headers) : [];
   const host = xhttp?.host ?? headers.find(([key]) => /^host$/i.test(key))?.[1];
   for (const [key, field] of Object.entries(SURGE_XHTTP_FIELDS)) {
-    const rawValue = key === "host" ? host : _4.get(xhttp, field);
+    const rawValue = key === "host" ? host : _5.get(xhttp, field);
     if (rawValue == null) continue;
     const rawText = String(rawValue);
     const value2 = stripSurgeQuotes(rawText);
@@ -7913,6 +8032,7 @@ function ssh(proxy) {
   );
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -7953,6 +8073,7 @@ function http(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -8030,6 +8151,7 @@ function socks5(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -8103,6 +8225,7 @@ function snell(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -8210,6 +8333,7 @@ function wireguard(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -8284,6 +8408,7 @@ function wireguard_surge(proxy) {
   result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
   result.appendIfPresent(
     `,underlying-proxy=${proxy["underlying-proxy"]}`,
     "underlying-proxy"
@@ -9351,6 +9476,8 @@ function Stash_Producer() {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/loon.js
+var import_buffer3 = __toESM(require_buffer());
+import _6 from "lodash";
 var targetPlatform3 = "Loon";
 var ipVersions3 = {
   dual: "dual",
@@ -9389,6 +9516,8 @@ function Loon_Producer() {
         return tailscale(proxy);
       case "hysteria2":
         return hysteria22(proxy);
+      case "mieru":
+        return mieru(proxy);
     }
     if (proxy.type === "anytls") {
       if (proxy.network && !["tcp"].includes(proxy.network)) {
@@ -9414,8 +9543,8 @@ function appendTlsProfile(result, proxy) {
   const tlsProfile = getLoonTlsProfile(proxy);
   if (tlsProfile) result.append(`,tls-profile=${tlsProfile}`);
 }
-function appendAlpn2(result, proxy) {
-  const alpn = getLoonAlpn(proxy);
+function appendAlpn2(result, proxy, isXhttp = false) {
+  const alpn = isXhttp ? getLoonXhttpAlpn(proxy) : getLoonAlpn(proxy);
   if (alpn) result.append(`,alpn="${alpn}"`);
 }
 function formatLoonValue(value, quoted = false) {
@@ -9427,29 +9556,93 @@ function formatLoonValue(value, quoted = false) {
 }
 function appendXhttp(result, proxy) {
   const xhttp = proxy["xhttp-opts"];
-  if (xhttp?.["download-settings"]) {
-    throw new Error("Loon XHTTP does not support download-settings");
+  const download = xhttp?.["download-settings"];
+  if (download?.plugin || download?.["shadow-tls-opts"]) {
+    throw new Error("Loon XHTTP download-settings do not support plugins");
   }
-  const headers = isPlainObject(xhttp?.headers) ? Object.entries(xhttp.headers) : [];
-  const host = xhttp?.host ?? headers.find(([key]) => /^host$/i.test(key))?.[1];
+  validateLoonXhttpXmux(xhttp);
+  let options = xhttp;
+  if (download) {
+    const server = getIfNotBlank(download.server) ?? getIfNotBlank(proxy.server);
+    if (server == null) {
+      throw new Error(
+        "Loon xhttp-download-server requires a server address"
+      );
+    }
+    const port = normalizeXhttpIntegerValue(download.port ?? proxy.port);
+    if (port == null || port < 1 || port > 65535) {
+      throw new Error(
+        "Loon xhttp-download-port must be an integer from 1 to 65535"
+      );
+    }
+    const reality = download["reality-opts"];
+    const hasReality = Boolean(getIfNotBlank(reality?.["public-key"]));
+    if (reality && !hasReality) {
+      throw new Error(
+        "Loon XHTTP download REALITY requires a non-blank public-key"
+      );
+    }
+    if (hasReality && [false, "false"].includes(download.tls)) {
+      throw new Error(
+        "Loon XHTTP download REALITY conflicts with xhttp-download-over-tls=false"
+      );
+    }
+    const alpn = getLoonXhttpAlpn(download, true);
+    const fingerprint = download.fingerprint ?? download["tls-fingerprint"];
+    const pubkeyFingerprint = download["tls-pubkey-sha256"];
+    const skipCertVerify = download["skip-cert-verify"];
+    if (hasReality && (fingerprint || pubkeyFingerprint || [true, "true"].includes(skipCertVerify))) {
+      throw new Error(
+        "Loon XHTTP download REALITY conflicts with skip-cert-verify=true or TLS certificate fingerprints"
+      );
+    }
+    options = {
+      ...xhttp,
+      "download-settings": {
+        ...download,
+        server: server.trim(),
+        port,
+        host: getXhttpHost(download),
+        alpn: alpn || void 0,
+        servername: download.servername ?? download.sni,
+        fingerprint: hasReality ? void 0 : fingerprint,
+        "tls-pubkey-sha256": hasReality ? void 0 : pubkeyFingerprint,
+        "skip-cert-verify": hasReality ? void 0 : skipCertVerify,
+        _loon_tls_profile: getLoonTlsProfile(download)
+      }
+    };
+  }
   result.append(",transport=xhttp");
   for (const [key, value] of [
     ["path", xhttp?.path],
-    ["host", host]
+    ["host", getXhttpHost(xhttp)]
   ]) {
     if (value != null) result.append(`,${key}=${formatLoonValue(value)}`);
   }
   for (const [key, field] of Object.entries(LOON_XHTTP_FIELDS)) {
-    const value = xhttp?.[field];
+    const value = _6.get(options, field);
     if (value != null)
       result.append(`,xhttp-${key}=${formatLoonValue(value)}`);
   }
-  for (const [key, value] of headers) {
-    if (!/^host$/i.test(key) && value != null) {
+  for (const [option, headers] of [
+    ["xhttp-header", xhttp?.headers],
+    ["xhttp-download-header", download?.headers]
+  ]) {
+    if (!isPlainObject(headers)) continue;
+    for (const [key, value] of Object.entries(headers)) {
+      if (/^host$/i.test(key) || value == null) continue;
       result.append(
-        `,xhttp-header=${formatLoonValue(`${key}: ${value}`, true)}`
+        `,${option}=${formatLoonValue(`${key}: ${value}`, true)}`
       );
     }
+  }
+}
+function getXhttpHost(opts) {
+  if (opts?.host != null) return opts.host;
+  if (isPlainObject(opts?.headers)) {
+    return Object.entries(opts.headers).find(
+      ([key]) => /^host$/i.test(key)
+    )?.[1];
   }
 }
 function getLoonShadowTLSAlpn(proxy) {
@@ -9490,6 +9683,26 @@ function appendReality(result, proxy) {
 function getLoonAlpn(proxy) {
   const values = Array.isArray(proxy.alpn) ? proxy.alpn : `${proxy.alpn || ""}`.split(",");
   return values.map((item) => `${item}`.trim()).filter((item) => item !== "").join(",");
+}
+function getLoonXhttpAlpn(endpoint, isDownload = false) {
+  const alpn = getLoonAlpn(endpoint);
+  if (!alpn) return alpn;
+  if (alpn.includes(",")) {
+    const scope = isDownload ? " download" : "";
+    throw new Error(`Loon XHTTP${scope} supports only a single ALPN`);
+  }
+  const hasReality = Boolean(endpoint["reality-opts"]?.["public-key"]);
+  const hasTls = !isDownload && endpoint.type === "trojan" || [true, "true"].includes(endpoint.tls);
+  const allowed = hasReality ? ["h2"] : hasTls ? ["http/1.1", "h2", "h3"] : ["http/1.1"];
+  if (!allowed.includes(alpn)) {
+    const field = isDownload ? "xhttp-download-alpn" : "XHTTP alpn";
+    throw new Error(
+      `Loon ${field} must be ${allowed.join(
+        " or "
+      )} for the configured security`
+    );
+  }
+  return alpn;
 }
 function getLoonTlsProfile(proxy) {
   const tlsProfile = `${proxy._loon_tls_profile || ""}`.trim();
@@ -9685,7 +9898,7 @@ function trojan2(proxy) {
     "skip-cert-verify"
   );
   appendTlsProfile(result, proxy);
-  appendAlpn2(result, proxy);
+  appendAlpn2(result, proxy, isXhttp);
   if (isReality) {
     appendReality(result, proxy);
   } else {
@@ -9811,7 +10024,7 @@ function vmess(proxy) {
     "skip-cert-verify"
   );
   if (proxy.tls || isReality) appendTlsProfile(result, proxy);
-  if (proxy.tls || isReality || isXhttp) appendAlpn2(result, proxy);
+  if (proxy.tls || isReality || isXhttp) appendAlpn2(result, proxy, isXhttp);
   if (isReality) {
     appendReality(result, proxy);
   } else {
@@ -9848,20 +10061,55 @@ function vmess(proxy) {
   result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
   return result.toString();
 }
-function vless(proxy) {
-  if (proxy.encryption && proxy.encryption !== "none")
-    throw new Error(`VLESS encryption is not supported`);
-  let isXtls = false;
-  const isReality = !!proxy["reality-opts"];
-  const isXhttp = proxy.network === "xhttp";
-  if (isXhttp && proxy.flow)
-    throw new Error("VLESS XHTTP does not support flow");
-  if (!isXhttp && typeof proxy.flow !== "undefined") {
-    if (["xtls-rprx-vision"].includes(proxy.flow)) {
-      isXtls = true;
-    } else {
-      throw new Error(`VLESS flow(${proxy.flow}) is not supported`);
+function appendVlessEncryption(result, encryption) {
+  if (!encryption || encryption === "none") return;
+  const [method, mode, rtt, ...settings] = encryption.split(".");
+  const paddingGroup = /^(-?\d+)-(-?\d+)-(-?\d+)$/;
+  const keyIndex = settings.findIndex((part) => !paddingGroup.test(part));
+  if (method !== "mlkem768x25519plus" || !["native", "xorpub", "random"].includes(mode) || !["0rtt", "1rtt"].includes(rtt) || !settings[keyIndex]) {
+    throw new Error("Unsupported VLESS encryption format");
+  }
+  const padding = settings.slice(0, keyIndex);
+  for (const [index, group] of padding.entries()) {
+    const [, probability, min, max] = paddingGroup.exec(group).map(Number);
+    if (index === 0 && (probability !== 100 || min < 35 || max < 35)) {
+      throw new Error(
+        "Loon VLESS encryption-padding first group requires probability 100 and lengths of at least 35"
+      );
     }
+    if (probability < 0 || probability > 100 || min < 0 || min > max || !Number.isSafeInteger(max)) {
+      throw new Error(
+        "Loon VLESS encryption-padding requires probabilities from 0 to 100 and ordered non-negative integer bounds"
+      );
+    }
+  }
+  const publicKeys = settings.slice(keyIndex).join(".");
+  result.append(`,encryption-mode=${mode},encryption-rtt=${rtt}`);
+  result.append(`,encryption-public-keys=${formatLoonValue(publicKeys)}`);
+  if (padding.length) {
+    result.append(
+      `,encryption-padding=${formatLoonValue(padding.join("."))}`
+    );
+  }
+}
+function vless(proxy) {
+  const isXtls = !!proxy.flow;
+  const reality = proxy["reality-opts"];
+  const isReality = Boolean(getIfNotBlank(reality?.["public-key"]));
+  const isXhttp = proxy.network === "xhttp";
+  const isTcp = (proxy.network ?? "tcp") === "tcp";
+  const isSecure = isReality || [true, "true"].includes(proxy.tls);
+  const encryptionEnabled = proxy.encryption && proxy.encryption !== "none";
+  if (reality && !isReality) {
+    throw new Error("Loon VLESS REALITY requires a non-blank public-key");
+  }
+  if (isXtls && !["xtls-rprx-vision", "xtls-rprx-vision-udp443"].includes(proxy.flow)) {
+    throw new Error(`VLESS flow(${proxy.flow}) is not supported`);
+  }
+  if (isXtls && !encryptionEnabled && (!isTcp || !isSecure)) {
+    throw new Error(
+      "Loon VLESS Vision without encryption requires TCP with TLS or REALITY"
+    );
   }
   const result = new Result(proxy);
   result.append(
@@ -9907,10 +10155,10 @@ function vless(proxy) {
     "skip-cert-verify"
   );
   if (proxy.tls || isReality || isXtls) appendTlsProfile(result, proxy);
-  if (proxy.tls || isReality || isXtls || isXhttp) appendAlpn2(result, proxy);
-  if (isXtls) {
-    result.appendIfPresent(`,flow=${proxy.flow}`, "flow");
-  }
+  if (proxy.tls || isReality || isXtls || isXhttp)
+    appendAlpn2(result, proxy, isXhttp);
+  appendVlessEncryption(result, proxy.encryption);
+  if (isXtls) result.append(`,flow=${proxy.flow}`);
   if (isReality) {
     appendReality(result, proxy);
   } else {
@@ -10087,6 +10335,49 @@ function wireguard2(proxy) {
   }
   return result.toString();
 }
+function mieru(proxy) {
+  if (proxy.transport && String(proxy.transport).toUpperCase() !== "TCP") {
+    throw new Error("Loon Mieru requires TCP transport");
+  }
+  if (proxy.tls || proxy["reality-opts"]) {
+    throw new Error("Loon Mieru does not support TLS or REALITY");
+  }
+  const server = getIfNotBlank(proxy.server)?.trim();
+  if (!server) throw new Error("Loon Mieru requires a server");
+  const portText = String(proxy.port ?? "").trim();
+  const port = Number(portText);
+  if (!/^\d+$/.test(portText) || port < 1 || port > 65535) {
+    throw new Error("Loon Mieru port must be an integer from 1 to 65535");
+  }
+  const credentials = [proxy.username, proxy.password].map(
+    (value) => String(value ?? "")
+  );
+  if (credentials.some(
+    (value) => !value || import_buffer3.Buffer.byteLength(value, "utf8") > 64
+  )) {
+    throw new Error(
+      "Loon Mieru username and password must each be 1-64 UTF-8 bytes"
+    );
+  }
+  const result = new Result(proxy);
+  const address = isIPv6(server) ? `[${server}]` : server;
+  const [username, password] = credentials.map(
+    (value) => formatLoonValue(value, true)
+  );
+  result.append(
+    `${proxy.name}=mieru,${address},${port},${username},${password}`
+  );
+  if (proxy.udp) result.append(",udp=true");
+  const blockQuic = proxy["block-quic"];
+  if (["on", "off", true, false].includes(blockQuic)) {
+    result.append(
+      `,block-quic=${blockQuic === "on" || blockQuic === true}`
+    );
+  }
+  const ipVersion = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
+  result.appendIfPresent(`,ip-mode=${ipVersion}`, "ip-version");
+  return result.toString();
+}
 function hysteria22(proxy) {
   if (proxy["obfs-password"] && proxy.obfs != "salamander") {
     throw new Error(`only salamander obfs is supported`);
@@ -10131,7 +10422,11 @@ function hysteria22(proxy) {
     `,download-bandwidth=${`${proxy["down"]}`.match(/\d+/)?.[0] || 0}`,
     "down"
   );
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
+  if ([true, "true", "on"].includes(proxy.ecn)) {
+    result.append(",ecn=true");
+  } else if ([false, "false", "off"].includes(proxy.ecn)) {
+    result.append(",ecn=false");
+  }
   const ip_version = ipVersions3[proxy["ip-version"]] || proxy["ip-version"];
   result.appendIfPresent(`,ip-mode=${ip_version}`, "ip-version");
   return result.toString();
@@ -11458,12 +11753,12 @@ Reason: ${err}`);
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/qx.js
-var import_buffer3 = __toESM(require_buffer());
+var import_buffer4 = __toESM(require_buffer());
 var targetPlatform4 = "QX";
 function encodeQxAlpn(alpn) {
   const protocols = (Array.isArray(alpn) ? alpn : `${alpn}`.split(",")).map((protocol) => `${protocol}`.trim()).filter(Boolean);
   return protocols.map((protocol) => {
-    const bytes = import_buffer3.Buffer.from(protocol, "utf8");
+    const bytes = import_buffer4.Buffer.from(protocol, "utf8");
     if (bytes.length > 255) {
       throw new Error("QX ALPN protocol exceeds 255 bytes");
     }
@@ -11505,7 +11800,7 @@ function QX_Producer() {
       case "hysteria2":
         return hysteria23(proxy);
       case "mieru":
-        return mieru(proxy);
+        return mieru2(proxy);
     }
     throw new Error(
       `Platform ${targetPlatform4} does not support proxy type: ${proxy.type}`
@@ -11932,7 +12227,7 @@ function hysteria23(proxy) {
   }
   if (isPresent2(proxy, "obfs-password")) {
     const obfsPassword = String(proxy["obfs-password"]);
-    if (import_buffer3.Buffer.byteLength(obfsPassword, "utf8") < 4) {
+    if (import_buffer4.Buffer.byteLength(obfsPassword, "utf8") < 4) {
       throw new Error(
         `QX Hysteria 2 ${obfs}-password must be at least 4 bytes`
       );
@@ -12054,7 +12349,7 @@ function socks53(proxy) {
   append(`,tag=${proxy.name}`);
   return result.toString();
 }
-function mieru(proxy) {
+function mieru2(proxy) {
   const result = new Result(proxy);
   result.append(`mieru=${proxy.server}:${proxy.port}`);
   result.appendIfPresent(`,username=${proxy.username}`, "username");
@@ -12315,7 +12610,7 @@ function hasShadowrocketSnellShadowTlsObfsConflict(proxy) {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/surfboard.js
-import _5 from "lodash";
+import _7 from "lodash";
 var targetPlatform5 = "Surfboard";
 function hasNonBlankValue2(value) {
   return value != null && `${value}`.trim().length > 0;
@@ -12593,7 +12888,7 @@ function vless4(proxy) {
     const headers = Object.entries(xhttp?.headers ?? {});
     const host = xhttp?.host ?? headers.find(([key]) => /^host$/i.test(key))?.[1];
     for (const [key, field] of Object.entries(SURGE_XHTTP_FIELDS)) {
-      append(`xhttp-${key}`, key === "host" ? host : _5.get(xhttp, field));
+      append(`xhttp-${key}`, key === "host" ? host : _7.get(xhttp, field));
     }
     append(
       "xhttp-headers",
@@ -12704,7 +12999,7 @@ function handleTransport2(result, proxy) {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/producers/sing-box.js
-var import_buffer4 = __toESM(require_buffer());
+var import_buffer5 = __toESM(require_buffer());
 var ipVersions4 = {
   ipv4: "ipv4_only",
   ipv6: "ipv6_only",
@@ -13018,7 +13313,7 @@ var tlsCertificateParser = (proxy, parsedProxy) => {
         `Platform sing-box: invalid SHA-256 certificate fingerprint for proxy ${proxy.name}`
       );
     }
-    tls.certificate_sha256 = [import_buffer4.Buffer.from(hex, "hex").toString("base64")];
+    tls.certificate_sha256 = [import_buffer5.Buffer.from(hex, "hex").toString("base64")];
   }
   if (hasCertificate && (tls.certificate_sha256?.length || tls.certificate_public_key_sha256?.length)) {
     throw new Error(
