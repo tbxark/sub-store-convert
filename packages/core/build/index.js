@@ -2537,7 +2537,7 @@ var grammars = String.raw`
     }
 }
 
-start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct) {
+start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snell/socks5/socks5_tls/tuic/tuic_v5/wireguard/hysteria2/ssh/trust_tunnel/direct/external) {
     if (
         ["auto", "none", "apple-26", "chromium-155"].includes(clientFingerprint) &&
         proxy.network !== "h3" &&
@@ -2559,7 +2559,7 @@ start = (masque/anytls/shadowsocks/vmess/vless/trojan/h2_connect/https/http/snel
     return proxy;
 }
 
-shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/udp_port/others)* {
+shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/udp_relay/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/udp_port/proxy_policy_parameter/others)* {
     proxy.type = "ss";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -2570,7 +2570,7 @@ shadowsocks = tag equals "ss" address (method/passwordk/obfs/obfs_host/obfs_uri/
     }
     handleShadowTLS();
 }
-vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_path/ws_headers/vmess_method/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "vmess";
     proxy.cipher = proxy.cipher || "auto";
     // Surfboard 与 Surge 默认不一致, 不管 Surfboard https://getsurfboard.com/docs/profile-format/proxy/external-proxy/vmess
@@ -2582,7 +2582,7 @@ vmess = tag equals "vmess" address (vmess_uuid/vmess_aead/ws/ws_http_upgrade/ws_
     handleWebsocket();
     handleShadowTLS();
 }
-vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/ws_http_upgrade/ws_path/ws_headers/grpc/grpc_service_name/grpc_mode/grpc_authority/xhttp/xhttp_headers/xhttp_option/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy["packet-encoding"] = "xudp";
     if (proxy["reality-opts"] && proxy["reality-opts"]["public-key"]) proxy.tls = true;
     if (xhttpEnabled) {
@@ -2594,30 +2594,30 @@ vless = tag equals vless_address (vless_username/vless_option/reality_option/ws/
     handleShadowTLS();
 }
 vless_address = "vless" address { proxy.type = "vless"; }
-trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+trojan = tag equals "trojan" address (passwordk/ws/ws_http_upgrade/ws_path/ws_headers/tls/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "trojan";
     handleWebsocket();
     handleShadowTLS();
 }
-https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+https = tag equals "https" address (username password)? (usernamek passwordk)? (headers/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "http";
     proxy.tls = true;
     handleShadowTLS();
 }
-h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "h2-connect";
     proxy.tls = true;
     handleShadowTLS();
 }
-http = tag equals "http" address (username password)? (usernamek passwordk)? (headers/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+http = tag equals "http" address (username password)? (usernamek passwordk)? (headers/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "http";
     handleShadowTLS();
 }
-ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (server_fingerprint/idle_timeout/private_key/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+ssh = tag equals "ssh" address (username password)? (usernamek passwordk)? (server_fingerprint/idle_timeout/private_key/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "ssh";
     handleShadowTLS();
 }
-snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/snell_psk/obfs/obfs_host/obfs_uri/udp_relay/reuse/alpn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "snell";
     // handle obfs
     if (obfs.type == "http" || obfs.type === "tls") {
@@ -2627,48 +2627,71 @@ snell = tag equals ("snell"i/"opensnell"i) address (snell_version/snell_mode/sne
     }
     handleShadowTLS();
 }
-tuic = tag equals "tuic" address (alpn/token/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
+tuic = tag equals "tuic" address (alpn/token/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/shadow_tls_version/shadow_tls_sni/shadow_tls_password/port_hopping/port_hopping_interval/proxy_policy_parameter/others)* {
     proxy.type = "tuic";
     handleShadowTLS();
 }
-tuic_v5 = tag equals "tuic-v5" address (alpn/passwordk/uuidk/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/fast_open/tfo/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/others)* {
+tuic_v5 = tag equals "tuic-v5" address (alpn/passwordk/uuidk/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/shadow_tls_version/shadow_tls_sni/shadow_tls_password/port_hopping/port_hopping_interval/proxy_policy_parameter/others)* {
     proxy.type = "tuic";
     proxy.version = 5;
     handleShadowTLS();
 }
-wireguard = tag equals "wireguard" (section_name/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+wireguard = tag equals "wireguard" (section_name/common_policy_parameter/proxy_only_parameter/ignored_policy_parameter)* {
+    if (!proxy["section-name"]) error("WireGuard requires section-name");
     proxy.type = "wireguard-surge";
-    handleShadowTLS();
 }
-hysteria2 = tag equals "hysteria2" address (no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_verification/client_cert/ech_config/passwordk/tls_fingerprint/download_bandwidth/ecn/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/port_hopping_interval/salamander_password/gecko_password/others)* {
+hysteria2 = tag equals "hysteria2" address (sni/cert_verify_name/alpn/tls_verification/client_cert/ech_config/passwordk/tls_fingerprint/download_bandwidth/shadow_tls_version/shadow_tls_sni/shadow_tls_password/port_hopping/port_hopping_interval/salamander_password/gecko_password/proxy_policy_parameter/others)* {
     proxy.type = "hysteria2";
     handleShadowTLS();
 }
-socks5 = tag equals "socks5" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+socks5 = tag equals "socks5" address (username password)? (usernamek passwordk)? (udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "socks5";
     handleShadowTLS();
 }
-socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/no_error_alert/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/fast_open/tfo/shadow_tls_version/shadow_tls_sni/shadow_tls_password/block_quic/ecn/others)* {
+socks5_tls = tag equals "socks5-tls" address (username password)? (usernamek passwordk)? (udp_relay/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "socks5";
     proxy.tls = true;
     handleShadowTLS();
 }
-anytls = tag equals "anytls" address (passwordk/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/block_quic/ecn/others)* {
+anytls = tag equals "anytls" address (passwordk/reuse/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/proxy_policy_parameter/others)* {
     proxy.type = "anytls";
     proxy.tls = true;
 }
-trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/h3/fast_open/tfo/block_quic/ecn/others)* {
+trust_tunnel = tag equals "trust-tunnel" address (usernamek/passwordk/client_random_auth_key/headers/max_streams/reuse/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/h3/proxy_policy_parameter/others)* {
     proxy.type = "trusttunnel";
     proxy.tls = true;
 }
-masque = tag equals "masque" address (usernamek/passwordk/port_hopping_interval/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/fast_open/tfo/udp_relay/ecn/block_quic/others)* {
+masque = tag equals "masque" address (usernamek/passwordk/port_hopping/port_hopping_interval/tls_fingerprint/tls_verification/client_cert/ech_config/sni/cert_verify_name/alpn/udp_relay/proxy_policy_parameter/others)* {
     proxy.type = "masque-surge";
     proxy.tls = true;
 }
 
-direct = tag equals "direct" (udp_relay/ip_version/underlying_proxy/tos/allow_other_interface/interface/test_url/test_udp/test_timeout/hybrid/no_error_alert/fast_open/tfo/block_quic/others)* {
+direct = tag equals "direct"i (common_policy_parameter/interface_parameter/udp_relay/ignored_policy_parameter)* {
     proxy.type = "direct";
 }
+
+external = tag equals "external" (external_exec/external_local_port/external_arg/external_address/udp_relay/proxy_policy_parameter/ignored_policy_parameter)* {
+    proxy.type = "external";
+    proxy.args = proxy.args || [];
+    proxy.addresses = proxy.addresses || [];
+}
+external_exec = comma "exec" equals value:quoted_value { if (proxy.exec === undefined) proxy.exec = value; }
+external_local_port = comma "local-port" equals value:quoted_value { if (proxy["local-port"] === undefined) proxy["local-port"] = value; }
+external_arg = comma "args" equals value:quoted_value {
+    proxy.args = proxy.args || [];
+    proxy.args.push(value);
+}
+external_address = comma "addresses" equals value:quoted_value {
+    proxy.addresses = proxy.addresses || [];
+    proxy.addresses.push(value);
+}
+
+proxy_policy_parameter = common_policy_parameter / interface_parameter / proxy_only_parameter
+common_policy_parameter = ip_version / hybrid / tfo / fast_open / tos / block_quic / test_url / test_timeout / test_udp
+interface_parameter = interface / allow_other_interface / dns_follow_interface
+proxy_only_parameter = no_error_alert / ecn / underlying_proxy
+ignored_policy_parameter = comma [^=,]+ equals quoted_value
+
 address = comma server:server comma port:port {
     proxy.server = server;
     proxy.port = port;
@@ -2702,6 +2725,13 @@ port = digits:[0-9]+ {
     }
 }
 
+port_hopping = comma "port-hopping" equals value:(
+    '"' _ list:port_hopping_list _ '"' { return list; }
+    / "'" _ list:port_hopping_list _ "'" { return list; }
+    / port_hopping_list
+) &(_ ("," / !.)) { proxy.ports = value.replace(/\s+/g, "").replace(/;/g, ","); }
+port_hopping_list = $(port_hopping_range (_ [,;] _ port_hopping_range)*)
+port_hopping_range = [0-9]+ ("-" [0-9]+)?
 port_hopping_interval = comma "port-hopping-interval" equals match:$[0-9]+ { proxy["hop-interval"] = parseInt(match.trim()); }
 
 username = & {
@@ -2813,28 +2843,41 @@ obfs_uri = comma "obfs-uri" equals path:uri { obfs.path = path }
 uri = $[^,]+
 
 udp_relay = comma "udp-relay" equals flag:bool { proxy.udp = flag; }
-fast_open = comma "fast-open" equals flag:bool { proxy.tfo = flag; }
+fast_open = comma "fast-open" equals flag:policy_bool { proxy.tfo = flag; }
 reuse = comma "reuse" equals flag:bool { proxy.reuse = flag; }
-ecn = comma "ecn" equals mode:("auto" / "on" / "off" / bool) &(_ ("," / !.)) { proxy.ecn = mode; }
-tfo = comma "tfo" equals flag:bool { proxy.tfo = flag; }
-ip_version = comma "ip-version" equals match:[^,]+ { proxy["ip-version"] = match.join(""); }
-section_name = comma "section-name" equals match:[^,]+ { proxy["section-name"] = match.join(""); }
-no_error_alert = comma "no-error-alert" equals match:[^,]+ { proxy["no-error-alert"] = match.join(""); }
-underlying_proxy = comma "underlying-proxy" equals value:(vless_quoted_value / uri) { proxy["underlying-proxy"] = value; }
+ecn = comma "ecn" equals mode:policy_toggle { if (mode !== undefined) proxy.ecn = mode; }
+tfo = comma "tfo" equals flag:policy_bool { proxy.tfo = flag; }
+ip_version = comma "ip-version" equals value:quoted_value { proxy["ip-version"] = value.trim(); }
+section_name = comma "section-name" equals value:quoted_value { proxy["section-name"] = value.trim(); }
+no_error_alert = comma "no-error-alert" equals value:quoted_value { proxy["no-error-alert"] = value.trim(); }
+underlying_proxy = comma "underlying-proxy" equals value:quoted_value { proxy["underlying-proxy"] = value.trim(); }
 download_bandwidth = comma "download-bandwidth" equals match:[^,]+ { proxy.down = match.join(""); }
-test_url = comma "test-url" equals match:[^,]+ { proxy["test-url"] = match.join(""); }
-test_udp = comma "test-udp" equals match:[^,]+ { proxy["test-udp"] = match.join(""); }
-test_timeout = comma "test-timeout" equals match:$[0-9]+ { proxy["test-timeout"] = parseInt(match.trim()); }
+test_url = comma "test-url" equals value:quoted_value { proxy["test-url"] = value.trim(); }
+test_udp = comma "test-udp" equals value:quoted_value { proxy["test-udp"] = value.trim(); }
+test_timeout = comma "test-timeout" equals value:quoted_value {
+    const seconds = value.trim();
+    if (/^(?:\d+(?:\.\d*)?|\.\d+)$/.test(seconds)) proxy["test-timeout"] = Number(seconds);
+}
 max_streams = comma "max-streams" equals match:quoted_integer { proxy["max-streams"] = match; }
 quoted_integer = '"' match:$[0-9]+ '"' { return parseInt(match.trim()); } / "'" match:$[0-9]+ "'" { return parseInt(match.trim()); } / match:$[0-9]+ { return parseInt(match.trim()); }
-tos = comma "tos" equals match:$[0-9]+ { proxy.tos = parseInt(match.trim()); }
-interface = comma "interface" equals match:[^,]+ { proxy.interface = match.join(""); }
-allow_other_interface = comma "allow-other-interface" equals flag:bool { proxy["allow-other-interface"] = flag; }
-hybrid = comma "hybrid" equals flag:bool { proxy.hybrid = flag; }
+tos = comma "tos" equals value:quoted_value {
+    const text = value.trim();
+    proxy.tos = /^(?:\d+|0x[\da-f]+)$/i.test(text) ? Number(text) : text;
+}
+interface = comma "interface" equals value:quoted_value { proxy.interface = value.trim(); }
+allow_other_interface = comma "allow-other-interface" equals flag:policy_bool { proxy["allow-other-interface"] = flag; }
+dns_follow_interface = comma "dns-follow-interface" equals flag:policy_bool { proxy["dns-follow-interface"] = flag; }
+hybrid = comma "hybrid" equals mode:policy_toggle { if (mode !== undefined) proxy.hybrid = mode; }
+policy_bool = value:quoted_value &{ return /^(?:true|false)$/.test(value.trim()); } { return value.trim() === "true"; }
+policy_toggle = value:quoted_value {
+    const mode = value.trim();
+    if (mode === "true" || mode === "false") return mode === "true";
+    if (["auto", "on", "off"].includes(mode)) return mode;
+}
 idle_timeout = comma "idle-timeout" equals match:$[0-9]+ { proxy["idle-timeout"] = parseInt(match.trim()); }
 private_key = comma "private-key" equals match:[^,]+ { proxy["keystore-private-key"] = stripQuotes(match.join("")); }
 server_fingerprint = comma "server-fingerprint" equals match:[^,]+ { proxy["server-fingerprint"] = match.join("").replace(/^"(.*)"$/, '$1'); }
-block_quic = comma "block-quic" equals match:[^,]+ { proxy["block-quic"] = match.join(""); }
+block_quic = comma "block-quic" equals value:quoted_value { proxy["block-quic"] = value.trim(); }
 udp_port = comma "udp-port" equals match:$[0-9]+ { proxy["udp-port"] = parseInt(match.trim()); }
 shadow_tls_version = comma "shadow-tls-version" equals match:$[0-9]+ { shadowTLS.version = parseInt(match.trim()); }
 shadow_tls_sni = comma "shadow-tls-sni" equals match:[^,]+ { shadowTLS.host = match.join(""); }
@@ -2846,12 +2889,11 @@ alpn = comma "alpn" equals match:quoted_value {
 }
 h3 = comma "h3" equals flag:bool { if (flag) proxy.network = "h3"; }
 quoted_value
-    = double_quoted_vless_value
+    = '"' value:$(("\\" ('"' / "\\") / [^"])*) '"' &(_ ("," / !.)) { return proxy.type === "vless" ? unescapeQuotedValue(value) : value; }
     / '"' match:$[^"]* '"' { return match; }
     / "'" match:$[^']* "'" { return proxy.type === "vless" ? unescapeQuotedValue(match) : match; }
-    / uri
+    / value:uri { return value.trim(); }
 vless_quoted_value = &{ return proxy.type === "vless"; } value:quoted_value { return value.trim(); }
-double_quoted_vless_value = &{ return proxy.type === "vless"; } '"' value:$(("\\" ('"' / "\\") / [^"])*) '"' &(_ ("," / !.)) { return unescapeQuotedValue(value); }
 uuidk = comma "uuid" equals match:[^,]+ { proxy.uuid = match.join(""); }
 salamander_password = comma "salamander-password" equals match:[^,]+ { proxy['obfs-password'] = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); proxy.obfs = 'salamander'; }
 gecko_password = comma "gecko-password" equals match:[^,]+ { proxy['obfs-password'] = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); proxy.obfs = 'gecko'; }
@@ -4180,15 +4222,6 @@ function formatSurgeVmessEncryptMethod(security) {
 }
 
 // src/vendors/Sub-Store/backend/src/core/proxy-utils/parsers/index.js
-function surge_port_hopping(raw) {
-  const [parts, port_hopping] = raw.match(
-    /,\s*?port-hopping\s*?=\s*?["']?\s*?((\d+(-\d+)?)([,;]\d+(-\d+)?)*)\s*?["']?\s*?/
-  ) || [];
-  return {
-    port_hopping: port_hopping ? port_hopping.replace(/;/g, ",") : void 0,
-    line: parts ? raw.replace(parts, "") : raw
-  };
-}
 function splitURIFragment(raw) {
   const [__, content, fragment] = /^(.*?)(?:#(.*?))?$/.exec(raw);
   return {
@@ -6285,6 +6318,8 @@ function URI_WireGuard() {
           proxy["public-key"] = value;
         } else if (/privatekey/i.test(key)) {
           proxy["private-key"] = value;
+        } else if (/^presharedkey$/i.test(key)) {
+          proxy["preshared-key"] = value;
         } else if (["udp"].includes(key)) {
           proxy[key] = /(TRUE)|1/i.test(value);
         } else if (![...Object.keys(proxy), "flag"].includes(key)) {
@@ -6670,9 +6705,7 @@ function Loon_WireGuard() {
 }
 function Surge_Direct() {
   const name = "Surge Direct Parser";
-  const test = (line) => {
-    return /^.*=\s*direct/.test(line.split(",")[0]);
-  };
+  const test = (line) => /^[^=,]*=\s*direct\s*$/i.test(line.split(",")[0]);
   const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
@@ -6697,12 +6730,7 @@ function Surge_Masque() {
   const test = (line) => {
     return /^.*=\s*masque/.test(line.split(",")[0]);
   };
-  const parse2 = (raw) => {
-    const { port_hopping, line } = surge_port_hopping(raw);
-    const proxy = getParser().parse(line);
-    proxy.ports = port_hopping;
-    return proxy;
-  };
+  const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
 function Surge_H2Connect() {
@@ -6774,56 +6802,8 @@ function Surge_External() {
     return /^.*=\s*external/.test(line.split(",")[0]);
   };
   const parse2 = (line) => {
-    let parsed = /^\s*(.*?)\s*?=\s*?external\s*?,\s*(.*?)\s*$/.exec(line);
-    let [_8, name2, other] = parsed;
-    line = other;
-    let exec = /(,|^)\s*?exec\s*?=\s*"(.*?)"\s*?(,|$)/.exec(line)?.[2];
-    if (!exec) {
-      exec = /(,|^)\s*?exec\s*?=\s*(.*?)\s*?(,|$)/.exec(line)?.[2];
-    }
-    let localPort = /(,|^)\s*?local-port\s*?=\s*"(.*?)"\s*?(,|$)/.exec(
-      line
-    )?.[2];
-    if (!localPort) {
-      localPort = /(,|^)\s*?local-port\s*?=\s*(.*?)\s*?(,|$)/.exec(
-        line
-      )?.[2];
-    }
-    const argsRegex = /(,|^)\s*?args\s*?=\s*("(.*?)"|(.*?))(?=\s*?(,|$))/g;
-    let argsMatch;
-    const args = [];
-    while ((argsMatch = argsRegex.exec(line)) !== null) {
-      if (argsMatch[3] != null) {
-        args.push(argsMatch[3]);
-      } else if (argsMatch[4] != null) {
-        args.push(argsMatch[4]);
-      }
-    }
-    const addressesRegex = /(,|^)\s*?addresses\s*?=\s*("(.*?)"|(.*?))(?=\s*?(,|$))/g;
-    let addressesMatch;
-    const addresses = [];
-    while ((addressesMatch = addressesRegex.exec(line)) !== null) {
-      let ip;
-      if (addressesMatch[3] != null) {
-        ip = addressesMatch[3];
-      } else if (addressesMatch[4] != null) {
-        ip = addressesMatch[4];
-      }
-      if (ip != null) {
-        ip = `${ip}`.trim().replace(/^\[/, "").replace(/\]$/, "");
-      }
-      if (isIP(ip)) {
-        addresses.push(ip);
-      }
-    }
-    const proxy = {
-      type: "external",
-      name: name2,
-      exec,
-      "local-port": localPort,
-      args,
-      addresses
-    };
+    const proxy = getParser().parse(line);
+    proxy.addresses = proxy.addresses.map((ip) => ip.trim().replace(/^\[/, "").replace(/\]$/, "")).filter(isIP);
     return proxy;
   };
   return { name, test, parse: parse2 };
@@ -6844,12 +6824,7 @@ function Surge_Tuic() {
   const test = (line) => {
     return /^.*=\s*tuic(-v5)?/.test(line.split(",")[0]);
   };
-  const parse2 = (raw) => {
-    const { port_hopping, line } = surge_port_hopping(raw);
-    const proxy = getParser().parse(line);
-    proxy["ports"] = port_hopping;
-    return proxy;
-  };
+  const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
 function Surge_WireGuard() {
@@ -6865,12 +6840,7 @@ function Surge_Hysteria2() {
   const test = (line) => {
     return /^.*=\s*hysteria2/.test(line.split(",")[0]);
   };
-  const parse2 = (raw) => {
-    const { port_hopping, line } = surge_port_hopping(raw);
-    const proxy = getParser().parse(line);
-    proxy["ports"] = port_hopping;
-    return proxy;
-  };
+  const parse2 = (line) => getParser().parse(line);
   return { name, test, parse: parse2 };
 }
 function isIP(ip) {
@@ -7296,6 +7266,34 @@ function parseWireGuardInterfaceAddress(value, family) {
     cidr: parseWireGuardCIDR(cidrRaw, max)
   };
 }
+function normalizeWireGuardInterfaceAddress(proxy, config) {
+  const { addressKey, cidrKey, family, defaultCIDR } = config;
+  const parsed = parseWireGuardInterfaceAddress(proxy[addressKey], family);
+  if (!parsed) {
+    if (proxy[addressKey] == null || `${proxy[addressKey]}`.trim().length === 0) {
+      delete proxy[cidrKey];
+    }
+    return;
+  }
+  proxy[addressKey] = parsed.address;
+  const normalizedCIDR = parseWireGuardCIDR(proxy[cidrKey], defaultCIDR);
+  proxy[cidrKey] = normalizedCIDR ?? parsed.cidr ?? defaultCIDR;
+}
+function normalizeWireGuardInterface(proxy = {}) {
+  normalizeWireGuardInterfaceAddress(proxy, {
+    addressKey: "ip",
+    cidrKey: "ip-cidr",
+    family: "ipv4",
+    defaultCIDR: 32
+  });
+  normalizeWireGuardInterfaceAddress(proxy, {
+    addressKey: "ipv6",
+    cidrKey: "ipv6-cidr",
+    family: "ipv6",
+    defaultCIDR: 128
+  });
+  return proxy;
+}
 function getWireGuardAddressWithCIDR(proxy = {}, family = "ipv4") {
   const config = family === "ipv6" ? { addressKey: "ipv6", cidrKey: "ipv6-cidr", defaultCIDR: 128 } : { addressKey: "ip", cidrKey: "ip-cidr", defaultCIDR: 32 };
   const parsed = parseWireGuardInterfaceAddress(
@@ -7365,6 +7363,53 @@ function quoteSurgeValue(value) {
 }
 function hasNonBlankValue(value) {
   return value != null && `${value}`.trim().length > 0;
+}
+function appendSurgePolicyParameters(result, proxy) {
+  const isDirect = proxy.type === "direct";
+  const supportsInterface = !["wireguard", "wireguard-surge"].includes(
+    proxy.type
+  );
+  const ipVersion = proxy["ip-version"];
+  const tos = stripSurgeQuotes(proxy.tos);
+  if (tos != null && (!/^(?:\d+|0x[\da-f]+)$/i.test(tos) || Number(tos) > 255)) {
+    throw new Error("Surge tos must be an integer between 0 and 255");
+  }
+  const parameters = {
+    "ip-version": ipVersions[ipVersion] ?? ipVersion,
+    "no-error-alert": isDirect ? void 0 : proxy["no-error-alert"],
+    tfo: proxy.tfo ?? proxy["fast-open"],
+    "test-url": proxy["test-url"],
+    "test-timeout": proxy["test-timeout"],
+    "test-udp": proxy["test-udp"],
+    hybrid: proxy.hybrid,
+    tos,
+    "allow-other-interface": supportsInterface ? proxy["allow-other-interface"] : void 0,
+    interface: supportsInterface ? proxy.interface ?? proxy["interface-name"] : void 0,
+    "dns-follow-interface": supportsInterface ? proxy["dns-follow-interface"] : void 0,
+    "block-quic": proxy["block-quic"],
+    ecn: isDirect ? void 0 : proxy.ecn,
+    "underlying-proxy": isDirect ? void 0 : proxy["underlying-proxy"]
+  };
+  for (const [key, value] of Object.entries(parameters)) {
+    if (value == null) continue;
+    const formatted = typeof value === "string" && value.includes(",") ? quoteSurgeValue(value) : value;
+    result.append(`,${key}=${formatted}`);
+  }
+}
+function appendPortHopping(result, proxy) {
+  if (hasNonBlankValue(proxy.ports)) {
+    if (hasNonBlankValue(stripSurgeQuotes(proxy["underlying-proxy"]))) {
+      throw new Error(
+        "Surge port-hopping cannot be combined with underlying-proxy"
+      );
+    }
+    result.append(
+      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
+    );
+  }
+  if (hasNonBlankValue(proxy["hop-interval"])) {
+    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
+  }
 }
 function formatSurgeAlpn(alpn) {
   const values = Array.isArray(alpn) ? alpn : stripSurgeQuotes(`${alpn || ""}`).split(",");
@@ -7517,7 +7562,7 @@ function Surge_Producer() {
       case "tuic":
         return tuic(proxy);
       case "wireguard-surge":
-        return wireguard_surge(proxy);
+        return wireguardPolicy(proxy);
       case "hysteria2":
         return hysteria2(proxy);
       case "ssh":
@@ -7584,12 +7629,6 @@ function shadowsocks(proxy) {
   }
   result.append(`,encrypt-method=${proxy.cipher}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   if (isPresent2(proxy, "plugin")) {
     if (proxy.plugin === "obfs") {
       result.append(`,obfs=${proxy["plugin-opts"].mode}`);
@@ -7605,110 +7644,29 @@ function shadowsocks(proxy) {
       throw unsupported(`plugin ${proxy.plugin} is not supported`);
     }
   }
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy, true);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function trojan(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   handleTransport(result, proxy);
   result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
   appendTlsProxyParams(result, proxy);
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function anytls(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy);
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function trusttunnel(proxy) {
@@ -7732,38 +7690,9 @@ function trusttunnel(proxy) {
     "max-streams"
   );
   if (proxy.network === "h3") result.append(",h3=true");
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy);
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function masque_surge(proxy) {
@@ -7771,49 +7700,9 @@ function masque_surge(proxy) {
   result.append(`${proxy.name}=masque,${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username="${proxy.username}"`, "username");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  if (hasNonBlankValue(proxy.ports)) {
-    result.append(
-      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
-    );
-  }
-  if (hasNonBlankValue(proxy["hop-interval"])) {
-    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
-  }
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
+  appendPortHopping(result, proxy);
   appendTlsProxyParams(result, proxy);
-  if (isPresent2(proxy, "tfo")) {
-    result.append(`,tfo=${proxy.tfo}`);
-  } else if (isPresent2(proxy, "fast-open")) {
-    result.append(`,tfo=${proxy["fast-open"]}`);
-  }
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy.hybrid}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy.tos}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy.interface}`, "interface");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function h2Connect(proxy) {
@@ -7827,41 +7716,10 @@ function h2Connect(proxy) {
     `,max-streams=${proxy["max-streams"]}`,
     "max-streams"
   );
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy);
-  if (proxy.tfo) {
-    app_default.info(`Option tfo is not supported by Surge, thus omitted`);
-  }
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function v2ray(proxy, includeUnsupportedProxy) {
@@ -7875,12 +7733,6 @@ function v2ray(proxy, includeUnsupportedProxy) {
       result.append(`,encrypt-method=${encryptMethod}`);
     }
   }
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   if (isVless) {
     appendVlessParams(result, proxy);
   } else {
@@ -7890,31 +7742,8 @@ function v2ray(proxy, includeUnsupportedProxy) {
     result.appendIfPresent(`,tls=${proxy.tls}`, "tls");
     appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
   }
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function appendVlessParams(result, proxy) {
@@ -8007,36 +7836,7 @@ function ssh(proxy) {
     `,server-fingerprint="${proxy["server-fingerprint"]}"`,
     "server-fingerprint"
   );
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function http(proxy) {
@@ -8046,73 +7846,15 @@ function http(proxy) {
   result.appendIfPresent(`,username="${proxy.username}"`, "username");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
   appendHeaders(result, proxy);
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function direct(proxy) {
   const result = new Result(proxy);
-  const type = "direct";
-  result.append(`${proxy.name}=${type}`);
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  result.append(`${proxy.name}=direct`);
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function socks5(proxy) {
@@ -8121,41 +7863,10 @@ function socks5(proxy) {
   result.append(`${proxy.name}=${type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username="${proxy.username}"`, "username");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy, Boolean(proxy.tls));
-  if (proxy.tfo) {
-    app_default.info(`Option tfo is not supported by Surge, thus omitted`);
-  }
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function appendHeaders(result, proxy) {
@@ -8187,12 +7898,6 @@ function snell(proxy) {
   if (Number(proxy.version) === 6) {
     result.appendIfPresent(`,mode=${proxy.mode}`, "mode");
   }
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   result.appendIfPresent(
     `,obfs=${proxy["obfs-opts"]?.mode}`,
     "obfs-opts.mode"
@@ -8205,32 +7910,9 @@ function snell(proxy) {
     `,obfs-uri=${proxy["obfs-opts"]?.path}`,
     "obfs-opts.path"
   );
-  result.appendIfPresent(`,tfo=${proxy.tfo}`, "tfo");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
   result.appendIfPresent(`,reuse=${proxy["reuse"]}`, "reuse");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function tuic(proxy) {
@@ -8243,176 +7925,116 @@ function tuic(proxy) {
   result.appendIfPresent(`,uuid=${proxy.uuid}`, "uuid");
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
   result.appendIfPresent(`,token=${proxy.token}`, "token");
-  if (hasNonBlankValue(proxy.ports)) {
-    result.append(
-      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
-    );
-  }
-  if (hasNonBlankValue(proxy["hop-interval"])) {
-    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
-  }
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
+  appendPortHopping(result, proxy);
   appendTlsProxyParams(result, proxy);
-  if (isPresent2(proxy, "tfo")) {
-    result.append(`,tfo=${proxy["tfo"]}`);
-  } else if (isPresent2(proxy, "fast-open")) {
-    result.append(`,tfo=${proxy["fast-open"]}`);
-  }
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function wireguard(proxy) {
-  if (Array.isArray(proxy.peers) && proxy.peers.length > 0) {
-    proxy.server = proxy.peers[0].server;
-    proxy.port = proxy.peers[0].port;
-    proxy.ip = proxy.peers[0].ip;
-    proxy.ipv6 = proxy.peers[0].ipv6;
-    proxy["public-key"] = proxy.peers[0]["public-key"];
-    proxy["preshared-key"] = proxy.peers[0]["pre-shared-key"];
-    proxy["allowed-ips"] = proxy.peers[0]["allowed-ips"];
-    proxy.reserved = proxy.peers[0].reserved;
+  const peers = Array.isArray(proxy.peers) && proxy.peers.length > 0 ? proxy.peers : [proxy];
+  const { ip, ipv6 } = normalizeWireGuardInterface({
+    ip: proxy["self-ip"] ?? proxy.ip ?? peers[0].ip,
+    ipv6: proxy["self-ip-v6"] ?? proxy.ipv6 ?? peers[0].ipv6
+  });
+  const keyField = isNotBlank(proxy["private-key-keystore-name"]) ? "private-key-keystore-name" : "private-key";
+  const keyValue = proxy[keyField];
+  if (!hasNonBlankValue(keyValue) || !ip && !ipv6) {
+    throw new Error(
+      "Surge WireGuard requires a local address and either private-key or private-key-keystore-name"
+    );
   }
+  const listenPort = proxy["listen-port"];
+  if (listenPort != null && (!/^\d+$/.test(`${listenPort}`.trim()) || listenPort < 1 || listenPort > 65535)) {
+    throw new Error(
+      "Surge WireGuard listen-port must be between 1 and 65535"
+    );
+  }
+  const sectionName = getIfNotBlank(proxy["section-name"], proxy.name).trim();
+  const policy = wireguardPolicy({
+    ...proxy,
+    "section-name": sectionName,
+    "underlying-proxy": listenPort == null ? proxy["underlying-proxy"] : void 0
+  });
   const result = new Result(proxy);
   result.append(`# > WireGuard Proxy ${proxy.name}
-# ${proxy.name}=wireguard`);
-  proxy["section-name"] = getIfNotBlank(proxy["section-name"], proxy.name);
-  result.appendIfPresent(
-    `,section-name=${proxy["section-name"]}`,
-    "section-name"
-  );
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
-  result.append(`
+# ${policy}
 # > WireGuard Section ${proxy.name}
-[WireGuard ${proxy["section-name"]}]
-private-key = ${proxy["private-key"]}`);
-  result.appendIfPresent(`
-self-ip = ${proxy.ip}`, "ip");
-  result.appendIfPresent(`
-self-ip-v6 = ${proxy.ipv6}`, "ipv6");
-  if (proxy.dns) {
-    if (Array.isArray(proxy.dns)) {
-      proxy.dns = proxy.dns.join(", ");
-    }
-    result.append(`
-dns-server = ${proxy.dns}`);
-  }
+[WireGuard ${sectionName}]
+${keyField} = ${keyValue}`);
+  if (ip) result.append(`
+self-ip = ${ip}`);
+  if (ipv6) result.append(`
+self-ip-v6 = ${ipv6}`);
+  const dns = proxy["dns-server"] ?? proxy.dns;
+  const dnsServers = Array.isArray(dns) ? dns.join(", ") : dns;
+  if (isNotBlank(dnsServers)) result.append(`
+dns-server = ${dnsServers}`);
   result.appendIfPresent(`
 mtu = ${proxy.mtu}`, "mtu");
-  if (ip_version === "prefer-v6") {
+  if (isPresent2(proxy, "prefer-ipv6")) {
+    result.append(`
+prefer-ipv6 = ${proxy["prefer-ipv6"]}`);
+  } else if (["ipv6-prefer", "prefer-v6"].includes(proxy["ip-version"])) {
     result.append(`
 prefer-ipv6 = true`);
   }
-  const allowedIps = Array.isArray(proxy["allowed-ips"]) ? proxy["allowed-ips"].join(",") : proxy["allowed-ips"];
-  let reserved = Array.isArray(proxy.reserved) ? proxy.reserved.join("/") : proxy.reserved;
-  let presharedKey = proxy["preshared-key"] ?? proxy["pre-shared-key"];
-  const peer = {
-    "public-key": proxy["public-key"],
-    "allowed-ips": allowedIps ? `"${allowedIps}"` : void 0,
-    endpoint: `${proxy.server}:${proxy.port}`,
-    keepalive: proxy["persistent-keepalive"] || proxy.keepalive,
-    "client-id": reserved,
-    "preshared-key": presharedKey
-  };
-  result.append(
-    `
-peer = (${Object.keys(peer).filter((k) => peer[k] != null).map((k) => `${k} = ${peer[k]}`).join(", ")})`
-  );
+  const allowPeerAccess = proxy["allow-peer-access"] ?? proxy["accept-incoming"];
+  if (listenPort == null && allowPeerAccess != null) {
+    result.append(`
+allow-peer-access = ${allowPeerAccess}`);
+  }
+  result.appendIfPresent(`
+listen-port = ${listenPort}`, "listen-port");
+  const singlePeerDefaults = peers.length === 1 ? proxy : {};
+  const defaultAllowedIps = peers.length === 1 && listenPort == null && (allowPeerAccess == null || /^false$/i.test(`${allowPeerAccess}`.trim())) ? [ip && "0.0.0.0/0", ipv6 && "::/0"].filter(Boolean).join(",") : void 0;
+  for (const peer of peers) {
+    const routes = peer["allowed-ips"] ?? singlePeerDefaults["allowed-ips"];
+    const allowedIps = stripSurgeQuotes(
+      Array.isArray(routes) ? routes.join(",") : routes
+    ) || defaultAllowedIps;
+    if (!hasNonBlankValue(peer["public-key"]) || !allowedIps) {
+      throw new Error(
+        "Surge WireGuard peers require public-key and allowed-ips"
+      );
+    }
+    let endpoint = peer.endpoint;
+    if (!isNotBlank(endpoint) && isNotBlank(peer.server) && hasNonBlankValue(peer.port)) {
+      const server = peer.server.trim();
+      endpoint = `${isIPv6(server) ? `[${server}]` : server}:${peer.port}`;
+    }
+    if (!isNotBlank(endpoint) && listenPort == null) {
+      throw new Error(
+        "Surge WireGuard peers require endpoint without listen-port"
+      );
+    }
+    let clientId = stripSurgeQuotes(peer["client-id"] ?? peer.reserved);
+    if (Array.isArray(clientId)) {
+      clientId = clientId.join("/");
+    } else if (/^[\da-f]{6}$/i.test(clientId)) {
+      clientId = `0x${clientId}`;
+    }
+    const fields = {
+      "public-key": peer["public-key"],
+      "allowed-ips": quoteSurgeValue(allowedIps),
+      endpoint,
+      keepalive: peer["persistent-keepalive"] ?? peer.keepalive ?? peer["persistent-keepalive-interval"] ?? proxy["persistent-keepalive"] ?? proxy.keepalive,
+      "client-id": clientId,
+      "preshared-key": peer["preshared-key"] ?? peer["pre-shared-key"] ?? singlePeerDefaults["preshared-key"] ?? singlePeerDefaults["pre-shared-key"]
+    };
+    const options = Object.entries(fields).filter(([, value]) => hasNonBlankValue(value)).map(([key, value]) => `${key} = ${value}`).join(", ");
+    result.append(`
+peer = (${options})`);
+  }
   return result.toString();
 }
-function wireguard_surge(proxy) {
+function wireguardPolicy(proxy) {
+  const sectionName = getIfNotBlank(proxy["section-name"])?.trim();
+  if (!sectionName) throw new Error("Surge WireGuard requires section-name");
+  const sectionNameValue = sectionName.includes(",") ? quoteSurgeValue(sectionName) : sectionName;
   const result = new Result(proxy);
-  result.append(`${proxy.name}=wireguard`);
-  result.appendIfPresent(
-    `,section-name=${proxy["section-name"]}`,
-    "section-name"
-  );
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
-  appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
+  result.append(`${proxy.name}=wireguard,section-name=${sectionNameValue}`);
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function hysteria2(proxy) {
@@ -8426,57 +8048,17 @@ function hysteria2(proxy) {
   const result = new Result(proxy);
   result.append(`${proxy.name}=hysteria2,${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
-  if (hasNonBlankValue(proxy.ports)) {
-    result.append(
-      `,port-hopping="${String(proxy.ports).replace(/,/g, ";")}"`
-    );
-  }
-  if (hasNonBlankValue(proxy["hop-interval"])) {
-    result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
-  }
+  appendPortHopping(result, proxy);
   if (proxy["obfs-password"] && obfsPasswordField) {
     result.append(`,${obfsPasswordField}="${proxy["obfs-password"]}"`);
   }
-  const ip_version = ipVersions[proxy["ip-version"]] || proxy["ip-version"];
-  result.appendIfPresent(`,ip-version=${ip_version}`, "ip-version");
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   appendTlsProxyParams(result, proxy);
-  if (isPresent2(proxy, "tfo")) {
-    result.append(`,tfo=${proxy["tfo"]}`);
-  } else if (isPresent2(proxy, "fast-open")) {
-    result.append(`,tfo=${proxy["fast-open"]}`);
-  }
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(
-    `,test-timeout=${proxy["test-timeout"]}`,
-    "test-timeout"
-  );
-  result.appendIfPresent(`,test-udp=${proxy["test-udp"]}`, "test-udp");
-  result.appendIfPresent(`,hybrid=${proxy["hybrid"]}`, "hybrid");
-  result.appendIfPresent(`,tos=${proxy["tos"]}`, "tos");
-  result.appendIfPresent(
-    `,allow-other-interface=${proxy["allow-other-interface"]}`,
-    "allow-other-interface"
-  );
-  result.appendIfPresent(
-    `,interface=${proxy["interface-name"]}`,
-    "interface-name"
-  );
-  result.appendIfPresent(`,interface=${proxy["interface"]}`, "interface");
   appendShadowTLS(result, proxy);
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
-  result.appendIfPresent(
-    `,underlying-proxy=${proxy["underlying-proxy"]}`,
-    "underlying-proxy"
-  );
   result.appendIfPresent(
     `,download-bandwidth=${`${proxy["down"]}`.match(/\d+/)?.[0] || 0}`,
     "down"
   );
-  result.appendIfPresent(`,ecn=${proxy.ecn}`, "ecn");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function handleTransport(result, proxy, includeUnsupportedProxy) {
@@ -8940,18 +8522,8 @@ function external(proxy) {
       result.append(`,addresses=${addresses}`);
     });
   }
-  result.appendIfPresent(
-    `,no-error-alert=${proxy["no-error-alert"]}`,
-    "no-error-alert"
-  );
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
-  if (isPresent2(proxy, "tfo")) {
-    result.append(`,tfo=${proxy["tfo"]}`);
-  } else if (isPresent2(proxy, "fast-open")) {
-    result.append(`,tfo=${proxy["fast-open"]}`);
-  }
-  result.appendIfPresent(`,test-url=${proxy["test-url"]}`, "test-url");
-  result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
+  appendSurgePolicyParameters(result, proxy);
   return result.toString();
 }
 function mihomo(proxy, type, opts) {
