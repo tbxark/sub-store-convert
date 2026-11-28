@@ -2213,6 +2213,9 @@ var grammars = String.raw`
     function unescapeQuotedValue(value) {
         return value.replace(/\\(["\\])/g, "$1");
     }
+    function supportsQuotedEscapes() {
+        return proxy.type === "vless" || proxy.type === "h2-connect";
+    }
     function readQuotedHeaderKey(text, start) {
         const quote = text[start];
         const withEscapes = proxy.type === "vless" && quote === '"';
@@ -2604,10 +2607,28 @@ https = tag equals "https" address (username password)? (usernamek passwordk)? (
     proxy.tls = true;
     handleShadowTLS();
 }
-h2_connect = tag equals "h2-connect" address (username password)? (usernamek passwordk)? (headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
-    proxy.type = "h2-connect";
+h2_connect = tag equals h2_connect_address h2_credentials? (h2_credential/h2_headers/headers/max_streams/sni/cert_verify_name/alpn/tls_fingerprint/client_fingerprint/tls_verification/client_cert/ech_config/udp_relay/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.tls = true;
     handleShadowTLS();
+}
+h2_connect_address = "h2-connect" address { proxy.type = "h2-connect"; }
+h2_credentials = comma !([a-zA-Z0-9-]+ equals) user:quoted_value comma pass:quoted_value {
+    proxy.username = user;
+    proxy.password = pass;
+}
+h2_credential = comma key:("username"/"password") equals value:quoted_value { proxy[key] = value; }
+// Keep nested single-quoted Surge header values in the shared header parser.
+h2_headers = comma "headers" equals value:double_quoted_value &{
+    return !/(?:^|;)\s*[^:;]+:\s*'.*?'\s*(?:;|$)/.test(value);
+} {
+    const entries = [];
+    for (const pair of value.split(";")) {
+        const separator = pair.indexOf(":");
+        if (separator <= 0) continue;
+        const key = pair.slice(0, separator).trim();
+        if (key) entries.push([key, unescapeQuotedValue(pair.slice(separator + 1).trim())]);
+    }
+    proxy.headers = Object.fromEntries(entries);
 }
 http = tag equals "http" address (username password)? (usernamek passwordk)? (headers/shadow_tls_version/shadow_tls_sni/shadow_tls_password/proxy_policy_parameter/others)* {
     proxy.type = "http";
@@ -2640,7 +2661,7 @@ wireguard = tag equals "wireguard" (section_name/common_policy_parameter/proxy_o
     if (!proxy["section-name"]) error("WireGuard requires section-name");
     proxy.type = "wireguard-surge";
 }
-hysteria2 = tag equals "hysteria2" address (sni/cert_verify_name/alpn/tls_verification/client_cert/ech_config/passwordk/tls_fingerprint/download_bandwidth/shadow_tls_version/shadow_tls_sni/shadow_tls_password/port_hopping/port_hopping_interval/salamander_password/gecko_password/proxy_policy_parameter/others)* {
+hysteria2 = tag equals "hysteria2" address (sni/cert_verify_name/alpn/tls_verification/client_cert/ech_config/passwordk/tls_fingerprint/download_bandwidth/shadow_tls_version/shadow_tls_sni/shadow_tls_password/port_hopping/port_hopping_interval/hysteria2_obfs_password/proxy_policy_parameter/others)* {
     proxy.type = "hysteria2";
     handleShadowTLS();
 }
@@ -2770,7 +2791,7 @@ sni = comma "sni" equals match:[^,]+ {
 }
 cert_verify_name = comma "server-cert-verify-name" equals match:[^,]+ { proxy["name-cert-verify"] = stripQuotes(match.join("")); }
 tls_verification = comma "skip-cert-verify" equals flag:bool { proxy["skip-cert-verify"] = flag; }
-tls_fingerprint = comma "server-cert-fingerprint-sha256" equals tls_fingerprint:$[^,]+ { proxy["tls-fingerprint"] = tls_fingerprint.trim(); }
+tls_fingerprint = comma "server-cert-fingerprint-sha256" equals value:quoted_value { proxy["tls-fingerprint"] = value.trim(); }
 client_fingerprint = comma "client-fingerprint" equals value:quoted_value { clientFingerprint = value.trim().toLowerCase(); }
 client_cert = comma "client-cert" equals match:[^,]+ { proxy["keystore-client-cert"] = stripQuotes(match.join("")); }
 ech_config = comma "ech-config" equals value:quoted_value { echConfig = value; }
@@ -2842,7 +2863,7 @@ obfs_host = comma "obfs-host" equals match:[^,]+ { obfs.host = match.join("").re
 obfs_uri = comma "obfs-uri" equals path:uri { obfs.path = path }
 uri = $[^,]+
 
-udp_relay = comma "udp-relay" equals flag:bool { proxy.udp = flag; }
+udp_relay = comma "udp-relay" equals flag:policy_bool { proxy.udp = flag; }
 fast_open = comma "fast-open" equals flag:policy_bool { proxy.tfo = flag; }
 reuse = comma "reuse" equals flag:bool { proxy.reuse = flag; }
 ecn = comma "ecn" equals mode:policy_toggle { if (mode !== undefined) proxy.ecn = mode; }
@@ -2889,14 +2910,21 @@ alpn = comma "alpn" equals match:quoted_value {
 }
 h3 = comma "h3" equals flag:bool { if (flag) proxy.network = "h3"; }
 quoted_value
-    = '"' value:$(("\\" ('"' / "\\") / [^"])*) '"' &(_ ("," / !.)) { return proxy.type === "vless" ? unescapeQuotedValue(value) : value; }
+    = value:double_quoted_value { return supportsQuotedEscapes() ? unescapeQuotedValue(value) : value; }
     / '"' match:$[^"]* '"' { return match; }
-    / "'" match:$[^']* "'" { return proxy.type === "vless" ? unescapeQuotedValue(match) : match; }
+    / "'" match:$[^']* "'" { return supportsQuotedEscapes() ? unescapeQuotedValue(match) : match; }
     / value:uri { return value.trim(); }
+double_quoted_value = '"' value:$(("\\" ('"' / "\\") / [^"])*) '"' &(_ ("," / !.)) { return value; }
 vless_quoted_value = &{ return proxy.type === "vless"; } value:quoted_value { return value.trim(); }
 uuidk = comma "uuid" equals match:[^,]+ { proxy.uuid = match.join(""); }
-salamander_password = comma "salamander-password" equals match:[^,]+ { proxy['obfs-password'] = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); proxy.obfs = 'salamander'; }
-gecko_password = comma "gecko-password" equals match:[^,]+ { proxy['obfs-password'] = match.join("").replace(/^"(.*?)"$/, '$1').replace(/^'(.*?)'$/, '$1'); proxy.obfs = 'gecko'; }
+hysteria2_obfs_password = comma mode:("salamander"/"gecko") "-password" equals value:(
+    text:double_quoted_value { return unescapeQuotedValue(text); }
+    / quoted_value
+) {
+    if (proxy.obfs === "gecko" && mode === "salamander") return;
+    proxy.obfs = mode;
+    proxy["obfs-password"] = value;
+}
 
 tag = match:[^=,]* { proxy.name = match.join("").trim(); }
 comma = _ "," _
@@ -7172,6 +7200,9 @@ function isPresent2(obj, attr) {
   const data = _4.get(obj, attr);
   return typeof data !== "undefined" && data !== null;
 }
+function quoteProxyValue(value) {
+  return `"${String(value).replace(/["\\]/g, "\\$&")}"`;
+}
 function supportsVlessTransportSecurity(proxy) {
   const { network, flow, encryption } = proxy;
   const reality = proxy["reality-opts"];
@@ -8050,7 +8081,9 @@ function hysteria2(proxy) {
   result.appendIfPresent(`,password="${proxy.password}"`, "password");
   appendPortHopping(result, proxy);
   if (proxy["obfs-password"] && obfsPasswordField) {
-    result.append(`,${obfsPasswordField}="${proxy["obfs-password"]}"`);
+    result.append(
+      `,${obfsPasswordField}=${quoteProxyValue(proxy["obfs-password"])}`
+    );
   }
   appendTlsProxyParams(result, proxy);
   appendShadowTLS(result, proxy);
@@ -12191,11 +12224,12 @@ function appendTlsProxyParams2(result, proxy, enabled = true) {
   if (!enabled) {
     return;
   }
+  const fingerprint = String(proxy["tls-fingerprint"]);
   result.appendIfPresent(
-    `,server-cert-fingerprint-sha256=${proxy["tls-fingerprint"]}`,
+    `,server-cert-fingerprint-sha256=${fingerprint.includes(",") ? quoteProxyValue(fingerprint) : fingerprint}`,
     "tls-fingerprint"
   );
-  result.appendIfPresent(`,sni="${proxy.sni}"`, "sni");
+  result.appendIfPresent(`,sni=${quoteProxyValue(proxy.sni)}`, "sni");
   result.appendIfPresent(
     `,skip-cert-verify=${proxy["skip-cert-verify"]}`,
     "skip-cert-verify"
@@ -12219,6 +12253,8 @@ function Surfboard_Producer() {
         return vless4(proxy);
       case "http":
         return http4(proxy);
+      case "h2-connect":
+        return h2Connect2(proxy);
       case "snell":
         return snell3(proxy);
       case "tuic":
@@ -12272,8 +12308,10 @@ function tuic2(proxy) {
   return result.toString();
 }
 function hysteria24(proxy) {
-  if (proxy.obfs && proxy.obfs !== "salamander" || proxy["obfs-password"] && proxy.obfs !== "salamander") {
-    throw new Error(`Surfboard Hysteria2 only supports salamander obfs`);
+  if ((proxy.obfs || proxy["obfs-password"]) && !["salamander", "gecko"].includes(proxy.obfs)) {
+    throw new Error(
+      "Surfboard Hysteria2 supports Salamander and Gecko obfs"
+    );
   }
   const result = new Result(proxy);
   result.append(`${proxy.name}=hysteria2,${proxy.server},${proxy.port}`);
@@ -12287,7 +12325,11 @@ function hysteria24(proxy) {
     result.append(`,port-hopping-interval=${proxy["hop-interval"]}`);
   }
   if (proxy["obfs-password"]) {
-    result.append(`,salamander-password="${proxy["obfs-password"]}"`);
+    result.append(
+      `,${proxy.obfs}-password=${quoteProxyValue(
+        proxy["obfs-password"]
+      )}`
+    );
   }
   appendTlsProxyParams2(result, proxy);
   result.appendIfPresent(
@@ -12401,9 +12443,15 @@ function trojan4(proxy) {
   return result.toString();
 }
 function vmess3(proxy) {
+  const cipher = String(proxy.cipher ?? "").trim().toLowerCase();
+  const encryptMethod = formatSurgeVmessEncryptMethod(cipher);
+  if (cipher && cipher !== VMESS_SECURITY_AUTO && !encryptMethod) {
+    throw new Error(`Surfboard does not support VMess cipher ${cipher}`);
+  }
   const result = new Result(proxy);
   result.append(`${proxy.name}=${proxy.type},${proxy.server},${proxy.port}`);
   result.appendIfPresent(`,username=${proxy.uuid}`, "uuid");
+  if (encryptMethod) result.append(`,encrypt-method=${encryptMethod}`);
   handleTransport2(result, proxy);
   if (isPresent2(proxy, "aead")) {
     result.append(`,vmess-aead=${proxy.aead}`);
@@ -12431,7 +12479,7 @@ function vless4(proxy) {
   const append = (key, value) => {
     if (value == null) return;
     const text = String(value);
-    const param = !text || /[,;"'\s\\]/.test(text) ? `"${text.replace(/["\\]/g, "\\$&")}"` : text;
+    const param = !text || /[,;"'\s\\]/.test(text) ? quoteProxyValue(text) : text;
     result.append(`,${key}=${param}`);
   };
   append("username", proxy.uuid);
@@ -12517,6 +12565,60 @@ function http4(proxy) {
   result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
   result.appendIfPresent(`,block-quic=${proxy["block-quic"]}`, "block-quic");
   return result.toString();
+}
+function h2Connect2(proxy) {
+  if (proxy.plugin) {
+    throw new Error("Surfboard HTTP/2 CONNECT does not support plugins");
+  }
+  if (proxy.username == null !== (proxy.password == null)) {
+    throw new Error(
+      "HTTP/2 CONNECT authentication requires both username and password"
+    );
+  }
+  const result = new Result(proxy);
+  result.append(`${proxy.name}=h2-connect,${proxy.server},${proxy.port}`);
+  result.appendIfPresent(
+    `,username=${quoteProxyValue(proxy.username)}`,
+    "username"
+  );
+  result.appendIfPresent(
+    `,password=${quoteProxyValue(proxy.password)}`,
+    "password"
+  );
+  const headers = Object.entries(proxy.headers ?? {}).filter(([, value]) => value != null).map(([key, value]) => {
+    if (!/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/.test(key) || // HTAB is allowed within HTTP field values.
+    // eslint-disable-next-line no-control-regex
+    /[;\x00-\x08\x0a-\x1f\x7f]/.test(String(value))) {
+      throw new Error("Invalid HTTP/2 CONNECT header name or value");
+    }
+    return `${key}:${value}`;
+  });
+  if (headers.length) {
+    result.append(`,headers=${quoteProxyValue(headers.join(";"))}`);
+  }
+  if (isPresent2(proxy, "max-streams")) {
+    const maxStreams = Number(String(proxy["max-streams"]));
+    if (!Number.isSafeInteger(maxStreams) || maxStreams < 1) {
+      throw new Error(
+        "HTTP/2 CONNECT max-streams must be a positive integer"
+      );
+    }
+    result.append(`,max-streams=${maxStreams}`);
+  }
+  appendTlsProxyParams2(result, proxy);
+  result.appendIfPresent(`,udp-relay=${proxy.udp}`, "udp");
+  if (["auto", "on", "off"].includes(proxy["block-quic"])) {
+    result.append(`,block-quic=${proxy["block-quic"]}`);
+  }
+  result.appendIfPresent(
+    `,underlying-proxy=${quoteProxyValue(proxy["underlying-proxy"])}`,
+    "underlying-proxy"
+  );
+  const line = result.toString();
+  if (/[\r\n]/.test(line)) {
+    throw new Error("HTTP/2 CONNECT proxy contains a line break");
+  }
+  return line;
 }
 function socks54(proxy) {
   const result = new Result(proxy);
